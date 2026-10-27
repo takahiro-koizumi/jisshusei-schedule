@@ -77,6 +77,9 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .grid td.off{background:var(--off)}
 .grid td.rest{background:var(--rest)}
 .grid td.gone{background:#eee}
+.grid td.col{background:var(--sc);box-shadow:inset 4px 0 0 var(--sb)}
+.sw{display:inline-block;width:18px;height:18px;border-radius:4px;border:2px solid var(--line2);background:#fff;flex:none;margin-right:6px}
+.clr{display:flex;align-items:center}
 .grid select{width:100%;padding:4px 6px;border:1px solid var(--line2);border-radius:4px;background:#fff;font-size:13px}
 .today{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border-radius:999px;padding:0 6px;margin-left:4px;vertical-align:1px}
 .hol{font-size:11px;font-weight:400}
@@ -94,6 +97,15 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .note:hover{color:var(--ink)}
 .note.has{color:var(--ink);white-space:pre-wrap;word-break:break-all}
 .noteIn{width:100%;margin-top:4px;padding:3px 6px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
+.hday{font-size:13px;color:var(--sub);margin:16px 0 4px}
+.hist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:8px}
+.hist li{display:grid;grid-template-columns:48px 90px 1fr;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);font-size:13px}
+.hist li:last-child{border-bottom:0}
+.ht{color:var(--sub);font-variant-numeric:tabular-nums}
+.hb{color:#2156b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hx{word-break:break-all}
+.hmore{text-align:center;margin-top:12px}
+#hsearch{flex:1 1 220px;max-width:360px;padding:7px 10px;border:1px solid var(--line2);border-radius:6px;background:#fff}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:8px}
 .legend i{display:inline-block;width:12px;height:12px;border:1px solid var(--line2);border-radius:2px;vertical-align:-2px;margin-right:4px}
 
@@ -160,6 +172,18 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .vday.tdy{border:2px solid var(--accent);padding:9px 11px}
 .vday.off{background:var(--off)}
 .vday.rest{background:#fafafa}
+.vday.col{background:var(--sc);border-left:6px solid var(--sb);padding-left:8px}
+.vday.col.tdy{border:2px solid var(--accent);border-left:6px solid var(--sb)}
+.vlang{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.vlang button{border:1px solid var(--line2);background:#fff;border-radius:999px;padding:4px 12px;font-size:14px}
+.vlang button.on{background:var(--dark);border-color:var(--dark);color:#fff}
+.v.lang-si{font-family:"Noto Sans Sinhala","Iskoola Pota","Nirmala UI","Sinhala Sangam MN","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif}
+/* 曜日名が長い言葉は、日付の欄を広げて字を小さくする（現場名に重ならないように） */
+.v.lang-id .vday{grid-template-columns:76px 1fr}
+.v.lang-id .vd .dw{font-size:18px}
+.v.lang-si .vday{grid-template-columns:110px 1fr}
+.v.lang-si .vd .dw{font-size:14px;text-align:center;overflow-wrap:anywhere}
+.furi .tr{font-size:.65em;font-weight:400;color:var(--sub)}
 .vd{display:flex;flex-direction:column;align-items:center;line-height:1.15;grid-row:span 2}
 .vd .md{font-size:13px;color:var(--sub)}
 .vd .dw{font-size:22px;font-weight:700}
@@ -187,8 +211,11 @@ table.vt{border-collapse:collapse;font-size:13px;min-width:100%}
 .vt tbody th .fk{display:block;font-size:10px;font-weight:400;color:var(--sub)}
 .vt td{min-width:110px}
 .vt .furi .fk{font-size:10px}
+.vt .furi .tr{font-size:12px;color:var(--ink)}
 .vt td.off{background:var(--off)}
 .vt td.tdy{box-shadow:inset 0 0 0 2px var(--accent)}
+.vt td.col{background:var(--sc);box-shadow:inset 3px 0 0 var(--sb)}
+.vt td.col.tdy{box-shadow:inset 3px 0 0 var(--sb),inset 0 0 0 2px var(--accent)}
 .vt tr.me th{background:#fff4e5}
 .vt .vnote{font-size:11px}
 
@@ -202,7 +229,7 @@ table.vt{border-collapse:collapse;font-size:13px;min-width:100%}
   #print h1 small{font-size:10pt;font-weight:400;margin-left:8px}
   #print table.vt{width:100%;font-size:9pt}
   #print .vt th,#print .vt td{border:1px solid #888}
-  #print .vt td.off,#print .vt thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print .vt td.off,#print .vt td.col,#print .vt thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
 @media (max-width:700px){
@@ -213,6 +240,8 @@ table.vt{border-collapse:collapse;font-size:13px;min-width:100%}
   .grid th.nm{min-width:96px}
   .addrow input{width:100%}
   .addrow label{flex:1 1 100%}
+  .hist li{grid-template-columns:44px 1fr}
+  .hist .hx{grid-column:1/-1}
 }
 </style>
 </head>
@@ -295,10 +324,89 @@ const dayCls = d => (isRestDay(d) ? 'sun' : d.getDay() === 6 ? 'sat' : '');
 
 /* ---------- 状態 ---------- */
 const KINDS = [['jisshu', '技能実習', '実'], ['tokutei', '特定技能', '特'], ['other', 'その他', '他']];
+// 現場の色 [保存する値, 名前, 地の色（薄い）, 線の色（濃い）]。未配置の黄色と紛れないよう黄色は入れない
+const SITE_COLORS = [
+  ['', 'なし', '', ''],
+  ['red', '赤', '#fde2e1', '#e5534b'],
+  ['orange', 'オレンジ', '#fee8d6', '#f08a24'],
+  ['green', '緑', '#dff3e4', '#2e9e57'],
+  ['teal', '青緑', '#d9f2ef', '#1a9c8c'],
+  ['sky', '水色', '#dcefff', '#2f8ae0'],
+  ['blue', '青', '#e1e6ff', '#3d5bd9'],
+  ['purple', '紫', '#ece3fb', '#8250df'],
+  ['pink', '桃', '#fbe1f0', '#d6409f'],
+  ['brown', '茶', '#efe5dc', '#9a6b43'],
+  ['gray', '灰', '#e9ebee', '#6b7280'],
+];
+const COLOR_OF = Object.fromEntries(SITE_COLORS.filter(c => c[0]).map(c => [c[0], c]));
+// 色の付いた現場なら、マス・カードに付ける class と style を返す
+function colorAttr(s, cls = '') {
+  const c = s && COLOR_OF[s.color];
+  return c ? { cls: `${cls} col`.trim(), style: ` style="--sc:${c[2]};--sb:${c[3]}"` } : { cls, style: '' };
+}
+function colorOptions(cur) {
+  return SITE_COLORS.map(([v, l, bg]) => `<option value="${v}"${(cur || '') === v ? ' selected' : ''}${bg ? ` style="background:${bg}"` : ''}>${l}</option>`).join('');
+}
+function swatch(v) {
+  const c = COLOR_OF[v];
+  return `<span class="sw"${c ? ` style="background:${c[2]};border-color:${c[3]}"` : ''}></span>`;
+}
+// 新しい現場には、まだ使っていない色を順に割り当てる（休み・研修などは色なし＝ピンクのまま）
+function nextSiteColor(kind) {
+  if (kind === 'off') return '';
+  const used = new Set(Object.values(S.company?.sites || {}).filter(s => !s.done).map(s => s.color));
+  return (SITE_COLORS.find(c => c[0] && !used.has(c[0])) || SITE_COLORS[1])[0];
+}
 const KIND_SHORT = Object.fromEntries(KINDS.map(k => [k[0], k[2]]));
-const TABS = [['table', '予定表'], ['people', '人の登録'], ['sites', '現場の登録'], ['settings', '設定']];
+const TABS = [['table', '予定表'], ['people', '人の登録'], ['sites', '現場の登録'], ['history', '履歴'], ['settings', '設定']];
+
+/* ---------- 実習生の画面の言葉（日本語はルビ付き。ほかは訳だけ） ---------- */
+const LANGS = [['ja', '日本語'], ['id', 'Bahasa Indonesia'], ['si', 'සිංහල']];
+const VT = {
+  title:     { ja: `${R('週', 'しゅう')}の${R('予定', 'よてい')}`, id: 'Jadwal Mingguan', si: 'සතියේ වැඩ සටහන' },
+  // 前後の週ボタンは「表示中の週から1週ずらす」なので、今日基準の lalu/depan（先週/来週）は使わない
+  prev:      { ja: `${R('前', 'まえ')}の${R('週', 'しゅう')}`, id: 'Sebelumnya', si: 'පෙර සතිය' },
+  thisWeek:  { ja: R('今週', 'こんしゅう'), id: 'Minggu ini', si: 'මෙම සතිය' },
+  next:      { ja: `${R('次', 'つぎ')}の${R('週', 'しゅう')}`, id: 'Berikutnya', si: 'ඊළඟ සතිය' },
+  me:        { ja: R('自分', 'じぶん'), id: 'Saya', si: 'මම' },
+  all:       { ja: 'みんな', id: 'Semua', si: 'සියලු දෙනා' },
+  name:      { ja: R('名前', 'なまえ'), id: 'Nama', si: 'නම' },
+  choose:    { ja: 'えらんでください', id: 'Pilih nama', si: 'නම තෝරන්න' },
+  hint:      { ja: `${R('自分', 'じぶん')}の ${R('名前', 'なまえ')}を えらぶと、${R('予定', 'よてい')}が でます。`, id: 'Pilih nama Anda untuk melihat jadwal.', si: 'වැඩ සටහන බැලීමට ඔබේ නම තෝරන්න.' },
+  undecided: { ja: R('未定', 'みてい'), id: 'Belum ditentukan', si: 'තවම තීරණය කර නැත' },
+  today:     { ja: R('今日', 'きょう'), id: 'Hari ini', si: 'අද' },
+  // 「祝日」は暦の名前。「自分の休み」と読まれないよう、国の祝日と分かる言い方にする（現場が入る祝日もある）
+  holiday:   { ja: R('祝日', 'しゅくじつ'), id: 'Libur nasional', si: 'පොදු නිවාඩු දිනය' },
+  notFound:  { ja: `${R('予定表', 'よていひょう')}が ${R('見', 'み')}つかりません。<br>URLを たしかめてください。`, id: 'Jadwal tidak ditemukan.<br>Periksa kembali URL-nya.', si: 'වැඩ සටහන හමු නොවීය.<br>URL එක නැවත පරීක්ෂා කරන්න.' },
+  loading:   { ja: '読み込み中…', id: 'Memuat…', si: 'පූරණය වෙමින්…' },
+  slow:      { ja: '読み込みに時間がかかっています。<br>電波の良い所で、もう一度開いてください。', id: 'Pemuatan memakan waktu lama.<br>Buka lagi di tempat dengan sinyal yang bagus.', si: 'පූරණය වීමට වැඩි වේලාවක් ගත වේ.<br>හොඳ සංඥා ඇති තැනක නැවත විවෘත කරන්න.' },
+  reload:    { ja: '再読み込み', id: 'Muat ulang', si: 'නැවත පූරණය කරන්න' },
+  admin:     { ja: '事務所の方（ログイン）', id: 'Untuk staf kantor (masuk)', si: 'කාර්යාල කාර්ය මණ්ඩලය සඳහා (පිවිසෙන්න)' },
+  nobody:    { ja: 'まだ だれも いません', id: 'Belum ada nama yang terdaftar', si: 'තවම කිසිවෙකු ලියාපදිංචි කර නැත' },
+  demo:      { ja: 'お試しモード', id: 'Mode uji coba', si: 'අත්හදා බැලීමේ ප්‍රකාරය' },
+  loadFail:  { ja: '読み込みに失敗しました。<br>通信を確かめて、もう一度開いてください。', id: 'Gagal memuat.<br>Periksa koneksi internet, lalu buka lagi.', si: 'පූරණය කිරීම අසාර්ථක විය.<br>අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත විවෘත කරන්න.' },
+};
+// 曜日（日曜はじまり）。シンハラ語の木曜は ්‍ර（ZWJ 入り）なので ‍ で書く
+const DOW_L = {
+  id: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
+  si: ['ඉරිදා', 'සඳුදා', 'අඟහරුවාදා', 'බදාදා', 'බ්‍රහස්පතින්දා', 'සිකුරාදා', 'සෙනසුරාදා'],
+};
+// 最初から登録される「休み」「研修」だけは訳を添える（ほかの現場名は事務所が日本語で付けるので訳さない）
+const OFF_TR = { '休み': { id: 'Libur', si: 'නිවාඩු' }, '研修': { id: 'Pelatihan', si: 'පුහුණුව' } };
+function initLang() {
+  const saved = lsGet('jsched_lang');
+  if (LANGS.some(l => l[0] === saved)) return saved;
+  const nav = String(navigator.language || '').toLowerCase();
+  return nav.startsWith('id') || nav.startsWith('in') ? 'id' : nav.startsWith('si') ? 'si' : 'ja';
+}
+// 訳の中身は自分で書いた固定の文なので、そのまま HTML に入れる（日本語はルビ、<br> を含む）
+const vt = key => VT[key][S.lang] ?? VT[key].ja;
+const vDow = d => S.lang === 'ja' ? R(DOW[d.getDay()], DOW_KANA[d.getDay()]) : DOW_L[S.lang][d.getDay()];
+const mdL = d => S.lang === 'ja' ? md(d) : `${d.getDate()}/${d.getMonth() + 1}`;   // インドネシア・スリランカは日/月の順
+const vHol = name => S.lang === 'ja' ? esc(name) : vt('holiday');
 
 const S = {
+  lang: initLang(),      // 実習生の画面の言葉（端末ごとに覚える）
   mode: 'demo',          // demo＝この端末だけ / cloud＝Firebase
   role: 'edit',          // edit＝事務所 / view＝実習生（見るだけ）
   screen: 'loading',     // loading / login / create / error / app
@@ -309,7 +417,8 @@ const S = {
   vtab: 'me', me: '',
   editors: [],           // 編集できる人のメールアドレス（編集画面のときだけ読む）
   editorsLoaded: false,  // 一覧が届く前に追加・削除すると、空の一覧を元にしてしまう
-  unsubC: null, unsubW: null, unsubE: null, pending: false,
+  hist: { list: [], loaded: false, n: 100, q: '', err: '' },   // 編集履歴（n＝読む件数）
+  unsubC: null, unsubW: null, unsubE: null, unsubH: null, pending: false,
 };
 let store = null;
 
@@ -330,10 +439,14 @@ function visiblePeople() {
 function nextOrder(coll) { return Math.max(0, ...Object.values(S.company?.[coll] || {}).map(x => x.order || 0)) + 1; }
 const cellOf = (pid, k) => S.week.cells?.[pid]?.[k] || null;
 
-let toastTimer;
-function toast(msg) {
+let toastTimer, toastHoldUntil = 0;
+// important＝警告・エラー。出ている間は、ふつうの知らせ（「追加しました」など）で上書きしない
+function toast(msg, important) {
+  if (!important && Date.now() < toastHoldUntil) return;
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  const ms = important ? 6000 : 3200;
+  toastHoldUntil = important ? Date.now() + ms : 0;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
 function errMsg(e) {
   const c = String(e?.code || '');
@@ -410,10 +523,10 @@ function seedDemo() {
   [['グエン・ヴァン・ナム', '', 'jisshu'], ['チャン・ティ・ラン', '', 'jisshu'], ['レ・ミン・トゥアン', '', 'jisshu'],
    ['ファム・クォック・フイ', '', 'jisshu'], ['ブイ・ドゥック・アイン', '', 'tokutei'], ['山田 太郎', 'やまだ たろう', 'other']]
     .forEach(([name, kana, kind], i) => { people['p_demo' + i] = { name, kana, kind, order: i + 1, retired: false }; });
-  [['休み', 'やすみ', 'off'], ['研修', 'けんしゅう', 'off'], ['柏市 新築外構工事', 'かしわし しんちく がいこう こうじ', 'site'],
-   ['船橋市 宅地造成工事', 'ふなばしし たくち ぞうせい こうじ', 'site'], ['千葉市 擁壁工事', 'ちばし ようへき こうじ', 'site'],
-   ['資材置場', 'しざい おきば', 'site']]
-    .forEach(([name, kana, kind], i) => { sites['s_demo' + i] = { name, kana, kind, order: i + 1, done: false }; });
+  [['休み', 'やすみ', 'off', ''], ['研修', 'けんしゅう', 'off', ''], ['柏市 新築外構工事', 'かしわし しんちく がいこう こうじ', 'site', 'green'],
+   ['船橋市 宅地造成工事', 'ふなばしし たくち ぞうせい こうじ', 'site', 'sky'], ['千葉市 擁壁工事', 'ちばし ようへき こうじ', 'site', 'orange'],
+   ['資材置場', 'しざい おきば', 'site', 'gray']]
+    .forEach(([name, kana, kind, color], i) => { sites['s_demo' + i] = { name, kana, kind, color, order: i + 1, done: false }; });
   const mon = mondayOf(new Date()), cells = {};
   [[2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 0], [4, 4, 4, 4, 4, 4], [1, 2, 2, 2, 2, 2], [5, 4, 4, 4, 4, 0], [2, 2, 3, 3, 3, '']]
     .forEach((row, i) => {
@@ -428,16 +541,24 @@ function makeDemoStore() {
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } };
   let data = read();
   if (!data) { data = seedDemo(); write(); }
-  data.editors ||= [];
-  const subsC = new Set(), subsW = new Map(), subsE = new Set();
+  const fix = () => { data.editors ||= []; data.history ||= []; };
+  fix();
+  const subsC = new Set(), subsW = new Map(), subsE = new Set(), subsH = new Set();
   function write() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { toast('この端末に保存できませんでした'); } }
   function emit() {
     subsC.forEach(cb => cb(clone(data.company)));
     for (const [m, set] of subsW) set.forEach(cb => cb(clone(data.weeks[m] || { cells: {} })));
     subsE.forEach(cb => cb(clone(data.editors)));
+    subsH.forEach(h => h.cb(clone(data.history.slice(0, h.n))));
+  }
+  // 書き込みのあとに履歴を足す（新しい順、300件まで）
+  function done(hist) {
+    if (hist) data.history.unshift({ id: newId('h_'), at: Date.now(), by: 'お試し', text: String(hist).slice(0, 500) });
+    data.history.length = Math.min(data.history.length, 300);
+    write(); emit(); return true;
   }
   // 同じパソコンの別タブ（実習生の画面など）にも反映する
-  window.addEventListener('storage', e => { if (e.key === KEY) { data = read() || seedDemo(); data.editors ||= []; emit(); } });
+  window.addEventListener('storage', e => { if (e.key === KEY) { data = read() || seedDemo(); fix(); emit(); } });
   return {
     onCompany(cb) { subsC.add(cb); cb(clone(data.company)); return () => subsC.delete(cb); },
     onWeek(m, cb) {
@@ -446,17 +567,18 @@ function makeDemoStore() {
       return () => subsW.get(m)?.delete(cb);
     },
     async getWeek(m) { return clone(data.weeks[m] || { cells: {} }); },
-    async setCells(m, cells) { deepMerge((data.weeks[m] ||= { cells: {} }).cells, cells); write(); emit(); },
-    async patch(obj) { deepMerge(data.company, obj); write(); emit(); },
-    async removeField(path) {
+    async setCells(m, cells, hist) { deepMerge((data.weeks[m] ||= { cells: {} }).cells, cells); return done(hist); },
+    async patch(obj, hist) { deepMerge(data.company, obj); return done(hist); },
+    async removeField(path, hist) {
       let o = data.company; for (const k of path.slice(0, -1)) o = o?.[k];
       if (o) delete o[path[path.length - 1]];
-      write(); emit();
+      return done(hist);
     },
     onEditors(cb) { subsE.add(cb); cb(clone(data.editors)); return () => subsE.delete(cb); },
-    async addEditors(list) { for (const e of list) if (!data.editors.includes(e)) data.editors.push(e); write(); emit(); return true; },
-    async removeEditor(email) { data.editors = data.editors.filter(x => x !== email); write(); emit(); return true; },
-    reset() { data = seedDemo(); write(); emit(); },
+    async addEditors(list, hist) { for (const e of list) if (!data.editors.includes(e)) data.editors.push(e); return done(hist); },
+    async removeEditor(email, hist) { data.editors = data.editors.filter(x => x !== email); return done(hist); },
+    onHistory(n, cb) { const h = { n, cb }; subsH.add(h); cb(clone(data.history.slice(0, n))); return () => subsH.delete(h); },
+    reset() { data = seedDemo(); fix(); write(); emit(); },
   };
 }
 
@@ -527,23 +649,55 @@ const Cloud = {
     const F = this.F, db = this.db;
     const cref = F.doc(db, 'companies', cid);
     const wref = m => F.doc(db, 'companies', cid, 'weeks', m);
-    const fail = e => { console.error(e); toast('保存できませんでした：' + errMsg(e)); };
+    const fail = e => { console.error(e); toast('保存できませんでした：' + errMsg(e), true); };
     // 電波が無いと「端末に何も無い」結果が先に来る。それを「無い」と見なすと
     // 「見つかりません」「未定」と誤って出るので、サーバーの返事を待つ。
     // 返事が「やはり無い」だと変わるのは fromCache だけなので、includeMetadataChanges で受け取る
     const notYet = s => !s.exists() && s.metadata.fromCache;
     const META = { includeMetadataChanges: true };
+    const aref = F.doc(db, 'acl', cid);
+    const hcol = F.collection(db, 'companies', cid, 'history');
+    let histWarned = false;
+    // 書き込みと編集履歴を1回のまとめ書き（batch）にする＝片方だけ残ることがない。
+    // 履歴を書くルールがまだ公開されていないとき（permission-denied）は、履歴なしで書き直して知らせる
+    // （ルールの貼り直しより先にアプリを公開しても、編集が止まらないように）。結果は true / false
+    async function commit(apply, hist) {
+      const run = withHist => {
+        const b = F.writeBatch(db);
+        apply(b);
+        if (withHist && hist) b.set(F.doc(hcol), { at: F.serverTimestamp(), by: Cloud.auth.currentUser?.email || '', text: String(hist).slice(0, 500) });
+        return b.commit();
+      };
+      try { await run(true); return true; }
+      catch (e) {
+        if (hist && String(e?.code || '').includes('permission-denied')) {
+          try {
+            await run(false);
+            if (!histWarned) { histWarned = true; toast('保存しました（編集履歴は残せませんでした。Firebase のルールの更新が必要です）', true); }
+            return true;
+          } catch (e2) { fail(e2); return false; }
+        }
+        fail(e); return false;
+      }
+    }
     return {
       onCompany(cb, onErr) { return F.onSnapshot(cref, META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : null); }, e => { console.error(e); onErr?.(e); }); },
       onWeek(m, cb) { return F.onSnapshot(wref(m), META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : { cells: {} }); }, e => { console.error(e); toast('読み込めませんでした：' + errMsg(e)); }); },
       async getWeek(m) { const s = await F.getDoc(wref(m)); return s.exists() ? s.data() : { cells: {} }; },
-      setCells(m, cells) { return F.setDoc(wref(m), { cells }, { merge: true }).catch(fail); },
-      patch(obj) { return F.setDoc(cref, obj, { merge: true }).catch(fail); },
-      removeField(path) { return F.updateDoc(cref, new F.FieldPath(...path), F.deleteField()).catch(fail); },
-      onEditors(cb, onErr) { return F.onSnapshot(F.doc(db, 'acl', cid), s => { if (s.exists()) cb(s.data().editors || []); }, e => { console.error(e); onErr?.(e); }); },
+      setCells(m, cells, hist) { return commit(b => b.set(wref(m), { cells }, { merge: true }), hist); },
+      patch(obj, hist) { return commit(b => b.set(cref, obj, { merge: true }), hist); },
+      removeField(path, hist) { return commit(b => b.update(cref, new F.FieldPath(...path), F.deleteField()), hist); },
+      onEditors(cb, onErr) { return F.onSnapshot(aref, s => { if (s.exists()) cb(s.data().editors || []); }, e => { console.error(e); onErr?.(e); }); },
       // 一覧を丸ごと書かず、足す・抜くだけを送る（2人が同時に触っても、片方の変更が消えない）
-      addEditors(list) { return F.updateDoc(F.doc(db, 'acl', cid), { editors: F.arrayUnion(...list) }).then(() => true, e => { fail(e); return false; }); },
-      removeEditor(email) { return F.updateDoc(F.doc(db, 'acl', cid), { editors: F.arrayRemove(email) }).then(() => true, e => { fail(e); return false; }); },
+      addEditors(list, hist) { return commit(b => b.update(aref, { editors: F.arrayUnion(...list) }), hist); },
+      removeEditor(email, hist) { return commit(b => b.update(aref, { editors: F.arrayRemove(email) }), hist); },
+      // 編集履歴（新しい順に n 件）。書いた直後のものは時刻をこの端末の見積もりで出す
+      onHistory(n, cb, onErr) {
+        return F.onSnapshot(F.query(hcol, F.orderBy('at', 'desc'), F.limit(n)), s => cb(s.docs.map(d => {
+          const v = d.data({ serverTimestamps: 'estimate' });
+          return { id: d.id, at: v.at?.toMillis?.() ?? Date.now(), by: v.by || '', text: v.text || '' };
+        })), e => { console.error(e); onErr?.(e); });
+      },
     };
   },
 };
@@ -552,12 +706,29 @@ const Cloud = {
    データの購読と再描画
    ===================================================================== */
 function stopData() {
-  S.unsubC?.(); S.unsubW?.(); S.unsubE?.(); S.unsubC = S.unsubW = S.unsubE = null;
+  S.unsubC?.(); S.unsubW?.(); S.unsubE?.(); S.unsubH?.(); S.unsubC = S.unsubW = S.unsubE = S.unsubH = null;
   clearTimeout(S.slowTimer); clearTimeout(S.weekSlowTimer);
+}
+// 編集履歴は「履歴」タブを開いたときに読み始める（開かない人の読み取りを増やさない）
+function startHistory() {
+  if (S.unsubH || S.role !== 'edit') return;
+  S.hist.loaded = false; S.hist.err = '';
+  S.unsubH = store.onHistory(S.hist.n, list => {
+    S.hist.list = list; S.hist.loaded = true; S.hist.err = '';
+    if (S.tab === 'history') refresh();
+  }, err => {
+    S.hist.loaded = true;
+    S.hist.err = String(err?.code || '').includes('permission-denied')
+      ? '履歴を読めません。Firebase のルールの更新が必要です。'
+      : '履歴を読めませんでした：' + errMsg(err);
+    S.unsubH = null;
+    if (S.tab === 'history') refresh();
+  });
 }
 function startData() {
   stopData();
   S.company = null; S.notFound = false; S.screen = 'app'; S.slowC = false;
+  S.hist = { list: [], loaded: false, n: 100, q: '', err: '' };
   S.me = lsGet('jsched_me_' + S.cid) || '';
   render();
   // 10秒たっても会社のデータが来なければ、電波が悪いことを知らせる
@@ -596,9 +767,11 @@ function subscribeWeek() {
 }
 function loadingHtml() {
   const slow = (S.slowC && !S.company && !S.notFound) || (S.slowW && !S.weekLoaded);
+  // 実習生の画面では選んだ言葉で出す（事務所の画面は日本語のまま）
+  const t = key => S.role === 'view' ? vt(key) : VT[key].ja;
   return slow
-    ? `<div class="center"><p>読み込みに時間がかかっています。<br>電波の良い所で、もう一度開いてください。</p><button class="btn" data-act="reload">再読み込み</button></div>`
-    : '<div class="center"><div class="spin"></div><p>読み込み中…</p></div>';
+    ? `<div class="center"><p>${t('slow')}</p><button class="btn" data-act="reload">${t('reload')}</button></div>`
+    : `<div class="center"><div class="spin"></div><p>${t('loading')}</p></div>`;
 }
 function goWeek(d) {
   S.weekStart = d ? addDays(S.weekStart, d) : mondayOf(new Date());
@@ -619,7 +792,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // データが届いたときに描き直す領域。入力欄やボタンのある所は入れない
 // （描き直すと打っている文字が消え、押しかけたボタンも別物になってクリックが効かない）
-const REGIONS = { table: ['grid', () => gridTable()], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], settings: ['edlist', () => editorItems()] };
+const REGIONS = { table: ['grid', () => gridTable()], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], history: ['hlist', () => historyList()], settings: ['edlist', () => editorItems()] };
 function refresh() {
   if (S.screen !== 'app') return;
   if (S.role === 'view' || !$('#main')) return render();
@@ -628,6 +801,11 @@ function refresh() {
     const ci = $('#coNameIn'); if (ci && document.activeElement !== ci) ci.value = S.company?.name || '';
     const ab = $('#edAddBtn'); if (ab) ab.disabled = !S.editorsLoaded || S.edAdding;
   }
+  if (S.tab === 'sites') {
+    // ほかの人が色を使ったり現場を足したりしたら、追加欄の色の初期値も選び直す（自分で選んだ後は変えない）
+    const cl = $('form[data-form="addSite"] [name=cl]');
+    if (cl && !cl.dataset.touched && document.activeElement !== cl) cl.innerHTML = colorOptions(nextSiteColor(cl.form.querySelector('[name=kd]').value));
+  }
   const [id, fn] = REGIONS[S.tab];
   const el = document.getElementById(id);
   if (!el) return renderMain();
@@ -635,7 +813,19 @@ function refresh() {
   el.innerHTML = fn();
 }
 function render() {
-  if (S.screen === 'loading') { app.innerHTML = '<div class="center"><div class="spin"></div><p>読み込み中…</p></div>'; return; }
+  document.documentElement.lang = 'ja';   // 実習生の画面では viewerShell が選んだ言葉に上書きする
+  // 実習生の URL で開いた起動中・エラーの画面も、選んだ言葉で出す（まだ role が決まる前なので URL で見分ける）
+  const asViewer = S.role === 'view' || (!S.user && (params.has('c') || params.has('view')));
+  if (S.screen === 'loading') {
+    app.innerHTML = asViewer
+      ? viewerShell(`<div class="center"><div class="spin"></div><p>${vt('loading')}</p></div>`)
+      : '<div class="center"><div class="spin"></div><p>読み込み中…</p></div>';
+    return;
+  }
+  if (S.screen === 'error' && asViewer) {
+    app.innerHTML = viewerShell(`<div class="center"><p>${S.errKey ? vt(S.errKey) : esc(S.errMsg)}</p><button class="btn" data-act="reload">${vt('reload')}</button></div>`);
+    return;
+  }
   if (S.screen === 'error') {
     const out = S.mode === 'cloud' && Cloud.auth?.currentUser ? '<button class="btn" data-act="logoutNow">ログアウト</button>' : '';
     app.innerHTML = `<div class="center"><p>${esc(S.errMsg)}</p><div class="btns"><button class="btn" data-act="reload">再読み込み</button>${out}</div></div>`; return;
@@ -650,6 +840,7 @@ function render() {
    編集画面（事務所）
    ===================================================================== */
 function renderEditor() {
+  document.documentElement.lang = 'ja';
   app.innerHTML = `
   <header class="top">
     <div class="brand"><span class="logo">週間配置表</span><span class="co" id="coName">${esc(S.company?.name || '')}</span>${S.mode === 'demo' ? '<span class="demo">お試しモード：この端末だけに保存</span>' : ''}</div>
@@ -666,6 +857,13 @@ function renderMain() {
       <div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`;
   } else if (S.tab === 'people') m.innerHTML = peoplePanel();
   else if (S.tab === 'sites') m.innerHTML = sitesPanel();
+  else if (S.tab === 'history') {
+    m.innerHTML = `<section class="panel"><h2>編集履歴</h2>
+      <p class="hint">いつ・だれが・何を変えたかを、新しい順に出します。編集できる人だけが見られ、あとから書き換えたり消したりはできません。</p>
+      <div class="bar"><input id="hsearch" type="search" placeholder="人・現場・編集した人で絞り込み" value="${esc(S.hist.q)}" autocomplete="off"></div>
+      <div id="hlist">${historyList()}</div></section>`;
+    startHistory();
+  }
   else { m.innerHTML = `<section class="panel"><h2>設定</h2><div id="sset" class="set">${settingsBody()}</div></section>`; drawQR(); }
 }
 function tableBar() {
@@ -712,17 +910,44 @@ function gridTable() {
     <th class="nm"><div class="nmrow"><div class="nmIn">${p.kana ? `<span class="kana">${esc(p.kana)}</span>` : ''}<span class="name">${esc(p.name)}</span></div><span class="kind k-${esc(p.kind)}">${KIND_SHORT[p.kind] || ''}</span><button class="fill" data-act="fill" data-pid="${esc(p.id)}" title="空いている日を同じ現場で埋める">⇉</button></div></th>
     ${days.map(d => {
       const k = ds(d), c = cellOf(p.id, k), s = c?.site ? S.company.sites[c.site] : null;
-      const cls = c?.site ? (!s ? 'gone' : s.kind === 'off' ? 'off' : '') : (isRestDay(d) ? 'rest' : 'unset');
+      const ca = colorAttr(s, c?.site ? (!s ? 'gone' : s.kind === 'off' ? 'off' : '') : (isRestDay(d) ? 'rest' : 'unset'));
       const note = c?.note
         ? `<div class="note has" data-act="note" data-pid="${esc(p.id)}" data-date="${k}">${esc(c.note)}</div>`
         : `<div class="note" data-act="note" data-pid="${esc(p.id)}" data-date="${k}">＋メモ</div>`;
-      return `<td class="${cls}"><select data-act="site" data-pid="${esc(p.id)}" data-date="${k}" aria-label="${esc(p.name)} ${md(d)}">${cellOptions(base, c?.site)}</select>${note}</td>`;
+      return `<td class="${ca.cls}"${ca.style}><select data-act="site" data-pid="${esc(p.id)}" data-date="${k}" aria-label="${esc(p.name)} ${md(d)}">${cellOptions(base, c?.site)}</select>${note}</td>`;
     }).join('')}
   </tr>`).join('');
   return `<table class="grid">${head}<tbody>${rows}</tbody></table>`;
 }
+/* ---- 編集履歴の文（何を変えたかを、そのときの名前で残す） ---- */
+const dayLabel = k => { const d = pd(k); return `${md(d)}（${DOW[d.getDay()]}）`; };
+const siteLabel = id => !id ? '未配置' : S.company?.sites?.[id]?.name || '（削除された現場）';
+const personLabel = id => S.company?.people?.[id]?.name || '（削除された人）';
+const short = s => { s = String(s ?? ''); return s.length > 40 ? s.slice(0, 40) + '…' : s; };
+const kindLabel = k => KINDS.find(x => x[0] === k)?.[1] || k;
+const siteKindLabel = k => k === 'off' ? '休み・研修など' : '現場';
+const colorLabel = v => COLOR_OF[v]?.[1] || 'なし';
+// 人・現場の欄を変えたときの文
+function fieldHist(coll, x, f, v) {
+  const who = coll === 'people' ? `人「${x.name}」` : `現場「${x.name}」`;
+  switch (f) {
+    case 'name': return `${coll === 'people' ? '人' : '現場'}の名前を「${x.name}」→「${v}」に変更`;
+    case 'kana': return `${who}のふりがなを「${x.kana || ''}」→「${v}」に変更`;
+    case 'kind': return coll === 'people' ? `${who}の区分を ${kindLabel(x.kind)} → ${kindLabel(v)} に変更` : `${who}の種類を ${siteKindLabel(x.kind)} → ${siteKindLabel(v)} に変更`;
+    case 'color': return `${who}の色を ${colorLabel(x.color)} → ${colorLabel(v)} に変更`;
+    case 'retired': return v ? `${who}を「帰国・退職」にした` : `${who}を「在籍」に戻した`;
+    case 'done': return v ? `${who}を「完了」にした` : `${who}を「稼働中」に戻した`;
+    default: return `${who}の ${f} を変更`;
+  }
+}
+
 function setCell(pid, date, patch) {
-  return store.setCells(ds(mondayOf(pd(date))), { [pid]: { [date]: patch } });
+  const cur = cellOf(pid, date) || {};
+  const where = `${personLabel(pid)} の ${dayLabel(date)}`;
+  const hist = 'site' in patch
+    ? `${where} を「${siteLabel(cur.site)}」→「${siteLabel(patch.site)}」に変更`
+    : patch.note ? `${where} のメモを「${short(patch.note)}」にした` : `${where} のメモを消した`;
+  return store.setCells(ds(mondayOf(pd(date))), { [pid]: { [date]: patch } }, hist);
 }
 function startNote(el) {
   const { pid, date } = el.dataset;
@@ -743,7 +968,7 @@ function startNote(el) {
   });
   inp.addEventListener('blur', () => finish(true));
 }
-function fillRow(pid) {
+async function fillRow(pid) {
   const p = S.company.people[pid]; if (!p) return;
   const days = weekDays();
   const site = days.map(d => cellOf(pid, ds(d))?.site).find(id => id && S.company.sites[id] && S.company.sites[id].kind !== 'off' && !S.company.sites[id].done);
@@ -755,13 +980,18 @@ function fillRow(pid) {
     out[k] = { site }; n++;
   }
   if (!n) { toast('空いている日がありません（日曜・祝日は埋めません）'); return; }
-  store.setCells(ds(S.weekStart), { [pid]: out });
-  toast(`${p.name} さんの空いている ${n} 日を「${S.company.sites[site].name}」にしました`);
+  const sname = S.company.sites[site].name;
+  const ok = await store.setCells(ds(S.weekStart), { [pid]: out },
+    `${p.name} の空いている ${n} 日（${Object.keys(out).sort().map(dayLabel).join('、')}）を「${sname}」で埋めた`);
+  if (ok) toast(`${p.name} さんの空いている ${n} 日を「${sname}」にしました`);
 }
 async function copyPrevWeek() {
-  const prevMon = addDays(S.weekStart, -7);
+  // 押したときの週に固定する（待っている間に週を移っても、別の週へ書かない）
+  const mon = S.weekStart, moved = () => ds(S.weekStart) !== ds(mon);
+  const prevMon = addDays(mon, -7);
   let prev;
-  try { prev = await store.getWeek(ds(prevMon)); } catch (e) { toast('前の週を読み込めませんでした：' + errMsg(e)); return; }
+  try { prev = await store.getWeek(ds(prevMon)); } catch (e) { toast('前の週を読み込めませんでした：' + errMsg(e), true); return; }
+  if (moved()) { toast('週を移ったので、コピーをやめました'); return; }
   const out = {}; let n = 0, over = 0;
   const skipped = new Set();
   for (const [pid, days] of Object.entries(prev?.cells || {})) {
@@ -787,26 +1017,28 @@ async function copyPrevWeek() {
     '\nメモはコピーしません（この週のメモはそのまま残ります）。' +
     (restNote ? `\n${restNote} は休みの日なので空けておきます。` : '');
   if (!(await ask(msg, 'コピーする'))) return;
-  await store.setCells(ds(S.weekStart), out);
-  toast(`${n} マスをコピーしました`);
+  if (moved()) { toast('週を移ったので、コピーをやめました'); return; }
+  const ok = await store.setCells(ds(mon), out, `前の週（${md(prevMon)}〜）の現場を ${md(mon)}〜 の週へコピー（${n} マス）`);
+  if (ok) toast(`${n} マスをコピーしました`);
 }
 function allTable(people, days, print) {
-  if (!people.length) return `<div class="empty">${print ? '表示する人がいません' : `まだ だれも いません`}</div>`;
+  if (!people.length) return `<div class="empty">${print ? '表示する人がいません' : vt('nobody')}</div>`;
   const today = todayStr();
-  const furiOf = c => {
-    const s = c?.site ? S.company.sites[c.site] : null;
-    return s ? furi(s) : '';
-  };
-  return `<table class="vt"><thead><tr><th>${print ? '氏名' : R('名前', 'なまえ')}</th>${days.map(d => {
+  // 印刷は日本語。実習生の画面は選んだ言葉（vt / vDow / vHol / mdL）で出す
+  return `<table class="vt"><thead><tr><th>${print ? '氏名' : vt('name')}</th>${days.map(d => {
     const h = holidayName(ds(d));
-    return `<th class="${dayCls(d)}">${md(d)}<br>${print ? DOW[d.getDay()] : R(DOW[d.getDay()], DOW_KANA[d.getDay()])}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
-  }).join('')}</tr></thead><tbody>${people.map(p => `<tr class="${!print && p.id === S.me ? 'me' : ''}"><th>${p.kana ? `<span class="fk">${esc(p.kana)}</span>` : ''}${esc(p.name)}</th>${days.map(d => {
+    return `<th class="${dayCls(d)}">${print ? md(d) : mdL(d)}<br>${print ? DOW[d.getDay()] : vDow(d)}${h ? `<div class="hol">${print ? esc(h) : vHol(h)}</div>` : ''}</th>`;
+  }).join('')}</tr></thead><tbody>${people.map(p => `<tr class="${!print && p.id === S.me ? 'me' : ''}"><th lang="ja">${p.kana ? `<span class="fk">${esc(p.kana)}</span>` : ''}${esc(p.name)}</th>${days.map(d => {
     const k = ds(d), c = cellOf(p.id, k), s = c?.site ? S.company.sites[c.site] : null;
-    return `<td class="${s?.kind === 'off' ? 'off' : ''}${!print && k === today ? ' tdy' : ''}">${furiOf(c)}${c?.note ? `<div class="vnote">${esc(c.note)}</div>` : ''}</td>`;
+    const ca = colorAttr(s, `${s?.kind === 'off' ? 'off' : ''}${!print && k === today ? ' tdy' : ''}`);
+    return `<td class="${ca.cls}"${ca.style}>${s ? furi(s, !print) : ''}${c?.note ? `<div class="vnote" lang="ja">${esc(c.note)}</div>` : ''}</td>`;
   }).join('')}</tr>`).join('')}</tbody></table>`;
 }
-function furi(s) {
-  return `<span class="furi">${s.kana ? `<span class="fk">${esc(s.kana)}</span>` : ''}<span class="fb">${esc(s.name)}</span></span>`;
+// 現場名（ふりがなを上に）。実習生の画面では、最初からある「休み」「研修」だけ選んだ言葉の訳を下に添える。
+// 事務所が日本語で入れた文字には lang="ja" を付ける（画面が si/id でも、Android で漢字が中国語の字形にならないように）
+function furi(s, viewer) {
+  const tr = viewer && S.lang !== 'ja' ? OFF_TR[s.name]?.[S.lang] : '';
+  return `<span class="furi" lang="ja">${s.kana ? `<span class="fk">${esc(s.kana)}</span>` : ''}<span class="fb">${esc(s.name)}</span>${tr ? `<span class="tr" lang="${S.lang}">${esc(tr)}</span>` : ''}</span>`;
 }
 function printWeek() {
   const days = weekDays();
@@ -848,6 +1080,7 @@ function sitesPanel() {
       <label>現場名<input name="nm" required maxlength="60" placeholder="例：柏市 新築外構工事"></label>
       <label>ふりがな（実習生の画面に出ます）<input name="kn" maxlength="80" placeholder="例：かしわし しんちく がいこう こうじ"></label>
       <label>種類<select name="kd"><option value="site">現場</option><option value="off">休み・研修など</option></select></label>
+      <label>色<select name="cl">${colorOptions(nextSiteColor())}</select></label>
       <button class="btn primary">追加</button>
     </form>
     <div id="slist">${siteList()}</div></section>`;
@@ -856,25 +1089,48 @@ function siteList() {
   if (!S.company) return '<div class="empty">読み込み中…</div>';
   const list = sortedSites(true);
   if (!list.length) return '<div class="empty">まだ登録されていません</div>';
-  return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>種類</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
+  return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>種類</th><th>色</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
     <tr class="${s.done ? 'retired' : ''}">
       <td class="ord"><button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
       <td><input data-coll="sites" data-f="name" data-id="${esc(s.id)}" value="${esc(s.name)}" maxlength="60"></td>
       <td><input data-coll="sites" data-f="kana" data-id="${esc(s.id)}" value="${esc(s.kana || '')}" maxlength="80"></td>
       <td><select data-coll="sites" data-f="kind" data-id="${esc(s.id)}"><option value="site">現場</option><option value="off" ${s.kind === 'off' ? 'selected' : ''}>休み・研修など</option></select></td>
+      <td><span class="clr">${swatch(s.color)}<select data-coll="sites" data-f="color" data-id="${esc(s.id)}" aria-label="色">${colorOptions(s.color)}</select></span></td>
       <td><select data-coll="sites" data-f="done" data-id="${esc(s.id)}"><option value="">稼働中</option><option value="1" ${s.done ? 'selected' : ''}>完了</option></select></td>
       <td><button class="mini danger" data-act="del" data-coll="sites" data-id="${esc(s.id)}">削除</button></td>
     </tr>`).join('')}</tbody></table>
     <p class="hint">終わった現場は「完了」にすると予定表の選択肢から消えます（これまでの予定は残ります）。</p>`;
 }
+/* ---- 編集履歴 ---- */
+function historyList() {
+  const H = S.hist;
+  if (H.err) return `<div class="empty">${esc(H.err)}</div>`;
+  if (!H.loaded) return '<div class="empty">読み込み中…</div>';
+  const q = H.q.trim().toLowerCase();
+  const list = q ? H.list.filter(h => `${h.text} ${h.by}`.toLowerCase().includes(q)) : H.list;
+  if (!list.length) return `<div class="empty">${q ? '該当する履歴がありません（読み込んだ分の中から探しています）' : 'まだ履歴はありません'}</div>`;
+  let html = '', lastDay = '';
+  for (const h of list) {
+    const d = new Date(h.at), day = ds(d);
+    if (day !== lastDay) {
+      html += `${lastDay ? '</ul>' : ''}<h3 class="hday">${d.getFullYear()}年 ${md(d)}（${DOW[d.getDay()]}）</h3><ul class="hist">`;
+      lastDay = day;
+    }
+    html += `<li><span class="ht">${pad(d.getHours())}:${pad(d.getMinutes())}</span><span class="hb" title="${esc(h.by)}">${esc(String(h.by).split('@')[0])}</span><span class="hx">${esc(h.text)}</span></li>`;
+  }
+  html += '</ul>';
+  if (H.list.length >= H.n) html += '<div class="hmore"><button class="btn" data-act="histMore">もっと前の履歴を見る</button></div>';
+  return html;
+}
 function moveItem(coll, id, d) {
   const list = coll === 'people' ? sortedPeople(true) : sortedSites(true);
   const i = list.findIndex(x => x.id === id), j = i + d;
   if (i < 0 || j < 0 || j >= list.length) return;
+  const moved = list[i].name;
   [list[i], list[j]] = [list[j], list[i]];
   const patch = {};
   list.forEach((x, k) => { if (x.order !== k + 1) patch[x.id] = { order: k + 1 }; });
-  store.patch({ [coll]: patch });
+  store.patch({ [coll]: patch }, `${coll === 'people' ? '人' : '現場'}の並び順を変更（「${moved}」を${d < 0 ? '上' : '下'}へ）`);
 }
 async function deleteItem(coll, id) {
   const x = S.company[coll]?.[id]; if (!x) return;
@@ -882,7 +1138,7 @@ async function deleteItem(coll, id) {
     ? `「${x.name}」を削除しますか？\n\nこの人の予定は表示されなくなります。\n帰国・退職した人は、削除せずに「状態」を変えてください。`
     : `「${x.name}」を削除しますか？\n\nこの現場が入っている予定は「削除された現場」と表示されます。\n終わった現場は、削除せずに「状態」を「完了」にしてください。`;
   if (!(await ask(msg, '削除する'))) return;
-  store.removeField([coll, id]);
+  store.removeField([coll, id], `${coll === 'people' ? '人' : '現場'}を削除：${x.name}`);
 }
 
 /* ---- 設定 ---- */
@@ -952,41 +1208,49 @@ async function copyText(t) {
 /* =====================================================================
    実習生の画面（見るだけ・ふりがな付き）
    ===================================================================== */
+// 実習生の画面の外枠（言葉の切り替えはどの状態でも出す）
+function viewerShell(inner) {
+  document.documentElement.lang = S.lang;
+  return `<div class="v lang-${S.lang}">
+    <div class="vlang" role="group" aria-label="Language">${LANGS.map(([k, l]) => `<button data-act="lang" data-l="${k}" lang="${k}" class="${S.lang === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    ${inner}</div>`;
+}
 function renderViewer() {
   const c = S.company;
-  if (S.notFound) {
-    app.innerHTML = `<div class="v"><div class="empty">${R('予定表', 'よていひょう')}が ${R('見', 'み')}つかりません。<br>URLを たしかめてください。</div></div>`; return;
-  }
-  if (!c) { app.innerHTML = loadingHtml(); return; }
+  if (S.notFound) { app.innerHTML = viewerShell(`<div class="empty">${vt('notFound')}</div>`); return; }
+  if (!c) { app.innerHTML = viewerShell(loadingHtml()); return; }
   const days = weekDays(), people = sortedPeople(false);
   if (S.me && !people.some(p => p.id === S.me)) S.me = '';
-  app.innerHTML = `<div class="v">
-    <header class="vtop"><div class="vco">${esc(c.name)}</div><h1>${R('週', 'しゅう')}の${R('予定', 'よてい')}</h1></header>
+  const range = S.lang === 'ja'
+    ? `${md(days[0])}（${R('月', 'げつ')}）〜 ${md(days[6])}（${R('日', 'にち')}）`
+    : `${mdL(days[0])} (${DOW_L[S.lang][1]}) – ${mdL(days[6])} (${DOW_L[S.lang][0]})`;
+  app.innerHTML = viewerShell(`
+    <header class="vtop"><div class="vco" lang="ja">${esc(c.name)}</div><h1>${vt('title')}</h1></header>
     <div class="vnav">
-      <button data-act="week" data-d="-7">◀ ${R('前', 'まえ')}の${R('週', 'しゅう')}</button>
-      <button data-act="week" data-d="0" class="${isThisWeek() ? 'on' : ''}">${R('今週', 'こんしゅう')}</button>
-      <button data-act="week" data-d="7">${R('次', 'つぎ')}の${R('週', 'しゅう')} ▶</button>
+      <button data-act="week" data-d="-7">◀ ${vt('prev')}</button>
+      <button data-act="week" data-d="0" class="${isThisWeek() ? 'on' : ''}">${vt('thisWeek')}</button>
+      <button data-act="week" data-d="7">${vt('next')} ▶</button>
     </div>
-    <div class="vrange">${md(days[0])}（${R('月', 'げつ')}）〜 ${md(days[6])}（${R('日', 'にち')}）</div>
-    <div class="vtabs"><button data-act="vtab" data-v="me" class="${S.vtab === 'me' ? 'on' : ''}">${R('自分', 'じぶん')}</button><button data-act="vtab" data-v="all" class="${S.vtab === 'all' ? 'on' : ''}">みんな</button></div>
+    <div class="vrange">${range}</div>
+    <div class="vtabs"><button data-act="vtab" data-v="me" class="${S.vtab === 'me' ? 'on' : ''}">${vt('me')}</button><button data-act="vtab" data-v="all" class="${S.vtab === 'all' ? 'on' : ''}">${vt('all')}</button></div>
     ${S.vtab === 'me' ? meView(people, days) : S.weekLoaded ? `<div class="vall">${allTable(people, days, false)}</div>` : loadingHtml()}
-    ${S.mode === 'demo' ? '<p class="vdemo">お試しモード</p>' : ''}
-    <footer class="vfoot">${S.mode === 'cloud' ? '<button class="link" data-act="adminLogin">事務所の方（ログイン）</button>' : ''}</footer>
-  </div>`;
+    ${S.mode === 'demo' ? `<p class="vdemo">${vt('demo')}</p>` : ''}
+    <footer class="vfoot">${S.mode === 'cloud' ? `<button class="link" data-act="adminLogin">${vt('admin')}</button>` : ''}</footer>`);
 }
 function meView(people, days) {
-  const opts = people.map(p => `<option value="${esc(p.id)}" ${S.me === p.id ? 'selected' : ''}>${esc(p.name)}${p.kana ? `（${esc(p.kana)}）` : ''}</option>`).join('');
-  const pick = `<label class="vpick"><span>${R('名前', 'なまえ')}</span><select data-act="pickMe"><option value="">えらんでください</option>${opts}</select></label>`;
-  if (!S.me) return pick + `<p class="vhint">${R('自分', 'じぶん')}の ${R('名前', 'なまえ')}を えらぶと、${R('予定', 'よてい')}が でます。</p>`;
+  const opts = people.map(p => `<option lang="ja" value="${esc(p.id)}" ${S.me === p.id ? 'selected' : ''}>${esc(p.name)}${p.kana ? `（${esc(p.kana)}）` : ''}</option>`).join('');
+  const pick = `<label class="vpick"><span>${vt('name')}</span><select data-act="pickMe"><option value="">${vt('choose')}</option>${opts}</select></label>`;
+  if (!S.me) return pick + `<p class="vhint">${vt('hint')}</p>`;
   if (!S.weekLoaded) return pick + loadingHtml();
   const today = todayStr();
   return pick + `<div class="vdays">${days.map(d => {
     const k = ds(d), c = cellOf(S.me, k), s = c?.site ? S.company.sites[c.site] : null, hol = holidayName(k);
-    const body = s ? furi(s) : `<span class="vmuted">${isRestDay(d) ? '―' : R('未定', 'みてい')}</span>`;
-    return `<div class="vday ${dayCls(d)}${k === today ? ' tdy' : ''}${s?.kind === 'off' ? ' off' : ''}${isRestDay(d) && !s ? ' rest' : ''}">
-      <div class="vd"><span class="md">${md(d)}</span><span class="dw">${R(DOW[d.getDay()], DOW_KANA[d.getDay()])}</span>${k === today ? `<span class="today">${R('今日', 'きょう')}</span>` : ''}${hol ? `<span class="holb">${R('祝日', 'しゅくじつ')}</span>` : ''}</div>
+    const body = s ? furi(s, true) : `<span class="vmuted">${isRestDay(d) ? '―' : vt('undecided')}</span>`;
+    const ca = colorAttr(s, `vday ${dayCls(d)}${k === today ? ' tdy' : ''}${s?.kind === 'off' ? ' off' : ''}${isRestDay(d) && !s ? ' rest' : ''}`);
+    return `<div class="${ca.cls}"${ca.style}>
+      <div class="vd"><span class="md">${mdL(d)}</span><span class="dw">${vDow(d)}</span>${k === today ? `<span class="today">${vt('today')}</span>` : ''}${hol ? `<span class="holb">${vt('holiday')}</span>` : ''}</div>
       <div class="vs">${body}</div>
-      ${c?.note ? `<div class="vnote">${esc(c.note)}</div>` : ''}
+      ${c?.note ? `<div class="vnote" lang="ja">${esc(c.note)}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
 }
@@ -1056,6 +1320,8 @@ app.addEventListener('click', e => {
     case 'del': deleteItem(d.coll, d.id); break;
     case 'demoReset': ask('お試しデータを最初の状態に戻しますか？\n入力した内容はすべて消えます。', '戻す').then(ok => { if (ok) store.reset(); }); break;
     case 'vtab': S.vtab = d.v; render(); break;
+    case 'lang': S.lang = d.l; lsSet('jsched_lang', S.lang); render(); break;
+    case 'histMore': S.hist.n += 100; S.unsubH?.(); S.unsubH = null; startHistory(); break;
     case 'adminLogin':
       if (S.user) { location.href = location.origin + location.pathname; break; }
       S.screen = 'login'; render(); break;
@@ -1074,6 +1340,11 @@ app.addEventListener('click', e => {
 });
 app.addEventListener('change', e => {
   const t = e.target, d = t.dataset;
+  // 現場の追加欄：自分で選んだ色はそのまま。種類を変えたら色の初期値を選び直す（休み・研修などは色なし）
+  if (t.form?.dataset.form === 'addSite') {
+    if (t.name === 'cl') { t.dataset.touched = '1'; return; }
+    if (t.name === 'kd') { const cl = t.form.querySelector('[name=cl]'); if (!cl.dataset.touched) cl.innerHTML = colorOptions(nextSiteColor(t.value)); return; }
+  }
   if (d.act === 'site') { t.blur(); setCell(d.pid, d.date, { site: t.value }); return; }
   if (d.act === 'pickMe') { S.me = t.value; lsSet('jsched_me_' + S.cid, S.me); render(); return; }
   if (d.coll && d.f) {
@@ -1081,19 +1352,25 @@ app.addEventListener('change', e => {
     let v = t.value.trim();
     if (d.f === 'name' && !v) { toast('名前は空にできません'); t.value = cur.name; return; }
     if (d.f === 'retired' || d.f === 'done') v = t.value === '1';
-    store.patch({ [d.coll]: { [d.id]: { [d.f]: v } } });
+    if ((cur[d.f] ?? (typeof v === 'boolean' ? false : '')) === v) return;   // 変わっていない
+    store.patch({ [d.coll]: { [d.id]: { [d.f]: v } } }, fieldHist(d.coll, cur, d.f, v));
     return;
   }
   if (t.id === 'coNameIn') {
     const v = t.value.trim();
     if (!v) { toast('会社名は空にできません'); t.value = S.company?.name || ''; return; }
-    store.patch({ name: v });
+    if (v === S.company?.name) return;
+    store.patch({ name: v }, `会社名を「${S.company?.name || ''}」→「${v}」に変更`);
   }
 });
 app.addEventListener('input', e => {
   if (e.target.id === 'search') {
     S.search = e.target.value;
     const g = $('#grid'); if (g) g.innerHTML = gridTable();
+  }
+  if (e.target.id === 'hsearch') {
+    S.hist.q = e.target.value;
+    const h = $('#hlist'); if (h) h.innerHTML = historyList();
   }
 });
 app.addEventListener('submit', async e => {
@@ -1105,10 +1382,12 @@ app.addEventListener('submit', async e => {
     const name = val('nm'); if (!name) return;
     const item = coll === 'people'
       ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', order: nextOrder('people'), retired: false }
-      : { name, kana: val('kn'), kind: val('kd') || 'site', order: nextOrder('sites'), done: false };
-    await store.patch({ [coll]: { [newId(coll === 'people' ? 'p_' : 's_')]: item } });
+      : { name, kana: val('kn'), kind: val('kd') || 'site', color: val('cl'), order: nextOrder('sites'), done: false };
+    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}）`;
+    if (!(await store.patch({ [coll]: { [newId(coll === 'people' ? 'p_' : 's_')]: item } }, hist))) return;   // 失敗したら入力を残す
     f.reset();
     if (coll === 'people') f.querySelector('[name=kd]').value = item.kind;
+    else { const cl = f.querySelector('[name=cl]'); delete cl.dataset.touched; cl.innerHTML = colorOptions(nextSiteColor(f.querySelector('[name=kd]').value)); }
     f.querySelector('[name=nm]').focus();
     toast(`「${name}」を追加しました`);
     return;
@@ -1125,7 +1404,7 @@ app.addEventListener('submit', async e => {
     S.edAdding = true;
     const btn = $('#edAddBtn'); if (btn) btn.disabled = true;
     let ok;
-    try { ok = await store.addEditors(add); }
+    try { ok = await store.addEditors(add, `編集できる人に追加：${add.join('、')}`); }
     finally { S.edAdding = false; const b = $('#edAddBtn'); if (b) b.disabled = !S.editorsLoaded; }
     if (!ok) return;   // 失敗は保存処理がもう知らせている。入力はそのまま残す
     f.reset();
@@ -1174,7 +1453,7 @@ async function removeEditor(email) {
   if (email === me) return;
   if (S.mode === 'cloud' && S.editors.length <= 1) { toast('最後の1人は外せません'); return; }
   if (!(await ask(`${email} を、編集できる人から外しますか？\nこの人は予定表を書き換えられなくなります。`, '外す'))) return;
-  store.removeEditor(email);
+  store.removeEditor(email, `編集できる人から外した：${email}`);
 }
 async function googleLogin(btn) {
   const err = $('#authErr'); if (err) err.textContent = '';
@@ -1205,7 +1484,7 @@ async function boot() {
   }
   S.mode = 'cloud'; S.screen = 'loading'; render();
   try { await Cloud.init(FIREBASE_CONFIG); }
-  catch (e) { console.error(e); S.screen = 'error'; S.errMsg = '読み込みに失敗しました。通信を確かめて、もう一度開いてください。'; render(); return; }
+  catch (e) { console.error(e); S.screen = 'error'; S.errKey = 'loadFail'; S.errMsg = '読み込みに失敗しました。通信を確かめて、もう一度開いてください。'; render(); return; }
   Cloud.onAuth(afterAuth);
 }
 // ログインの状態が決まったら（開いた直後・ログイン・ログアウト・確かめ直し）どの画面にするか決める
