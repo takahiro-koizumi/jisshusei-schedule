@@ -1,0 +1,6 @@
+# 公開しないもの（GitHub Pages で配るのは index.html だけ）
+# 編集する人のメールアドレスが入っている（Firebase コンソールに貼るだけ）
+firestore.rules
+# 社内向けの設計メモ・設定手順
+CLAUDE.md
+SETUP.md

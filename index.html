@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f3a4a">
+<meta name="apple-mobile-web-app-title" content="週間配置表">
+<title>週間配置表</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#fff; --line:#e3e5e8; --line2:#cfd3d9; --ink:#1f2328; --sub:#6b7280; --faint:#a0a6ad;
+  --head:#f7f7f5; --dark:#2f3a4a; --accent:#f07a2a;
+  --unset:#fbf0b8; --off:#fce4e7; --rest:#f1f2f4;
+  --sun:#fde3e5; --sunink:#d1243b; --satink:#2156b8;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:14px;-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.35;cursor:default}
+ruby rt{font-size:.55em;font-weight:400}
+
+/* ---- 共通部品 ---- */
+.btn{border:1px solid var(--line2);background:#fff;border-radius:6px;padding:6px 12px;white-space:nowrap}
+.btn:hover{background:#f6f7f9}
+.btn.primary{background:var(--dark);border-color:var(--dark);color:#fff}
+.btn.primary:hover{background:#3b4859}
+.btn.danger{color:#b4233c;border-color:#efb7c0}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--sub)}
+.mini{border:1px solid var(--line2);background:#fff;border-radius:4px;padding:2px 7px;font-size:12px}
+.mini.danger{color:#b4233c;border-color:#efb7c0}
+.link{border:0;background:none;color:#2156b8;text-decoration:underline;padding:4px}
+.empty{padding:28px 16px;text-align:center;color:var(--sub)}
+.hint{font-size:12px;color:var(--sub);margin:8px 0 0}
+.center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center}
+.spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--dark);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#222;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:calc(100vw - 32px)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
+.modalBox{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:440px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.modalMsg{margin:0 0 16px;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:60vh;overflow:auto}
+.modalBox .btns{display:flex;justify-content:flex-end;gap:8px}
+
+/* ---- 編集画面 ---- */
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.logo{font-weight:700;font-size:17px}
+.co{color:var(--sub)}
+.demo{font-size:12px;background:#fff4e5;color:#9a5a00;border:1px solid #f5d29a;border-radius:999px;padding:1px 8px}
+.tabs{display:flex;gap:2px;background:var(--bg);padding:3px;border-radius:8px}
+.tabs button{border:0;background:transparent;padding:6px 12px;border-radius:6px;color:var(--sub)}
+.tabs button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.topR{margin-left:auto;display:flex;gap:6px}
+main{padding:12px 16px 24px}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.seg{display:flex;background:#e9ebee;border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 10px;border-radius:6px;color:#333}
+.seg button:hover{background:rgba(255,255,255,.7)}
+.seg.dark button.on{background:var(--dark);color:#fff;font-weight:600}
+.wk{font-weight:600;padding:0 4px;white-space:nowrap}
+#search{flex:1 1 160px;min-width:140px;max-width:260px;padding:7px 10px;border:1px solid var(--line2);border-radius:6px;background:#fff}
+.sp{flex:1}
+
+.gridwrap{overflow:auto;max-height:calc(100vh - 150px);border:1px solid var(--line);border-radius:8px;background:#fff}
+table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
+.grid th,.grid td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 8px;vertical-align:top}
+.grid thead th{position:sticky;top:0;background:var(--head);z-index:2;font-weight:600;text-align:center;white-space:nowrap;padding:8px}
+.grid thead th.sun{background:var(--sun);color:var(--sunink)}
+.grid thead th.sat{color:var(--satink)}
+.grid thead th.tdy{box-shadow:inset 0 -3px 0 var(--accent)}
+.grid th.nm{position:sticky;left:0;z-index:1;background:#fafaf8;text-align:left;min-width:160px;max-width:200px}
+.grid thead th.nm{z-index:3;background:var(--head)}
+.grid td{min-width:150px;background:#fff}
+.grid td.unset{background:var(--unset)}
+.grid td.off{background:var(--off)}
+.grid td.rest{background:var(--rest)}
+.grid td.gone{background:#eee}
+.grid select{width:100%;padding:4px 6px;border:1px solid var(--line2);border-radius:4px;background:#fff;font-size:13px}
+.today{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border-radius:999px;padding:0 6px;margin-left:4px;vertical-align:1px}
+.hol{font-size:11px;font-weight:400}
+.nmrow{display:flex;align-items:flex-start;gap:4px}
+.nmIn{display:flex;flex-direction:column;flex:1;min-width:0}
+.nmIn .kana{font-size:10px;color:var(--sub);font-weight:400}
+.nmIn .name{font-weight:600;word-break:break-all}
+.kind{align-self:flex-start;font-size:10px;border-radius:3px;padding:0 4px;margin-top:3px;font-weight:600}
+.k-jisshu{background:#e3f1e7;color:#1f7a43}
+.k-tokutei{background:#e6eefc;color:#2156b8}
+.k-other{background:#eceef1;color:#555}
+.fill{border:1px solid var(--line2);background:#fff;border-radius:4px;font-size:12px;padding:0 5px;line-height:20px;color:var(--sub)}
+.fill:hover{color:var(--ink);border-color:var(--dark)}
+.note{font-size:12px;color:var(--faint);padding:4px 2px 0;cursor:pointer;min-height:20px}
+.note:hover{color:var(--ink)}
+.note.has{color:var(--ink);white-space:pre-wrap;word-break:break-all}
+.noteIn{width:100%;margin-top:4px;padding:3px 6px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border:1px solid var(--line2);border-radius:2px;vertical-align:-2px;margin-right:4px}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;max-width:980px}
+.panel h2{margin:0 0 12px;font-size:16px}
+.panel h3{margin:20px 0 6px;font-size:14px}
+.panel p{margin:4px 0}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;padding:12px;background:#f7f8fa;border-radius:8px;margin-bottom:12px}
+.addrow label,.set label.row{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--sub)}
+.addrow input,.addrow select,.list input,.list select,.set input{padding:6px 8px;border:1px solid var(--line2);border-radius:5px;background:#fff;font-size:14px;color:var(--ink)}
+.addrow input{width:200px}
+.list{border-collapse:collapse;width:100%}
+.list th{font-size:12px;color:var(--sub);font-weight:600;text-align:left;padding:6px;border-bottom:1px solid var(--line)}
+.list td{padding:5px 6px;border-bottom:1px solid var(--line)}
+.list td input{width:100%;min-width:120px}
+.list tr.retired td{background:#f6f6f6}
+.list tr.retired input{color:var(--sub)}
+.list td.ord{white-space:nowrap}
+.set label.row input{max-width:360px}
+.urlrow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.urlrow input{flex:1 1 300px;font-size:13px}
+.qr{margin-top:6px;min-height:20px}
+.qr svg{display:block;background:#fff}
+
+/* ---- ログイン ---- */
+.auth{max-width:380px;margin:8vh auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px}
+.auth h1{margin:0 0 4px;font-size:20px}
+.auth form{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.auth label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--sub)}
+.auth input{padding:9px 10px;border:1px solid var(--line2);border-radius:6px;font-size:15px;color:var(--ink)}
+.auth .err{color:#b4233c;font-size:13px;min-height:1em}
+.auth .btns{display:flex;gap:8px;flex-wrap:wrap}
+.auth.wide{max-width:520px}
+.auth textarea{padding:9px 10px;border:1px solid var(--line2);border-radius:6px;font-size:14px;font-family:inherit;color:var(--ink);resize:vertical}
+.authBody{display:flex;flex-direction:column;gap:10px;margin:16px 0}
+.gbtn{padding:10px 14px;font-size:15px}
+.who{font-size:12px;color:var(--sub);align-self:center}
+.eds{list-style:none;margin:8px 0;padding:0;border:1px solid var(--line);border-radius:8px;max-width:560px}
+.eds li{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line)}
+.eds li:last-child{border-bottom:0}
+.eds .em{flex:1;word-break:break-all}
+.eds .none{color:var(--sub)}
+.you{font-size:11px;background:#e6eefc;color:#2156b8;border-radius:999px;padding:1px 8px}
+.addrow label.grow{flex:1 1 320px}
+.addrow textarea{width:100%;padding:6px 8px;border:1px solid var(--line2);border-radius:5px;font-size:14px;font-family:inherit;color:var(--ink);resize:vertical}
+
+/* ---- 実習生の画面 ---- */
+.v{max-width:640px;margin:0 auto;padding:12px 14px 40px;font-size:16px}
+.vtop{text-align:center;padding:4px 0 8px}
+.vco{font-size:13px;color:var(--sub)}
+.vtop h1{margin:2px 0 0;font-size:22px}
+.vnav{display:grid;grid-template-columns:1fr auto 1fr;gap:6px}
+.vnav button{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:8px 6px;font-size:15px}
+.vnav button.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+.vrange{text-align:center;font-weight:700;font-size:17px;margin:10px 0}
+.vtabs{display:grid;grid-template-columns:1fr 1fr;background:#e9ebee;border-radius:10px;padding:3px;gap:3px;margin-bottom:12px}
+.vtabs button{border:0;background:transparent;border-radius:8px;padding:8px;font-size:16px}
+.vtabs button.on{background:#fff;font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.vpick{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.vpick select{flex:1;font-size:17px;padding:8px;border:1px solid var(--line2);border-radius:6px;background:#fff;min-width:0}
+.vhint{text-align:center;color:var(--sub)}
+.vdays{display:flex;flex-direction:column;gap:8px}
+.vday{display:grid;grid-template-columns:64px 1fr;gap:2px 12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;align-items:center}
+.vday.tdy{border:2px solid var(--accent);padding:9px 11px}
+.vday.off{background:var(--off)}
+.vday.rest{background:#fafafa}
+.vd{display:flex;flex-direction:column;align-items:center;line-height:1.15;grid-row:span 2}
+.vd .md{font-size:13px;color:var(--sub)}
+.vd .dw{font-size:22px;font-weight:700}
+.vday.sun .dw{color:var(--sunink)}
+.vday.sat .dw{color:var(--satink)}
+.vd .today{margin:4px 0 0}
+.vd .holb{font-size:11px;color:var(--sunink);margin-top:2px}
+.vs{font-size:19px;font-weight:700;word-break:break-all}
+.vmuted{color:var(--faint);font-weight:400}
+.vnote{font-size:14px;color:#444;white-space:pre-wrap;word-break:break-all;margin-top:2px}
+.furi{display:inline-flex;flex-direction:column;line-height:1.3}
+.furi .fk{font-size:.6em;font-weight:400;color:var(--sub)}
+.vall{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+.vdemo{text-align:center;font-size:12px;color:#9a5a00}
+.vfoot{text-align:center;margin-top:28px}
+
+table.vt{border-collapse:collapse;font-size:13px;min-width:100%}
+.vt th,.vt td{border:1px solid var(--line);padding:5px 6px;vertical-align:top;text-align:left}
+.vt thead th{background:var(--head);text-align:center;white-space:nowrap;font-weight:600}
+.vt thead th.sun{background:var(--sun);color:var(--sunink)}
+.vt thead th.sat{color:var(--satink)}
+.vt tbody th{background:#fafaf8;font-weight:600;word-break:break-all}
+.vall .vt tbody th,.vall .vt thead th:first-child{position:sticky;left:0;z-index:1;box-shadow:1px 0 0 var(--line);width:100px;min-width:100px;max-width:100px}
+.vall .vt thead th:first-child{background:var(--head)}
+.vt tbody th .fk{display:block;font-size:10px;font-weight:400;color:var(--sub)}
+.vt td{min-width:110px}
+.vt .furi .fk{font-size:10px}
+.vt td.off{background:var(--off)}
+.vt td.tdy{box-shadow:inset 0 0 0 2px var(--accent)}
+.vt tr.me th{background:#fff4e5}
+.vt .vnote{font-size:11px}
+
+#print{display:none}
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  html,body{background:#fff}
+  #app,#toast{display:none!important}
+  #print{display:block;font-size:10pt}
+  #print h1{font-size:13pt;margin:0 0 6px}
+  #print h1 small{font-size:10pt;font-weight:400;margin-left:8px}
+  #print table.vt{width:100%;font-size:9pt}
+  #print .vt th,#print .vt td{border:1px solid #888}
+  #print .vt td.off,#print .vt thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+@media (max-width:700px){
+  .top{padding:8px 10px;gap:8px}
+  .topR{margin-left:0}
+  main{padding:10px 8px 20px}
+  .grid td{min-width:132px}
+  .grid th.nm{min-width:96px}
+  .addrow input{width:100%}
+  .addrow label{flex:1 1 100%}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="center"><div class="spin"></div><p>読み込み中…</p></div></div>
+<div id="print"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript>このページを使うには JavaScript を有効にしてください。</noscript>
+
+<script type="module">
+/* =====================================================================
+   クラウド（Firebase）の設定
+   SETUP.md の手順で取得した firebaseConfig をここに貼り付ける。
+   null のままだと「お試しモード」（この端末のブラウザだけに保存）で動く。
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyDTaklFulRi_6z257xeTBPFrWIJk7OCRVQ',
+  authDomain: 'lotus-assign.firebaseapp.com',
+  projectId: 'lotus-assign',
+  storageBucket: 'lotus-assign.firebasestorage.app',
+  messagingSenderId: '837112725741',
+  appId: '1:837112725741:web:baa918c5a4694143318ce4',
+};
+const FIREBASE_VERSION = '10.12.2';
+// 使う会社のメールのドメイン。この会社の Google アカウントだけが最初の登録をできる
+// （firestore.rules の companyDomain() と同じにする）
+const COMPANY_DOMAIN = 'p-lotus.com';
+
+const app = document.getElementById('app');
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const R = (base, kana) => `<ruby>${base}<rt>${kana}</rt></ruby>`;
+const clone = o => JSON.parse(JSON.stringify(o ?? null));
+const newId = prefix => prefix + Math.random().toString(36).slice(2, 10);
+const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* 保存できない端末では覚えないだけ */ } }
+
+/* ---------- 日付（ローカル時刻で扱う。toISOString は UTC になるので使わない） ---------- */
+const pad = n => String(n).padStart(2, '0');
+const ds = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const pd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const mondayOf = d => addDays(d, -((d.getDay() + 6) % 7));
+const todayStr = () => ds(new Date());
+const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
+const DOW = ['日', '月', '火', '水', '木', '金', '土'];
+const DOW_KANA = ['にち', 'げつ', 'か', 'すい', 'もく', 'きん', 'ど'];
+
+/* ---------- 祝日（2007年以降の祝日法。振替休日・国民の休日を含む） ---------- */
+const holidayCache = {};
+function nthMonday(y, m, n) { const w = new Date(y, m - 1, 1).getDay(); return ((8 - w) % 7) + 1 + (n - 1) * 7; }
+function holidaysOf(y) {
+  if (holidayCache[y]) return holidayCache[y];
+  const h = {};
+  const add = (m, d, name) => { h[`${y}-${pad(m)}-${pad(d)}`] = name; };
+  const shun = Math.floor(20.8431 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+  const shu = Math.floor(23.2488 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+  add(1, 1, '元日'); add(1, nthMonday(y, 1, 2), '成人の日'); add(2, 11, '建国記念の日'); add(2, 23, '天皇誕生日');
+  add(3, shun, '春分の日'); add(4, 29, '昭和の日'); add(5, 3, '憲法記念日'); add(5, 4, 'みどりの日'); add(5, 5, 'こどもの日');
+  add(7, nthMonday(y, 7, 3), '海の日'); add(8, 11, '山の日'); add(9, nthMonday(y, 9, 3), '敬老の日'); add(9, shu, '秋分の日');
+  add(10, nthMonday(y, 10, 2), 'スポーツの日'); add(11, 3, '文化の日'); add(11, 23, '勤労感謝の日');
+  // 国民の休日：祝日にはさまれた平日
+  for (const k of Object.keys(h)) {
+    const mid = addDays(pd(k), 1);
+    if (!h[ds(mid)] && h[ds(addDays(pd(k), 2))] && mid.getDay() !== 0) h[ds(mid)] = '国民の休日';
+  }
+  // 振替休日：日曜の祝日の後の最初の平日
+  for (const k of Object.keys(h).sort()) {
+    if (pd(k).getDay() !== 0) continue;
+    let n = addDays(pd(k), 1);
+    while (h[ds(n)]) n = addDays(n, 1);
+    h[ds(n)] = '振替休日';
+  }
+  return (holidayCache[y] = h);
+}
+const holidayName = k => holidaysOf(+k.slice(0, 4))[k] || '';
+const isRestDay = d => d.getDay() === 0 || !!holidayName(ds(d));
+const dayCls = d => (isRestDay(d) ? 'sun' : d.getDay() === 6 ? 'sat' : '');
+
+/* ---------- 状態 ---------- */
+const KINDS = [['jisshu', '技能実習', '実'], ['tokutei', '特定技能', '特'], ['other', 'その他', '他']];
+const KIND_SHORT = Object.fromEntries(KINDS.map(k => [k[0], k[2]]));
+const TABS = [['table', '予定表'], ['people', '人の登録'], ['sites', '現場の登録'], ['settings', '設定']];
+
+const S = {
+  mode: 'demo',          // demo＝この端末だけ / cloud＝Firebase
+  role: 'edit',          // edit＝事務所 / view＝実習生（見るだけ）
+  screen: 'loading',     // loading / login / create / error / app
+  cid: null, user: null, errMsg: '',
+  company: null, notFound: false,
+  weekStart: mondayOf(new Date()), week: { cells: {} },
+  tab: 'table', filter: 'all', search: '',
+  vtab: 'me', me: '',
+  editors: [],           // 編集できる人のメールアドレス（編集画面のときだけ読む）
+  editorsLoaded: false,  // 一覧が届く前に追加・削除すると、空の一覧を元にしてしまう
+  unsubC: null, unsubW: null, unsubE: null, pending: false,
+};
+let store = null;
+
+function weekDays() { return Array.from({ length: 7 }, (_, i) => addDays(S.weekStart, i)); }
+const isThisWeek = () => ds(S.weekStart) === ds(mondayOf(new Date()));
+function sortList(map, keep) {
+  return Object.entries(map || {}).map(([id, v]) => ({ id, ...v })).filter(keep)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name).localeCompare(String(b.name), 'ja'));
+}
+const sortedPeople = withRetired => sortList(S.company?.people, p => withRetired || !p.retired);
+const sortedSites = withDone => sortList(S.company?.sites, s => withDone || !s.done);
+function visiblePeople() {
+  const q = S.search.trim().toLowerCase();
+  return sortedPeople(false).filter(p =>
+    (S.filter === 'all' || p.kind === S.filter) &&
+    (!q || String(p.name).toLowerCase().includes(q) || String(p.kana || '').toLowerCase().includes(q)));
+}
+function nextOrder(coll) { return Math.max(0, ...Object.values(S.company?.[coll] || {}).map(x => x.order || 0)) + 1; }
+const cellOf = (pid, k) => S.week.cells?.[pid]?.[k] || null;
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function errMsg(e) {
+  const c = String(e?.code || '');
+  if (c.includes('permission-denied')) return '権限がありません。URLかログインを確かめてください。';
+  if (c.includes('unavailable')) return '通信できません。電波の良い所でもう一度開いてください。';
+  return e?.message || String(e);
+}
+function authMsg(e) {
+  const c = String(e?.code || '');
+  if (/popup-closed-by-user|cancelled-popup-request/.test(c)) return '';
+  if (c.includes('popup-blocked')) return 'ログイン用の小さな画面がブロックされました。このページのポップアップを許可してから、もう一度押してください。';
+  if (c.includes('unauthorized-domain')) return 'このURLはログインに使えるように設定されていません（Firebase の承認済みドメインを確かめてください）。';
+  if (c.includes('operation-not-allowed')) return 'Google ログインが有効になっていません（Firebase の設定を確かめてください）。';
+  if (c.includes('network')) return '通信できません。';
+  return errMsg(e);
+}
+const normEmail = s => String(s || '').trim().toLowerCase();
+// 先頭に ' は来ない（Outlook の「'addr'」形式で ' ごと取り込まないため）。o'brien@ のように途中なら可
+const EMAIL_PART = /[a-z0-9._%+-][a-z0-9._%+'-]*@[a-z0-9-]+(?:\.[a-z0-9-]+)+/g;
+const isCompanyEmail = e => normEmail(e).endsWith('@' + COMPANY_DOMAIN);
+// 改行・カンマ・空白で区切ったメールアドレスを読み取る（小文字にそろえ、重複を除く）。
+// Outlook の宛先「田中 太郎 <tanaka@…>」をそのまま貼っても、名前は読み飛ばしてアドレスだけ取る。
+// ルールは完全一致で比べるので、囲み・句読点以外が混じったものは登録しない（bad に入れる）
+function parseEmails(text) {
+  const emails = [], bad = [];
+  for (const raw of String(text || '').split(/[\s,、;；]+/)) {
+    if (!raw.includes('@') && !raw.includes('＠')) continue;
+    const low = normEmail(raw);
+    const found = low.match(EMAIL_PART);
+    const rest = found?.length === 1 ? low.replace(found[0], '').replace(/^mailto:/, '') : '';
+    if (!found || found.length !== 1 || /[^<>()"'「」『』＜＞（）.。]/.test(rest)) { bad.push(raw); continue; }
+    if (!emails.includes(found[0])) emails.push(found[0]);
+  }
+  return { emails, bad };
+}
+// 確かめの画面。ブラウザ標準の confirm() は出せない環境（アプリ内のブラウザ等）があるので、画面の中に出す。
+// 結果は Promise<boolean>（「キャンセル」・外側を押す・Esc は false）
+function ask(message, okLabel = 'OK') {
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal';
+    wrap.innerHTML = '<div class="modalBox" role="dialog" aria-modal="true"><p class="modalMsg"></p><div class="btns"><button class="btn" data-k="no">キャンセル</button><button class="btn primary" data-k="yes"></button></div></div>';
+    wrap.querySelector('.modalMsg').textContent = message;
+    wrap.querySelector('[data-k=yes]').textContent = okLabel;
+    const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); done(false); } };
+    const done = v => { wrap.remove(); document.removeEventListener('keydown', onKey, true); resolve(v); };
+    wrap.addEventListener('click', e => {
+      const k = e.target.closest('[data-k]')?.dataset.k;
+      if (k) done(k === 'yes'); else if (e.target === wrap) done(false);
+    });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(wrap);
+    wrap.querySelector('[data-k=yes]').focus();
+  });
+}
+// 会社のドメイン以外のアドレスが入っていたら確かめる（打ち間違いに気づくため）
+async function confirmOutside(emails) {
+  const out = emails.filter(e => !isCompanyEmail(e));
+  return !out.length || await ask(`次のアドレスは @${COMPANY_DOMAIN} ではありません。このまま登録しますか？\n\n${out.join('\n')}`, '登録する');
+}
+
+/* =====================================================================
+   保存先：お試しモード（localStorage）
+   ===================================================================== */
+function deepMerge(t, s) {
+  for (const [k, v] of Object.entries(s)) {
+    if (isObj(v) && isObj(t[k])) deepMerge(t[k], v);
+    else t[k] = clone(v);
+  }
+  return t;
+}
+function seedDemo() {
+  const people = {}, sites = {};
+  [['グエン・ヴァン・ナム', '', 'jisshu'], ['チャン・ティ・ラン', '', 'jisshu'], ['レ・ミン・トゥアン', '', 'jisshu'],
+   ['ファム・クォック・フイ', '', 'jisshu'], ['ブイ・ドゥック・アイン', '', 'tokutei'], ['山田 太郎', 'やまだ たろう', 'other']]
+    .forEach(([name, kana, kind], i) => { people['p_demo' + i] = { name, kana, kind, order: i + 1, retired: false }; });
+  [['休み', 'やすみ', 'off'], ['研修', 'けんしゅう', 'off'], ['柏市 新築外構工事', 'かしわし しんちく がいこう こうじ', 'site'],
+   ['船橋市 宅地造成工事', 'ふなばしし たくち ぞうせい こうじ', 'site'], ['千葉市 擁壁工事', 'ちばし ようへき こうじ', 'site'],
+   ['資材置場', 'しざい おきば', 'site']]
+    .forEach(([name, kana, kind], i) => { sites['s_demo' + i] = { name, kana, kind, order: i + 1, done: false }; });
+  const mon = mondayOf(new Date()), cells = {};
+  [[2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 0], [4, 4, 4, 4, 4, 4], [1, 2, 2, 2, 2, 2], [5, 4, 4, 4, 4, 0], [2, 2, 3, 3, 3, '']]
+    .forEach((row, i) => {
+      const pc = cells['p_demo' + i] = {};
+      row.forEach((si, j) => { if (si !== '') pc[ds(addDays(mon, j))] = { site: 's_demo' + si, note: '' }; });
+    });
+  cells.p_demo0[ds(mon)].note = '7:00 事務所集合';
+  return { company: { name: 'お試し株式会社', people, sites }, weeks: { [ds(mon)]: { cells } }, editors: [] };
+}
+function makeDemoStore() {
+  const KEY = 'jsched_demo_v1';
+  const read = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } };
+  let data = read();
+  if (!data) { data = seedDemo(); write(); }
+  data.editors ||= [];
+  const subsC = new Set(), subsW = new Map(), subsE = new Set();
+  function write() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { toast('この端末に保存できませんでした'); } }
+  function emit() {
+    subsC.forEach(cb => cb(clone(data.company)));
+    for (const [m, set] of subsW) set.forEach(cb => cb(clone(data.weeks[m] || { cells: {} })));
+    subsE.forEach(cb => cb(clone(data.editors)));
+  }
+  // 同じパソコンの別タブ（実習生の画面など）にも反映する
+  window.addEventListener('storage', e => { if (e.key === KEY) { data = read() || seedDemo(); data.editors ||= []; emit(); } });
+  return {
+    onCompany(cb) { subsC.add(cb); cb(clone(data.company)); return () => subsC.delete(cb); },
+    onWeek(m, cb) {
+      if (!subsW.has(m)) subsW.set(m, new Set());
+      subsW.get(m).add(cb); cb(clone(data.weeks[m] || { cells: {} }));
+      return () => subsW.get(m)?.delete(cb);
+    },
+    async getWeek(m) { return clone(data.weeks[m] || { cells: {} }); },
+    async setCells(m, cells) { deepMerge((data.weeks[m] ||= { cells: {} }).cells, cells); write(); emit(); },
+    async patch(obj) { deepMerge(data.company, obj); write(); emit(); },
+    async removeField(path) {
+      let o = data.company; for (const k of path.slice(0, -1)) o = o?.[k];
+      if (o) delete o[path[path.length - 1]];
+      write(); emit();
+    },
+    onEditors(cb) { subsE.add(cb); cb(clone(data.editors)); return () => subsE.delete(cb); },
+    async addEditors(list) { for (const e of list) if (!data.editors.includes(e)) data.editors.push(e); write(); emit(); return true; },
+    async removeEditor(email) { data.editors = data.editors.filter(x => x !== email); write(); emit(); return true; },
+    reset() { data = seedDemo(); write(); emit(); },
+  };
+}
+
+/* =====================================================================
+   保存先：クラウド（Firebase Authentication〔Google〕＋ Cloud Firestore）
+   companies/{会社ID}            … 会社名・人・現場（実習生もURLで読める）
+   companies/{会社ID}/weeks/{月曜} … その週の配置 cells[人ID][日付] = {site, note}
+   acl/{会社ID}                  … 編集できる人のメールアドレス {editors:[…]}（編集者だけ読める）
+   config/lock                   … 予定表を作った印。1つ作ったら以後は誰も作れない
+   1マスずつ merge で書くので、2台で別のマスを同時に触っても消し合わない。
+   誰が書けるかは firestore.rules が決める（画面の作りに頼らない）。
+   ===================================================================== */
+const DEFAULT_SITES = {
+  s_yasumi: { name: '休み', kana: 'やすみ', kind: 'off', order: 1, done: false },
+  s_kenshu: { name: '研修', kana: 'けんしゅう', kind: 'off', order: 2, done: false },
+};
+const Cloud = {
+  async init(cfg) {
+    const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/`;
+    const [appM, authM, fsM] = await Promise.all([
+      import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+    this.A = authM; this.F = fsM;
+    const fb = appM.initializeApp(cfg);
+    this.auth = authM.getAuth(fb);
+    this.db = fsM.getFirestore(fb);
+  },
+  onAuth(cb) { return this.A.onAuthStateChanged(this.auth, cb); },
+  loginGoogle() {
+    const p = new this.A.GoogleAuthProvider();
+    p.setCustomParameters({ prompt: 'select_account' });
+    return this.A.signInWithPopup(this.auth, p);
+  },
+  logout() { return this.A.signOut(this.auth); },
+  // 自分のメールアドレスが編集者に入っている会社を探す
+  // 通信できないときは例外（unavailable）を投げる。空の結果を「編集者ではない」と取り違えないため
+  async findMyCompany(email) {
+    const F = this.F, db = this.db;
+    const saved = lsGet('jsched_cid');
+    if (saved) {
+      try {
+        const s = await F.getDoc(F.doc(db, 'acl', saved));
+        if (s.exists() && (s.data().editors || []).includes(email)) return saved;
+      } catch (e) {
+        if (String(e?.code || '').includes('unavailable')) throw e;
+        /* 外された・読めない。下の検索に任せる */
+      }
+    }
+    const snap = await F.getDocsFromServer(F.query(F.collection(db, 'acl'), F.where('editors', 'array-contains', email), F.limit(1)));
+    return snap.empty ? null : snap.docs[0].id;
+  },
+  // 予定表がまだ無いか（最初の登録ができる人だけが、作る前にだけ読める。それ以外は permission-denied）
+  async isLocked() {
+    const s = await this.F.getDoc(this.F.doc(this.db, 'config', 'lock'));
+    return s.exists();
+  },
+  // 会社・編集者一覧・作った印を1回で書く（ルールが3つそろっていることを確かめる）
+  async createCompany(name, editors) {
+    const F = this.F, db = this.db;
+    const cref = F.doc(F.collection(db, 'companies'));
+    const b = F.writeBatch(db);
+    b.set(cref, { name, people: {}, sites: DEFAULT_SITES, createdAt: F.serverTimestamp() });
+    b.set(F.doc(db, 'acl', cref.id), { editors });
+    b.set(F.doc(db, 'config', 'lock'), { cid: cref.id, at: F.serverTimestamp() });
+    await b.commit();
+    return cref.id;
+  },
+  storeFor(cid) {
+    const F = this.F, db = this.db;
+    const cref = F.doc(db, 'companies', cid);
+    const wref = m => F.doc(db, 'companies', cid, 'weeks', m);
+    const fail = e => { console.error(e); toast('保存できませんでした：' + errMsg(e)); };
+    // 電波が無いと「端末に何も無い」結果が先に来る。それを「無い」と見なすと
+    // 「見つかりません」「未定」と誤って出るので、サーバーの返事を待つ。
+    // 返事が「やはり無い」だと変わるのは fromCache だけなので、includeMetadataChanges で受け取る
+    const notYet = s => !s.exists() && s.metadata.fromCache;
+    const META = { includeMetadataChanges: true };
+    return {
+      onCompany(cb, onErr) { return F.onSnapshot(cref, META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : null); }, e => { console.error(e); onErr?.(e); }); },
+      onWeek(m, cb) { return F.onSnapshot(wref(m), META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : { cells: {} }); }, e => { console.error(e); toast('読み込めませんでした：' + errMsg(e)); }); },
+      async getWeek(m) { const s = await F.getDoc(wref(m)); return s.exists() ? s.data() : { cells: {} }; },
+      setCells(m, cells) { return F.setDoc(wref(m), { cells }, { merge: true }).catch(fail); },
+      patch(obj) { return F.setDoc(cref, obj, { merge: true }).catch(fail); },
+      removeField(path) { return F.updateDoc(cref, new F.FieldPath(...path), F.deleteField()).catch(fail); },
+      onEditors(cb, onErr) { return F.onSnapshot(F.doc(db, 'acl', cid), s => { if (s.exists()) cb(s.data().editors || []); }, e => { console.error(e); onErr?.(e); }); },
+      // 一覧を丸ごと書かず、足す・抜くだけを送る（2人が同時に触っても、片方の変更が消えない）
+      addEditors(list) { return F.updateDoc(F.doc(db, 'acl', cid), { editors: F.arrayUnion(...list) }).then(() => true, e => { fail(e); return false; }); },
+      removeEditor(email) { return F.updateDoc(F.doc(db, 'acl', cid), { editors: F.arrayRemove(email) }).then(() => true, e => { fail(e); return false; }); },
+    };
+  },
+};
+
+/* =====================================================================
+   データの購読と再描画
+   ===================================================================== */
+function stopData() {
+  S.unsubC?.(); S.unsubW?.(); S.unsubE?.(); S.unsubC = S.unsubW = S.unsubE = null;
+  clearTimeout(S.slowTimer); clearTimeout(S.weekSlowTimer);
+}
+function startData() {
+  stopData();
+  S.company = null; S.notFound = false; S.screen = 'app'; S.slowC = false;
+  S.me = lsGet('jsched_me_' + S.cid) || '';
+  render();
+  // 10秒たっても会社のデータが来なければ、電波が悪いことを知らせる
+  // 画面全体は作り直さない（入力中の欄やログイン画面を壊さないため）。refresh は入力中を避ける
+  S.slowTimer = setTimeout(() => { if (!S.company && !S.notFound) { S.slowC = true; refresh(); } }, 10000);
+  S.unsubC = store.onCompany(c => {
+    if (c) { c.people ||= {}; c.sites ||= {}; }
+    S.company = c; S.notFound = !c;
+    refresh();
+  }, err => { S.screen = 'error'; S.errMsg = errMsg(err); render(); });
+  subscribeWeek();
+  S.editors = []; S.editorsLoaded = false; S.edAdding = false;
+  if (S.role === 'edit') {
+    S.unsubE = store.onEditors(list => {
+      S.editors = list; S.editorsLoaded = true;
+      if (S.tab === 'settings') refresh();
+    }, err => {
+      // 編集できる人から外されると一覧が読めなくなる。入り直して「登録されていません」を出す
+      if (String(err?.code || '').includes('permission-denied') && S.mode === 'cloud') afterAuth(Cloud.auth.currentUser);
+    });
+  }
+}
+function subscribeWeek() {
+  S.unsubW?.();
+  clearTimeout(S.weekSlowTimer);
+  S.week = { cells: {} }; S.weekLoaded = false; S.slowW = false;
+  const m = ds(S.weekStart);
+  // 週のデータが10秒来なくても「時間がかかっています」を出す（会社とは別に数える）
+  S.weekSlowTimer = setTimeout(() => { if (!S.weekLoaded && m === ds(S.weekStart)) { S.slowW = true; refresh(); } }, 10000);
+  S.unsubW = store.onWeek(m, w => {
+    if (m !== ds(S.weekStart)) return;
+    S.week = w || {}; S.week.cells ||= {};
+    S.weekLoaded = true; S.slowW = false;
+    refresh();
+  });
+}
+function loadingHtml() {
+  const slow = (S.slowC && !S.company && !S.notFound) || (S.slowW && !S.weekLoaded);
+  return slow
+    ? `<div class="center"><p>読み込みに時間がかかっています。<br>電波の良い所で、もう一度開いてください。</p><button class="btn" data-act="reload">再読み込み</button></div>`
+    : '<div class="center"><div class="spin"></div><p>読み込み中…</p></div>';
+}
+function goWeek(d) {
+  S.weekStart = d ? addDays(S.weekStart, d) : mondayOf(new Date());
+  subscribeWeek();
+  render();
+}
+
+// 入力中の欄があるところは書き換えない（打っている文字が消えるため）。離れたら描き直す
+function editingIn(el) {
+  const a = document.activeElement;
+  return !!(a && el && el.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
+}
+document.addEventListener('focusout', () => {
+  if (!S.pending) return;
+  setTimeout(() => { if (S.pending && !editingIn($('#main'))) { S.pending = false; refresh(); } }, 0);
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.screen === 'app') refresh(); });
+
+// データが届いたときに描き直す領域。入力欄やボタンのある所は入れない
+// （描き直すと打っている文字が消え、押しかけたボタンも別物になってクリックが効かない）
+const REGIONS = { table: ['grid', () => gridTable()], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], settings: ['edlist', () => editorItems()] };
+function refresh() {
+  if (S.screen !== 'app') return;
+  if (S.role === 'view' || !$('#main')) return render();
+  const co = $('#coName'); if (co) co.textContent = S.company?.name || '';
+  if (S.tab === 'settings') {
+    const ci = $('#coNameIn'); if (ci && document.activeElement !== ci) ci.value = S.company?.name || '';
+    const ab = $('#edAddBtn'); if (ab) ab.disabled = !S.editorsLoaded || S.edAdding;
+  }
+  const [id, fn] = REGIONS[S.tab];
+  const el = document.getElementById(id);
+  if (!el) return renderMain();
+  if (editingIn(el)) { S.pending = true; return; }
+  el.innerHTML = fn();
+}
+function render() {
+  if (S.screen === 'loading') { app.innerHTML = '<div class="center"><div class="spin"></div><p>読み込み中…</p></div>'; return; }
+  if (S.screen === 'error') {
+    const out = S.mode === 'cloud' && Cloud.auth?.currentUser ? '<button class="btn" data-act="logoutNow">ログアウト</button>' : '';
+    app.innerHTML = `<div class="center"><p>${esc(S.errMsg)}</p><div class="btns"><button class="btn" data-act="reload">再読み込み</button>${out}</div></div>`; return;
+  }
+  if (S.screen === 'login') return renderLogin();
+  if (S.screen === 'create') return renderCreate();
+  if (S.screen === 'noaccess') return renderNoAccess();
+  if (S.role === 'view') renderViewer(); else renderEditor();
+}
+
+/* =====================================================================
+   編集画面（事務所）
+   ===================================================================== */
+function renderEditor() {
+  app.innerHTML = `
+  <header class="top">
+    <div class="brand"><span class="logo">週間配置表</span><span class="co" id="coName">${esc(S.company?.name || '')}</span>${S.mode === 'demo' ? '<span class="demo">お試しモード：この端末だけに保存</span>' : ''}</div>
+    <nav class="tabs">${TABS.map(([k, l]) => `<button data-act="tab" data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${l}</button>`).join('')}</nav>
+    <div class="topR">${S.mode === 'cloud' ? `<span class="who">${esc(S.user?.email || '')}</span>` : ''}<button class="btn" data-act="openView">実習生の画面 ↗</button>${S.mode === 'cloud' ? '<button class="btn ghost" data-act="logout">ログアウト</button>' : ''}</div>
+  </header>
+  <main id="main"></main>`;
+  renderMain();
+}
+function renderMain() {
+  const m = $('#main'); if (!m) return;
+  if (S.tab === 'table') {
+    m.innerHTML = tableBar() + `<div class="gridwrap" id="grid">${gridTable()}</div>
+      <div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`;
+  } else if (S.tab === 'people') m.innerHTML = peoplePanel();
+  else if (S.tab === 'sites') m.innerHTML = sitesPanel();
+  else { m.innerHTML = `<section class="panel"><h2>設定</h2><div id="sset" class="set">${settingsBody()}</div></section>`; drawQR(); }
+}
+function tableBar() {
+  const days = weekDays();
+  return `<div class="bar">
+    <div class="seg"><button data-act="week" data-d="-7">◀ 前週</button><button data-act="week" data-d="0">今週</button><button data-act="week" data-d="7">次週 ▶</button></div>
+    <div class="wk">${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</div>
+    <div class="seg dark">${[['all', '全員'], ...KINDS].map(([k, l]) => `<button data-act="filter" data-k="${k}" class="${S.filter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <input id="search" type="search" placeholder="名前で検索…" value="${esc(S.search)}" autocomplete="off">
+    <span class="sp"></span>
+    <button class="btn" data-act="copyPrev">前の週をコピー</button>
+    <button class="btn" data-act="print">印刷</button>
+  </div>`;
+}
+function siteOptionsBase() {
+  const list = sortedSites(false);
+  const o = s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
+  const off = list.filter(s => s.kind === 'off'), on = list.filter(s => s.kind !== 'off');
+  return `<option value="">（未配置）</option>`
+    + (off.length ? `<optgroup label="休み・研修など">${off.map(o).join('')}</optgroup>` : '')
+    + (on.length ? `<optgroup label="現場">${on.map(o).join('')}</optgroup>` : '');
+}
+function cellOptions(base, cur) {
+  if (!cur) return base;
+  const s = S.company.sites[cur];
+  if (s && !s.done) return base.replace(`value="${esc(cur)}">`, `value="${esc(cur)}" selected>`);
+  // 完了・削除した現場でも、入っている予定は消さずにそのまま見せる
+  return base + `<option value="${esc(cur)}" selected>${s ? '（完了）' + esc(s.name) : '（削除された現場）'}</option>`;
+}
+function gridTable() {
+  if (!S.company || !S.weekLoaded) return loadingHtml();
+  const days = weekDays(), today = todayStr();
+  const head = `<thead><tr><th class="nm">氏名</th>${days.map(d => {
+    const k = ds(d), h = holidayName(k);
+    return `<th class="${dayCls(d)}${k === today ? ' tdy' : ''}">${DOW[d.getDay()]} ${md(d)}${k === today ? '<span class="today">今日</span>' : ''}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
+  }).join('')}</tr></thead>`;
+  const people = visiblePeople();
+  if (!people.length) {
+    const msg = sortedPeople(false).length ? '該当する人がいません' : '「人の登録」タブから実習生を登録してください';
+    return `<table class="grid">${head}</table><div class="empty">${msg}</div>`;
+  }
+  const base = siteOptionsBase();
+  const rows = people.map(p => `<tr>
+    <th class="nm"><div class="nmrow"><div class="nmIn">${p.kana ? `<span class="kana">${esc(p.kana)}</span>` : ''}<span class="name">${esc(p.name)}</span></div><span class="kind k-${esc(p.kind)}">${KIND_SHORT[p.kind] || ''}</span><button class="fill" data-act="fill" data-pid="${esc(p.id)}" title="空いている日を同じ現場で埋める">⇉</button></div></th>
+    ${days.map(d => {
+      const k = ds(d), c = cellOf(p.id, k), s = c?.site ? S.company.sites[c.site] : null;
+      const cls = c?.site ? (!s ? 'gone' : s.kind === 'off' ? 'off' : '') : (isRestDay(d) ? 'rest' : 'unset');
+      const note = c?.note
+        ? `<div class="note has" data-act="note" data-pid="${esc(p.id)}" data-date="${k}">${esc(c.note)}</div>`
+        : `<div class="note" data-act="note" data-pid="${esc(p.id)}" data-date="${k}">＋メモ</div>`;
+      return `<td class="${cls}"><select data-act="site" data-pid="${esc(p.id)}" data-date="${k}" aria-label="${esc(p.name)} ${md(d)}">${cellOptions(base, c?.site)}</select>${note}</td>`;
+    }).join('')}
+  </tr>`).join('');
+  return `<table class="grid">${head}<tbody>${rows}</tbody></table>`;
+}
+function setCell(pid, date, patch) {
+  return store.setCells(ds(mondayOf(pd(date))), { [pid]: { [date]: patch } });
+}
+function startNote(el) {
+  const { pid, date } = el.dataset;
+  const cur = cellOf(pid, date)?.note || '';
+  const inp = document.createElement('input');
+  inp.className = 'noteIn'; inp.value = cur; inp.maxLength = 200; inp.placeholder = 'メモ（Enterで確定）';
+  el.replaceWith(inp); inp.focus();
+  let done = false;
+  const finish = save => {
+    if (done) return; done = true;
+    const v = inp.value.trim();
+    inp.blur();
+    if (save && v !== cur) setCell(pid, date, { note: v }); else refresh();
+  };
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') finish(false);
+  });
+  inp.addEventListener('blur', () => finish(true));
+}
+function fillRow(pid) {
+  const p = S.company.people[pid]; if (!p) return;
+  const days = weekDays();
+  const site = days.map(d => cellOf(pid, ds(d))?.site).find(id => id && S.company.sites[id] && S.company.sites[id].kind !== 'off' && !S.company.sites[id].done);
+  if (!site) { toast(`先に ${p.name} さんのどこか1日に現場を選んでください`); return; }
+  const out = {}; let n = 0;
+  for (const d of days) {
+    const k = ds(d);
+    if (isRestDay(d) || cellOf(pid, k)?.site) continue;
+    out[k] = { site }; n++;
+  }
+  if (!n) { toast('空いている日がありません（日曜・祝日は埋めません）'); return; }
+  store.setCells(ds(S.weekStart), { [pid]: out });
+  toast(`${p.name} さんの空いている ${n} 日を「${S.company.sites[site].name}」にしました`);
+}
+async function copyPrevWeek() {
+  const prevMon = addDays(S.weekStart, -7);
+  let prev;
+  try { prev = await store.getWeek(ds(prevMon)); } catch (e) { toast('前の週を読み込めませんでした：' + errMsg(e)); return; }
+  const out = {}; let n = 0, over = 0;
+  const skipped = new Set();
+  for (const [pid, days] of Object.entries(prev?.cells || {})) {
+    const p = S.company.people[pid];
+    if (!p || p.retired) continue;
+    for (const [d, c] of Object.entries(days || {})) {
+      if (!c?.site) continue;
+      const nd = ds(addDays(pd(d), 7));
+      // 日曜・祝日には書き込まない（休みの日に現場が出ると実習生が出勤してしまうため）
+      if (isRestDay(pd(nd))) { skipped.add(nd); continue; }
+      const cur = cellOf(pid, nd);
+      if (cur?.site === c.site) continue;
+      if (cur?.site) over++;
+      (out[pid] ||= {})[nd] = { site: c.site };
+      n++;
+    }
+  }
+  if (!n) { toast('前の週からコピーする予定はありません'); return; }
+  const restNote = [...skipped].sort().map(k => `${md(pd(k))}（${holidayName(k) || '日曜'}）`).join('、');
+  const msg = `前の週（${md(prevMon)}〜）の現場を、この週にコピーします。\n\n${n} マスを書き込みます。` +
+    (over ? `\nそのうち ${over} マスは今入っている現場を上書きします。` : '') +
+    '\n前の週で空いていたマスは、この週の内容をそのまま残します。' +
+    '\nメモはコピーしません（この週のメモはそのまま残ります）。' +
+    (restNote ? `\n${restNote} は休みの日なので空けておきます。` : '');
+  if (!(await ask(msg, 'コピーする'))) return;
+  await store.setCells(ds(S.weekStart), out);
+  toast(`${n} マスをコピーしました`);
+}
+function allTable(people, days, print) {
+  if (!people.length) return `<div class="empty">${print ? '表示する人がいません' : `まだ だれも いません`}</div>`;
+  const today = todayStr();
+  const furiOf = c => {
+    const s = c?.site ? S.company.sites[c.site] : null;
+    return s ? furi(s) : '';
+  };
+  return `<table class="vt"><thead><tr><th>${print ? '氏名' : R('名前', 'なまえ')}</th>${days.map(d => {
+    const h = holidayName(ds(d));
+    return `<th class="${dayCls(d)}">${md(d)}<br>${print ? DOW[d.getDay()] : R(DOW[d.getDay()], DOW_KANA[d.getDay()])}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
+  }).join('')}</tr></thead><tbody>${people.map(p => `<tr class="${!print && p.id === S.me ? 'me' : ''}"><th>${p.kana ? `<span class="fk">${esc(p.kana)}</span>` : ''}${esc(p.name)}</th>${days.map(d => {
+    const k = ds(d), c = cellOf(p.id, k), s = c?.site ? S.company.sites[c.site] : null;
+    return `<td class="${s?.kind === 'off' ? 'off' : ''}${!print && k === today ? ' tdy' : ''}">${furiOf(c)}${c?.note ? `<div class="vnote">${esc(c.note)}</div>` : ''}</td>`;
+  }).join('')}</tr>`).join('')}</tbody></table>`;
+}
+function furi(s) {
+  return `<span class="furi">${s.kana ? `<span class="fk">${esc(s.kana)}</span>` : ''}<span class="fb">${esc(s.name)}</span></span>`;
+}
+function printWeek() {
+  const days = weekDays();
+  $('#print').innerHTML = `<h1>${esc(S.company.name)}　週間配置表<small>${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</small></h1>${allTable(visiblePeople(), days, true)}`;
+  window.print();
+}
+
+/* ---- 人の登録 ---- */
+function peoplePanel() {
+  return `<section class="panel"><h2>人の登録</h2>
+    <form class="addrow" data-form="addPerson">
+      <label>名前<input name="nm" required maxlength="40" placeholder="例：グエン・ヴァン・ナム"></label>
+      <label>ふりがな（なくても可）<input name="kn" maxlength="60"></label>
+      <label>区分<select name="kd">${KINDS.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label>
+      <button class="btn primary">追加</button>
+    </form>
+    <div id="plist">${peopleList()}</div></section>`;
+}
+function peopleList() {
+  if (!S.company) return '<div class="empty">読み込み中…</div>';
+  const list = sortedPeople(true);
+  if (!list.length) return '<div class="empty">まだ登録されていません</div>';
+  return `<table class="list"><thead><tr><th>並び順</th><th>名前</th><th>ふりがな</th><th>区分</th><th>状態</th><th></th></tr></thead><tbody>${list.map((p, i) => `
+    <tr class="${p.retired ? 'retired' : ''}">
+      <td class="ord"><button class="mini" data-act="move" data-coll="people" data-id="${esc(p.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="people" data-id="${esc(p.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
+      <td><input data-coll="people" data-f="name" data-id="${esc(p.id)}" value="${esc(p.name)}" maxlength="40"></td>
+      <td><input data-coll="people" data-f="kana" data-id="${esc(p.id)}" value="${esc(p.kana || '')}" maxlength="60"></td>
+      <td><select data-coll="people" data-f="kind" data-id="${esc(p.id)}">${KINDS.map(k => `<option value="${k[0]}" ${p.kind === k[0] ? 'selected' : ''}>${k[1]}</option>`).join('')}</select></td>
+      <td><select data-coll="people" data-f="retired" data-id="${esc(p.id)}"><option value="">在籍</option><option value="1" ${p.retired ? 'selected' : ''}>帰国・退職</option></select></td>
+      <td><button class="mini danger" data-act="del" data-coll="people" data-id="${esc(p.id)}">削除</button></td>
+    </tr>`).join('')}</tbody></table>
+    <p class="hint">「帰国・退職」にすると予定表に出なくなります（これまでの予定は残ります）。「削除」は登録の間違いを消すときだけ使ってください。</p>`;
+}
+
+/* ---- 現場の登録 ---- */
+function sitesPanel() {
+  return `<section class="panel"><h2>現場の登録</h2>
+    <form class="addrow" data-form="addSite">
+      <label>現場名<input name="nm" required maxlength="60" placeholder="例：柏市 新築外構工事"></label>
+      <label>ふりがな（実習生の画面に出ます）<input name="kn" maxlength="80" placeholder="例：かしわし しんちく がいこう こうじ"></label>
+      <label>種類<select name="kd"><option value="site">現場</option><option value="off">休み・研修など</option></select></label>
+      <button class="btn primary">追加</button>
+    </form>
+    <div id="slist">${siteList()}</div></section>`;
+}
+function siteList() {
+  if (!S.company) return '<div class="empty">読み込み中…</div>';
+  const list = sortedSites(true);
+  if (!list.length) return '<div class="empty">まだ登録されていません</div>';
+  return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>種類</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
+    <tr class="${s.done ? 'retired' : ''}">
+      <td class="ord"><button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
+      <td><input data-coll="sites" data-f="name" data-id="${esc(s.id)}" value="${esc(s.name)}" maxlength="60"></td>
+      <td><input data-coll="sites" data-f="kana" data-id="${esc(s.id)}" value="${esc(s.kana || '')}" maxlength="80"></td>
+      <td><select data-coll="sites" data-f="kind" data-id="${esc(s.id)}"><option value="site">現場</option><option value="off" ${s.kind === 'off' ? 'selected' : ''}>休み・研修など</option></select></td>
+      <td><select data-coll="sites" data-f="done" data-id="${esc(s.id)}"><option value="">稼働中</option><option value="1" ${s.done ? 'selected' : ''}>完了</option></select></td>
+      <td><button class="mini danger" data-act="del" data-coll="sites" data-id="${esc(s.id)}">削除</button></td>
+    </tr>`).join('')}</tbody></table>
+    <p class="hint">終わった現場は「完了」にすると予定表の選択肢から消えます（これまでの予定は残ります）。</p>`;
+}
+function moveItem(coll, id, d) {
+  const list = coll === 'people' ? sortedPeople(true) : sortedSites(true);
+  const i = list.findIndex(x => x.id === id), j = i + d;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  const patch = {};
+  list.forEach((x, k) => { if (x.order !== k + 1) patch[x.id] = { order: k + 1 }; });
+  store.patch({ [coll]: patch });
+}
+async function deleteItem(coll, id) {
+  const x = S.company[coll]?.[id]; if (!x) return;
+  const msg = coll === 'people'
+    ? `「${x.name}」を削除しますか？\n\nこの人の予定は表示されなくなります。\n帰国・退職した人は、削除せずに「状態」を変えてください。`
+    : `「${x.name}」を削除しますか？\n\nこの現場が入っている予定は「削除された現場」と表示されます。\n終わった現場は、削除せずに「状態」を「完了」にしてください。`;
+  if (!(await ask(msg, '削除する'))) return;
+  store.removeField([coll, id]);
+}
+
+/* ---- 設定 ---- */
+function viewerUrl(preview) {
+  const base = location.origin + location.pathname;
+  if (S.mode === 'demo') return base + '?view=1';
+  return base + '?c=' + encodeURIComponent(S.cid) + (preview ? '&as=view' : '');
+}
+function settingsBody() {
+  return `<label class="row">会社名<input id="coNameIn" value="${esc(S.company?.name || '')}" maxlength="40"></label>
+    <h3>実習生に見せる画面</h3>
+    <p>このURLかQRコードを、実習生のスマホで開いてもらいます。見るだけの画面で、予定を書き換えることはできません。</p>
+    <div class="urlrow"><input readonly value="${esc(viewerUrl())}" aria-label="実習生用URL"><button class="btn" data-act="copyUrl">コピー</button><button class="btn" data-act="openView">開く ↗</button></div>
+    <div id="qr" class="qr"></div>
+    <p class="hint">${S.mode === 'cloud' ? 'URLを知っている人は誰でもこの予定表を見られます。社外の人には渡さないでください。' : 'お試しモードでは、このパソコンのこのブラウザでしか開けません。'}</p>
+    ${editorsSection()}
+    ${S.mode === 'demo'
+      ? `<h3>お試しモード</h3><p>データはこの端末のブラウザだけに保存されています。複数の端末で同じ予定表を共有するには、クラウド（Firebase）の設定が必要です。</p><button class="btn danger" data-act="demoReset">お試しデータを最初の状態に戻す</button>`
+      : `<h3>ログイン</h3><p>${esc(S.user?.email || '')} でログイン中</p><button class="btn" data-act="logout">ログアウト</button>`}`;
+}
+function editorsSection() {
+  return `<h3>編集できる人</h3>
+    <p>ここにあるメールアドレスの Google アカウントでログインした人だけが、予定表を書き換えられます。それ以外の人は、ログインしても何もできません。${S.mode === 'demo' ? '<br>（お試しモードでは制限はかかりません）' : ''}</p>
+    <ul class="eds" id="edlist">${editorItems()}</ul>
+    <form class="addrow" data-form="addEditors">
+      <label class="grow">追加するメールアドレス（何人かまとめて入れるときは改行かカンマで区切る。Outlook の宛先をそのまま貼ってもよい）<textarea name="em" rows="2" autocomplete="off"></textarea></label>
+      <button class="btn primary" id="edAddBtn" ${S.editorsLoaded && !S.edAdding ? '' : 'disabled'}>追加</button>
+    </form>`;
+}
+function editorItems() {
+  if (!S.editorsLoaded) return '<li class="none">読み込み中…</li>';
+  const me = normEmail(S.user?.email);
+  const list = S.editors || [];
+  if (!list.length) return '<li class="none">まだ登録されていません</li>';
+  return list.map(e => `<li><span class="em">${esc(e)}</span>${e === me
+    ? '<span class="you">あなた</span>'
+    : `<button class="mini danger" data-act="edDel" data-email="${esc(e)}">外す</button>`}</li>`).join('');
+}
+let qrLoader = null;
+function loadQR() {
+  return qrLoader ||= new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+    s.onload = res; s.onerror = () => { qrLoader = null; rej(new Error('qr')); };
+    document.head.appendChild(s);
+  });
+}
+async function drawQR() {
+  if (!$('#qr')) return;
+  try {
+    await loadQR();
+    const q = window.qrcode(0, 'M'); q.addData(viewerUrl()); q.make();
+    const box = $('#qr'); if (box) box.innerHTML = q.createSvgTag(5, 16);
+  } catch (e) {
+    const box = $('#qr'); if (box) box.textContent = 'QRコードを表示できませんでした（通信を確かめてください）';
+  }
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast('URLをコピーしました'); }
+  catch (e) {
+    // クリップボードが使えないときは欄の文字を選んでおき、Ctrl+C を案内する
+    const inp = $('.urlrow input'); if (inp) { inp.focus(); inp.select(); }
+    toast('URLを選びました。Ctrl＋C（スマホは「コピー」）でコピーしてください');
+  }
+}
+
+/* =====================================================================
+   実習生の画面（見るだけ・ふりがな付き）
+   ===================================================================== */
+function renderViewer() {
+  const c = S.company;
+  if (S.notFound) {
+    app.innerHTML = `<div class="v"><div class="empty">${R('予定表', 'よていひょう')}が ${R('見', 'み')}つかりません。<br>URLを たしかめてください。</div></div>`; return;
+  }
+  if (!c) { app.innerHTML = loadingHtml(); return; }
+  const days = weekDays(), people = sortedPeople(false);
+  if (S.me && !people.some(p => p.id === S.me)) S.me = '';
+  app.innerHTML = `<div class="v">
+    <header class="vtop"><div class="vco">${esc(c.name)}</div><h1>${R('週', 'しゅう')}の${R('予定', 'よてい')}</h1></header>
+    <div class="vnav">
+      <button data-act="week" data-d="-7">◀ ${R('前', 'まえ')}の${R('週', 'しゅう')}</button>
+      <button data-act="week" data-d="0" class="${isThisWeek() ? 'on' : ''}">${R('今週', 'こんしゅう')}</button>
+      <button data-act="week" data-d="7">${R('次', 'つぎ')}の${R('週', 'しゅう')} ▶</button>
+    </div>
+    <div class="vrange">${md(days[0])}（${R('月', 'げつ')}）〜 ${md(days[6])}（${R('日', 'にち')}）</div>
+    <div class="vtabs"><button data-act="vtab" data-v="me" class="${S.vtab === 'me' ? 'on' : ''}">${R('自分', 'じぶん')}</button><button data-act="vtab" data-v="all" class="${S.vtab === 'all' ? 'on' : ''}">みんな</button></div>
+    ${S.vtab === 'me' ? meView(people, days) : S.weekLoaded ? `<div class="vall">${allTable(people, days, false)}</div>` : loadingHtml()}
+    ${S.mode === 'demo' ? '<p class="vdemo">お試しモード</p>' : ''}
+    <footer class="vfoot">${S.mode === 'cloud' ? '<button class="link" data-act="adminLogin">事務所の方（ログイン）</button>' : ''}</footer>
+  </div>`;
+}
+function meView(people, days) {
+  const opts = people.map(p => `<option value="${esc(p.id)}" ${S.me === p.id ? 'selected' : ''}>${esc(p.name)}${p.kana ? `（${esc(p.kana)}）` : ''}</option>`).join('');
+  const pick = `<label class="vpick"><span>${R('名前', 'なまえ')}</span><select data-act="pickMe"><option value="">えらんでください</option>${opts}</select></label>`;
+  if (!S.me) return pick + `<p class="vhint">${R('自分', 'じぶん')}の ${R('名前', 'なまえ')}を えらぶと、${R('予定', 'よてい')}が でます。</p>`;
+  if (!S.weekLoaded) return pick + loadingHtml();
+  const today = todayStr();
+  return pick + `<div class="vdays">${days.map(d => {
+    const k = ds(d), c = cellOf(S.me, k), s = c?.site ? S.company.sites[c.site] : null, hol = holidayName(k);
+    const body = s ? furi(s) : `<span class="vmuted">${isRestDay(d) ? '―' : R('未定', 'みてい')}</span>`;
+    return `<div class="vday ${dayCls(d)}${k === today ? ' tdy' : ''}${s?.kind === 'off' ? ' off' : ''}${isRestDay(d) && !s ? ' rest' : ''}">
+      <div class="vd"><span class="md">${md(d)}</span><span class="dw">${R(DOW[d.getDay()], DOW_KANA[d.getDay()])}</span>${k === today ? `<span class="today">${R('今日', 'きょう')}</span>` : ''}${hol ? `<span class="holb">${R('祝日', 'しゅくじつ')}</span>` : ''}</div>
+      <div class="vs">${body}</div>
+      ${c?.note ? `<div class="vnote">${esc(c.note)}</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* =====================================================================
+   ログイン・会社登録（クラウド時のみ）
+   ===================================================================== */
+function renderLogin() {
+  app.innerHTML = `<div class="auth">
+    <h1>週間配置表</h1><p class="hint">事務所の方のログイン</p>
+    <div class="authBody">
+      <button class="btn primary gbtn" data-act="googleLogin">Google でログイン</button>
+      <div class="err" id="authErr"></div>
+      <p class="hint">会社の Google アカウント（@${esc(COMPANY_DOMAIN)}）でログインしてください。予定表を書き換えられるのは、登録されたメールアドレスの人だけです。</p>
+    </div>
+    <p class="hint">実習生の方は、会社から届いたURLかQRコードから開いてください（ログインはいりません）。</p>
+    ${S.cid && S.role === 'view' ? '<p><button class="link" data-act="backToView">予定表に戻る</button></p>' : ''}
+  </div>`;
+}
+function renderCreate() {
+  const me = normEmail(S.user?.email);
+  app.innerHTML = `<div class="auth wide">
+    <h1>週間配置表</h1>
+    <p>はじめに、会社名と、予定表を書き換えられる人のメールアドレスを登録してください。<b>この登録は最初の1回だけ</b>で、後から「設定」で変えられます。</p>
+    <form data-form="create">
+      <label>会社名<input name="co" required maxlength="40" placeholder="例：〇〇建設株式会社"></label>
+      <label>編集できる人のメールアドレス（1行に1人。あなたのアドレスは必ず入ります）<textarea name="ed" rows="8" autocomplete="off">${esc(me)}\n</textarea></label>
+      <div class="err" id="authErr"></div>
+      <button class="btn primary">登録して始める</button>
+    </form>
+    <p class="hint">${esc(S.user?.email || '')} でログイン中　<button class="link" data-act="logoutNow">ログアウト</button></p>
+  </div>`;
+}
+function renderNoAccess() {
+  const email = S.user?.email || '';
+  app.innerHTML = `<div class="auth">
+    <h1>週間配置表</h1>
+    <p><b>${esc(email)}</b> は、この予定表を編集できる人に登録されていません。</p>
+    <p class="hint">${isCompanyEmail(email)
+      ? '編集できる人に「設定」→「編集できる人」へこのメールアドレスを追加してもらってから、「もう一度確かめる」を押してください。'
+      : `この予定表は、会社の Google アカウント（@${esc(COMPANY_DOMAIN)}）で使います。「ログアウト」してから、会社のアカウントを選び直してください。`}</p>
+    <div class="err" id="authErr"></div>
+    <div class="btns"><button class="btn primary" data-act="recheck">もう一度確かめる</button><button class="btn" data-act="logoutNow">ログアウト</button></div>
+  </div>`;
+}
+
+/* =====================================================================
+   操作
+   ===================================================================== */
+app.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b || !app.contains(b) || b.tagName === 'SELECT') return;
+  const d = b.dataset;
+  // 週のデータが届く前に表を使う操作をすると、空の表を元に計算してしまう
+  if (['fill', 'copyPrev', 'print'].includes(d.act) && !(S.company && S.weekLoaded)) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
+  switch (d.act) {
+    case 'tab': S.tab = d.tab; render(); break;
+    case 'week': goWeek(+d.d); break;
+    case 'filter': S.filter = d.k; renderMain(); break;
+    case 'note': if (S.role === 'edit') startNote(b); break;
+    case 'fill': fillRow(d.pid); break;
+    case 'copyPrev': copyPrevWeek(); break;
+    case 'print': printWeek(); break;
+    case 'openView': window.open(viewerUrl(true), '_blank'); break;
+    case 'copyUrl': copyText(viewerUrl()); break;
+    case 'move': moveItem(d.coll, d.id, +d.d); break;
+    case 'del': deleteItem(d.coll, d.id); break;
+    case 'demoReset': ask('お試しデータを最初の状態に戻しますか？\n入力した内容はすべて消えます。', '戻す').then(ok => { if (ok) store.reset(); }); break;
+    case 'vtab': S.vtab = d.v; render(); break;
+    case 'adminLogin':
+      if (S.user) { location.href = location.origin + location.pathname; break; }
+      S.screen = 'login'; render(); break;
+    case 'backToView':
+      // 購読が止まっていたら（ログイン後にログアウトした等）、もう一度画面を決め直す
+      if (S.mode === 'cloud' && !S.unsubC) afterAuth(Cloud.auth.currentUser);
+      else { S.screen = 'app'; render(); }
+      break;
+    case 'logout': ask('ログアウトしますか？', 'ログアウト').then(ok => { if (ok) Cloud.logout(); }); break;
+    case 'logoutNow': Cloud.logout(); break;
+    case 'googleLogin': googleLogin(b); break;
+    case 'recheck': S.screen = 'loading'; render(); afterAuth(Cloud.auth.currentUser); break;
+    case 'edDel': removeEditor(d.email); break;
+    case 'reload': location.reload(); break;
+  }
+});
+app.addEventListener('change', e => {
+  const t = e.target, d = t.dataset;
+  if (d.act === 'site') { t.blur(); setCell(d.pid, d.date, { site: t.value }); return; }
+  if (d.act === 'pickMe') { S.me = t.value; lsSet('jsched_me_' + S.cid, S.me); render(); return; }
+  if (d.coll && d.f) {
+    const cur = S.company[d.coll]?.[d.id]; if (!cur) return;
+    let v = t.value.trim();
+    if (d.f === 'name' && !v) { toast('名前は空にできません'); t.value = cur.name; return; }
+    if (d.f === 'retired' || d.f === 'done') v = t.value === '1';
+    store.patch({ [d.coll]: { [d.id]: { [d.f]: v } } });
+    return;
+  }
+  if (t.id === 'coNameIn') {
+    const v = t.value.trim();
+    if (!v) { toast('会社名は空にできません'); t.value = S.company?.name || ''; return; }
+    store.patch({ name: v });
+  }
+});
+app.addEventListener('input', e => {
+  if (e.target.id === 'search') {
+    S.search = e.target.value;
+    const g = $('#grid'); if (g) g.innerHTML = gridTable();
+  }
+});
+app.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, fd = new FormData(f), kind = f.dataset.form;
+  const val = k => String(fd.get(k) || '').trim();
+  if (kind === 'addPerson' || kind === 'addSite') {
+    const coll = kind === 'addPerson' ? 'people' : 'sites';
+    const name = val('nm'); if (!name) return;
+    const item = coll === 'people'
+      ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', order: nextOrder('people'), retired: false }
+      : { name, kana: val('kn'), kind: val('kd') || 'site', order: nextOrder('sites'), done: false };
+    await store.patch({ [coll]: { [newId(coll === 'people' ? 'p_' : 's_')]: item } });
+    f.reset();
+    if (coll === 'people') f.querySelector('[name=kd]').value = item.kind;
+    f.querySelector('[name=nm]').focus();
+    toast(`「${name}」を追加しました`);
+    return;
+  }
+  if (kind === 'addEditors') {
+    if (!S.editorsLoaded) { toast('編集できる人の一覧を読み込み中です。少し待ってからもう一度押してください'); return; }
+    const { emails, bad } = parseEmails(fd.get('em'));
+    if (bad.length) { toast('メールアドレスの形になっていません：' + bad.join('、')); return; }
+    const add = emails.filter(x => !S.editors.includes(x));
+    if (!add.length) { toast(emails.length ? 'もう登録されています' : 'メールアドレスを入れてください'); return; }
+    if (S.editors.length + add.length > 50) { toast('編集できる人は50人までです'); return; }
+    if (!(await confirmOutside(add))) return;
+    // 書いている間は押せないようにする（途中で一覧の更新が来ても戻さない）
+    S.edAdding = true;
+    const btn = $('#edAddBtn'); if (btn) btn.disabled = true;
+    let ok;
+    try { ok = await store.addEditors(add); }
+    finally { S.edAdding = false; const b = $('#edAddBtn'); if (b) b.disabled = !S.editorsLoaded; }
+    if (!ok) return;   // 失敗は保存処理がもう知らせている。入力はそのまま残す
+    f.reset();
+    toast(`${add.length} 人を追加しました`);
+    return;
+  }
+  if (kind === 'create') {
+    const name = val('co'), err = $('#authErr');
+    const me = normEmail(S.user?.email);
+    const { emails, bad } = parseEmails(fd.get('ed'));
+    if (!name) return;
+    if (bad.length) { err.textContent = 'メールアドレスの形になっていません：' + bad.join('、'); return; }
+    const editors = emails.includes(me) ? emails : [me, ...emails];
+    if (editors.length > 50) { err.textContent = '編集できる人は50人までです。'; return; }
+    // 確かめている間に二度押しされないよう、先にボタンを止める
+    const btn = f.querySelector('button');
+    btn.disabled = true;
+    const gen = authGen;
+    const go = await confirmOutside(editors)
+      && await ask(`会社名「${name}」、編集できる人 ${editors.length} 人で登録します。\nこの登録は1回きりです。\n\n${editors.join('\n')}`, '登録する');
+    if (gen !== authGen) return;   // 確かめている間にログアウトなどで画面が変わった
+    if (!go) { btn.disabled = false; return; }
+    try {
+      const cid = await Cloud.createCompany(name, editors);
+      if (gen !== authGen) return;   // 待っている間にログアウトなどで画面が変わった
+      S.cid = cid;
+      lsSet('jsched_cid', S.cid);
+      if (location.search) { history.replaceState(null, '', location.pathname); params = new URLSearchParams(); }
+      S.role = 'edit'; S.tab = 'people';
+      store = Cloud.storeFor(S.cid);
+      startData();
+      toast('登録しました。まず実習生と現場を登録してください');
+    } catch (ex) {
+      if (gen !== authGen) return;
+      console.error(ex);
+      err.textContent = String(ex?.code || '').includes('permission-denied')
+        ? '登録できませんでした。予定表がすでに作られているか、このアカウントでは作れません。'
+        : '登録できませんでした：' + errMsg(ex);
+      btn.disabled = false;
+    }
+  }
+});
+async function removeEditor(email) {
+  if (!S.editorsLoaded) return;
+  const me = normEmail(S.user?.email);
+  if (email === me) return;
+  if (S.mode === 'cloud' && S.editors.length <= 1) { toast('最後の1人は外せません'); return; }
+  if (!(await ask(`${email} を、編集できる人から外しますか？\nこの人は予定表を書き換えられなくなります。`, '外す'))) return;
+  store.removeEditor(email);
+}
+async function googleLogin(btn) {
+  const err = $('#authErr'); if (err) err.textContent = '';
+  btn.disabled = true;
+  loginRequested = true;
+  try { await Cloud.loginGoogle(); }
+  catch (ex) {
+    loginRequested = false;
+    btn.disabled = false;
+    if (err) err.textContent = authMsg(ex);
+  }
+}
+
+/* =====================================================================
+   起動
+   ===================================================================== */
+let params = new URLSearchParams(location.search);
+let loginRequested = false;
+let authGen = 0;
+
+async function boot() {
+  if (!FIREBASE_CONFIG) {
+    S.mode = 'demo'; S.cid = 'demo';
+    S.role = params.get('view') ? 'view' : 'edit';
+    store = makeDemoStore();
+    startData();
+    return;
+  }
+  S.mode = 'cloud'; S.screen = 'loading'; render();
+  try { await Cloud.init(FIREBASE_CONFIG); }
+  catch (e) { console.error(e); S.screen = 'error'; S.errMsg = '読み込みに失敗しました。通信を確かめて、もう一度開いてください。'; render(); return; }
+  Cloud.onAuth(afterAuth);
+}
+// ログインの状態が決まったら（開いた直後・ログイン・ログアウト・確かめ直し）どの画面にするか決める
+// 何度も呼ばれる（ログアウトを途中で押す等）ので、待っている間に次の呼び出しが来たら古い方の結果は捨てる
+async function afterAuth(user) {
+  const gen = ++authGen;
+  S.user = user || null;
+  stopData();
+  // ログインボタンを押した直後は、URLの会社IDより自分の会社を優先する
+  const preferMine = loginRequested && !!user;
+  loginRequested = false;
+  const cParam = params.get('c');
+  const forceView = !preferMine && !!cParam && params.get('as') === 'view';
+  const isCode = (e, c) => String(e?.code || '').includes(c);
+  try {
+    if (user && !forceView) {
+      const email = normEmail(user.email);
+      let mine = null;
+      if (email) {
+        try { mine = await Cloud.findMyCompany(email); }
+        catch (e) { if (!isCode(e, 'permission-denied')) throw e; console.error(e); }   // 読めない＝編集者ではない
+      }
+      if (gen !== authGen) return;
+      if (mine && (!cParam || cParam === mine || preferMine)) {
+        S.role = 'edit'; S.cid = mine; lsSet('jsched_cid', mine);
+        if (preferMine && location.search) { history.replaceState(null, '', location.pathname); params = new URLSearchParams(); }
+      } else if (cParam && !preferMine) { S.role = 'view'; S.cid = cParam; }
+      else {
+        // 編集できる人ではない。まだ予定表が無く、最初の登録ができる人なら登録画面へ
+        // （ルールで読めない人は permission-denied → 登録されていません）
+        let locked = true;
+        if (isCompanyEmail(email)) {
+          try { locked = await Cloud.isLocked(); }
+          catch (e) { if (isCode(e, 'unavailable')) throw e; console.error(e); }
+        }
+        if (gen !== authGen) return;
+        S.screen = locked ? 'noaccess' : 'create';
+        render();
+        return;
+      }
+    } else if (cParam) { S.role = 'view'; S.cid = cParam; }
+    else { S.screen = 'login'; render(); return; }
+  } catch (err) {
+    if (gen !== authGen) return;
+    console.error(err); S.screen = 'error'; S.errMsg = errMsg(err); render(); return;
+  }
+  store = Cloud.storeFor(S.cid);
+  startData();
+}
+boot();
+</script>
+</body>
+</html>
