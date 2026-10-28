@@ -142,6 +142,9 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .auth textarea{padding:9px 10px;border:1px solid var(--line2);border-radius:6px;font-size:14px;font-family:inherit;color:var(--ink);resize:vertical}
 .authBody{display:flex;flex-direction:column;gap:10px;margin:16px 0}
 .gbtn{padding:10px 14px;font-size:15px}
+.inapp{margin:14px 0 0;padding:10px 12px;background:#fff6e0;border:1px solid #f0c36d;border-radius:8px;font-size:14px}
+.inapp p{margin:0 0 8px}
+.inapp a.btn{display:inline-block;text-decoration:none}
 .who{font-size:12px;color:var(--sub);align-self:center}
 .eds{list-style:none;margin:8px 0;padding:0;border:1px solid var(--line);border-radius:8px;max-width:560px}
 .eds li{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line)}
@@ -461,7 +464,23 @@ function authMsg(e) {
   if (c.includes('unauthorized-domain')) return 'このURLはログインに使えるように設定されていません（Firebase の承認済みドメインを確かめてください）。';
   if (c.includes('operation-not-allowed')) return 'Google ログインが有効になっていません（Firebase の設定を確かめてください）。';
   if (c.includes('network')) return '通信できません。';
+  if (/web-storage-unsupported|operation-not-supported/.test(c)) return 'このブラウザではログインできません。Safari か Chrome で開き直してください。';
   return errMsg(e);
+}
+// LINE などのアプリの中の画面（アプリ内ブラウザ）。Google はここでのログインを禁止している（「403 disallowed_useragent」）
+const UA = navigator.userAgent || '';
+const IN_APP = /\bLine\//.test(UA) ? 'LINE'
+  : /Instagram/.test(UA) ? 'Instagram'
+  : /FBAN|FBAV|FB_IAB/.test(UA) ? 'Facebook'
+  : /MicroMessenger/.test(UA) ? 'WeChat'
+  : /KAKAOTALK/i.test(UA) ? 'カカオトーク'
+  : /; wv\)/.test(UA) ? 'アプリ' : '';
+// 編集する人に渡すURL。LINE で送っても、開くと Safari・Chrome で開く（LINE の openExternalBrowser）
+const editorUrl = () => location.origin + location.pathname + '?openExternalBrowser=1';
+// ログイン画面を出す。LINE の中なら、まずふつうのブラウザで開き直す（それでも LINE の中なら案内を出す）
+function showLogin() {
+  S.screen = 'login'; render();
+  if (IN_APP === 'LINE' && !params.has('openExternalBrowser')) location.href = editorUrl();
 }
 const normEmail = s => String(s || '').trim().toLowerCase();
 // 先頭に ' は来ない（Outlook の「'addr'」形式で ' ごと取り込まないため）。o'brien@ のように途中なら可
@@ -1166,7 +1185,9 @@ function editorsSection() {
     <form class="addrow" data-form="addEditors">
       <label class="grow">追加するメールアドレス（何人かまとめて入れるときは改行かカンマで区切る。Outlook の宛先をそのまま貼ってもよい）<textarea name="em" rows="2" autocomplete="off"></textarea></label>
       <button class="btn primary" id="edAddBtn" ${S.editorsLoaded && !S.edAdding ? '' : 'disabled'}>追加</button>
-    </form>`;
+    </form>
+    ${S.mode === 'cloud' ? `<p>編集する人には、このURLを送ってください。LINE で送っても、開くと Safari・Chrome で開きます（LINE の中の画面では Google のログインができないため）。</p>
+    <div class="urlrow"><input readonly value="${esc(editorUrl())}" aria-label="編集する人に送るURL"><button class="btn" data-act="copyUrl" data-u="editor">コピー</button></div>` : ''}`;
 }
 function editorItems() {
   if (!S.editorsLoaded) return '<li class="none">読み込み中…</li>';
@@ -1196,11 +1217,11 @@ async function drawQR() {
     const box = $('#qr'); if (box) box.textContent = 'QRコードを表示できませんでした（通信を確かめてください）';
   }
 }
-async function copyText(t) {
+async function copyText(t, inp) {
   try { await navigator.clipboard.writeText(t); toast('URLをコピーしました'); }
   catch (e) {
     // クリップボードが使えないときは欄の文字を選んでおき、Ctrl+C を案内する
-    const inp = $('.urlrow input'); if (inp) { inp.focus(); inp.select(); }
+    inp ||= $('.urlrow input'); if (inp) { inp.focus(); inp.select(); }
     toast('URLを選びました。Ctrl＋C（スマホは「コピー」）でコピーしてください');
   }
 }
@@ -1261,8 +1282,14 @@ function meView(people, days) {
 function renderLogin() {
   app.innerHTML = `<div class="auth">
     <h1>週間配置表</h1><p class="hint">事務所の方のログイン</p>
+    ${IN_APP ? `<div class="inapp">
+      <p><b>${IN_APP === 'アプリ' ? 'アプリ' : esc(IN_APP) + ' '}の中の画面では、Google のログインができません。</b>Safari か Chrome で開き直してください。</p>
+      ${IN_APP === 'LINE' ? `<p><a class="btn primary" href="${esc(editorUrl())}">ブラウザで開く</a></p>` : ''}
+      <p class="hint">開けないときは、画面の上か下にある「︙」や共有のボタンから「ブラウザで開く」（iPhone は「Safari で開く」）を選ぶか、下のURLをコピーして Safari・Chrome に貼り付けてください。</p>
+      <div class="urlrow"><input readonly value="${esc(location.origin + location.pathname)}" aria-label="このページのURL"><button class="btn" data-act="copyUrl" data-u="page">コピー</button></div>
+    </div>` : ''}
     <div class="authBody">
-      <button class="btn primary gbtn" data-act="googleLogin">Google でログイン</button>
+      <button class="btn ${IN_APP ? '' : 'primary '}gbtn" data-act="googleLogin">Google でログイン</button>
       <div class="err" id="authErr"></div>
       <p class="hint">会社の Google アカウント（@${esc(COMPANY_DOMAIN)}）でログインしてください。予定表を書き換えられるのは、登録されたメールアドレスの人だけです。</p>
     </div>
@@ -1315,7 +1342,8 @@ app.addEventListener('click', e => {
     case 'copyPrev': copyPrevWeek(); break;
     case 'print': printWeek(); break;
     case 'openView': window.open(viewerUrl(true), '_blank'); break;
-    case 'copyUrl': copyText(viewerUrl()); break;
+    case 'copyUrl': copyText(d.u === 'editor' ? editorUrl() : d.u === 'page' ? location.origin + location.pathname : viewerUrl(),
+      b.closest('.urlrow')?.querySelector('input')); break;
     case 'move': moveItem(d.coll, d.id, +d.d); break;
     case 'del': deleteItem(d.coll, d.id); break;
     case 'demoReset': ask('お試しデータを最初の状態に戻しますか？\n入力した内容はすべて消えます。', '戻す').then(ok => { if (ok) store.reset(); }); break;
@@ -1324,7 +1352,7 @@ app.addEventListener('click', e => {
     case 'histMore': S.hist.n += 100; S.unsubH?.(); S.unsubH = null; startHistory(); break;
     case 'adminLogin':
       if (S.user) { location.href = location.origin + location.pathname; break; }
-      S.screen = 'login'; render(); break;
+      showLogin(); break;
     case 'backToView':
       // 購読が止まっていたら（ログイン後にログアウトした等）、もう一度画面を決め直す
       if (S.mode === 'cloud' && !S.unsubC) afterAuth(Cloud.auth.currentUser);
@@ -1457,6 +1485,10 @@ async function removeEditor(email) {
 }
 async function googleLogin(btn) {
   const err = $('#authErr'); if (err) err.textContent = '';
+  // アプリの中の画面では始めない。LINE は Google の画面だけ Safari に移すので、戻ったときに
+  // 「Unable to process request due to missing initial state」で止まる
+  if (IN_APP === 'LINE') { location.href = editorUrl(); return; }
+  if (IN_APP) { if (err) err.textContent = 'この画面ではログインできません。上の案内のとおり、Safari か Chrome で開き直してください。'; return; }
   btn.disabled = true;
   loginRequested = true;
   try { await Cloud.loginGoogle(); }
@@ -1526,7 +1558,7 @@ async function afterAuth(user) {
         return;
       }
     } else if (cParam) { S.role = 'view'; S.cid = cParam; }
-    else { S.screen = 'login'; render(); return; }
+    else { showLogin(); return; }
   } catch (err) {
     if (gen !== authGen) return;
     console.error(err); S.screen = 'error'; S.errMsg = errMsg(err); render(); return;
