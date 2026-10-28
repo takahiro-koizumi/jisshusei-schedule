@@ -109,6 +109,36 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:8px}
 .legend i{display:inline-block;width:12px;height:12px;border:1px solid var(--line2);border-radius:2px;vertical-align:-2px;margin-right:4px}
 
+/* ---- ホワイトボード（現場×日。人のマグネットをドラッグして配置する。現場配置ボードと同じ見た目） ---- */
+.board th,.board td{border-color:#e2e0d2}
+.board td{min-width:128px;padding:4px}
+.board td.col{background:color-mix(in srgb,var(--sc) 45%,#fff);box-shadow:none}
+.board td.lock{background:#f3f3f1}
+.board th.nm{background:#f8f8f4}
+.board th.nm.col{background:var(--sc);box-shadow:inset 5px 0 0 var(--sb)}
+.board th.nm.off{background:var(--off)}
+.board tr.pool th.nm{background:#fff8d6}
+.board tr.pool td{border-bottom:2px solid #d4d2c4}
+.board .sub{display:block;font-size:10px;color:var(--sub);font-weight:400}
+.mlist{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:30px}
+.mg{display:inline-flex;align-items:center;max-width:100%;min-height:26px;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;line-height:1.2;color:#fff;background:linear-gradient(180deg,#ff7373 0%,#e94747 100%);box-shadow:0 1px 2px rgba(0,0,0,.15);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;word-break:break-all}
+.mg:focus-visible{outline:2px solid var(--dark);outline-offset:1px}
+.mg[data-kind=jisshu],.mg[data-kind=tokutei]{border-radius:14px;padding-left:4px}
+.mg[data-kind=jisshu]::before,.mg[data-kind=tokutei]::before{content:'実';display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:14px;height:14px;padding:0 3px;margin-right:4px;border-radius:50%;background:rgba(0,0,0,.3);font-size:9px}
+.mg[data-kind=tokutei]::before{content:'特'}
+.mg.faded{opacity:.5;min-height:20px;padding:2px 6px;font-size:11px}   /* 日曜・祝日の未配置＝休み。場所を取らないよう小さく */
+.mg .x{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;margin-left:5px;border-radius:50%;background:rgba(0,0,0,.35);font-size:10px;cursor:pointer}
+.mg .x:hover{background:rgba(220,53,69,.85)}
+.bnote{font-size:11px;color:#444;margin-top:4px;word-break:break-all;cursor:pointer;line-height:1.35}
+.bnote b{font-weight:600;margin-right:3px}
+.sortable-ghost{opacity:.4}
+.sortable-chosen{transform:scale(1.05)}
+.sortable-drag{box-shadow:0 2px 6px rgba(0,0,0,.25)!important}
+.sortable-fallback{will-change:transform;transform:translateZ(0);backface-visibility:hidden;pointer-events:none}
+.modalBox h3{margin:0 0 12px;font-size:16px}
+.mrow{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--sub);margin-bottom:12px}
+.mrow select,.mrow input{padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;font-size:16px;color:var(--ink)}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
+
 .panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;max-width:980px}
 .panel h2{margin:0 0 12px;font-size:16px}
 .panel h3{margin:20px 0 6px;font-size:14px}
@@ -241,6 +271,7 @@ table.vt{border-collapse:collapse;font-size:13px;min-width:100%}
   main{padding:10px 8px 20px}
   .grid td{min-width:132px}
   .grid th.nm{min-width:96px}
+  .board td{min-width:112px}
   .addrow input{width:100%}
   .addrow label{flex:1 1 100%}
   .hist li{grid-template-columns:44px 1fr}
@@ -417,6 +448,8 @@ const S = {
   company: null, notFound: false,
   weekStart: mondayOf(new Date()), week: { cells: {} },
   tab: 'table', filter: 'all', search: '',
+  view: lsGet('jsched_view') === 'board' ? 'board' : 'table',   // 予定表の見せ方：表（人ごと）／ホワイトボード（現場ごと）。端末ごとに覚える
+  dragging: false,       // マグネットをドラッグしている間は、届いたデータで描き直さない（つかんだ物が消えるため）
   vtab: 'me', me: '',
   editors: [],           // 編集できる人のメールアドレス（編集画面のときだけ読む）
   editorsLoaded: false,  // 一覧が届く前に追加・削除すると、空の一覧を元にしてしまう
@@ -779,11 +812,17 @@ function subscribeWeek() {
   S.weekSlowTimer = setTimeout(() => { if (!S.weekLoaded && m === ds(S.weekStart)) { S.slowW = true; refresh(); } }, 10000);
   S.unsubW = store.onWeek(m, w => {
     if (m !== ds(S.weekStart)) return;
-    S.week = w || {}; S.week.cells ||= {};
+    w = w || {}; w.cells ||= {};
+    // 書き込むと、サーバーの確認だけの知らせ（中身は同じ）がもう1回来る。それで描き直すと、
+    // ホワイトボードで次につかみかけたマグネットやタップが消えるので、中身が変わったときだけ描き直す
+    const same = S.weekLoaded && stableJson(w.cells) === stableJson(S.week.cells);
+    S.week = w;
     S.weekLoaded = true; S.slowW = false;
-    refresh();
+    if (!same) refresh();
   });
 }
+// キーの順に関係なく同じ中身なら同じ文字列にする（Firestore はキーの順を保たない）
+const stableJson = o => JSON.stringify(o, (k, v) => isObj(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : v);
 function loadingHtml() {
   const slow = (S.slowC && !S.company && !S.notFound) || (S.slowW && !S.weekLoaded);
   // 実習生の画面では選んだ言葉で出す（事務所の画面は日本語のまま）
@@ -811,7 +850,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // データが届いたときに描き直す領域。入力欄やボタンのある所は入れない
 // （描き直すと打っている文字が消え、押しかけたボタンも別物になってクリックが効かない）
-const REGIONS = { table: ['grid', () => gridTable()], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], history: ['hlist', () => historyList()], settings: ['edlist', () => editorItems()] };
+const REGIONS = { table: ['grid', () => weekView(), mountBoard], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], history: ['hlist', () => historyList()], settings: ['edlist', () => editorItems()] };
 function refresh() {
   if (S.screen !== 'app') return;
   if (S.role === 'view' || !$('#main')) return render();
@@ -825,11 +864,12 @@ function refresh() {
     const cl = $('form[data-form="addSite"] [name=cl]');
     if (cl && !cl.dataset.touched && document.activeElement !== cl) cl.innerHTML = colorOptions(nextSiteColor(cl.form.querySelector('[name=kd]').value));
   }
-  const [id, fn] = REGIONS[S.tab];
+  const [id, fn, after] = REGIONS[S.tab];
   const el = document.getElementById(id);
   if (!el) return renderMain();
-  if (editingIn(el)) { S.pending = true; return; }
+  if (editingIn(el) || (S.dragging && id === 'grid')) { S.pending = true; return; }
   el.innerHTML = fn();
+  after?.();
 }
 function render() {
   document.documentElement.lang = 'ja';   // 実習生の画面では viewerShell が選んだ言葉に上書きする
@@ -872,8 +912,9 @@ function renderEditor() {
 function renderMain() {
   const m = $('#main'); if (!m) return;
   if (S.tab === 'table') {
-    m.innerHTML = tableBar() + `<div class="gridwrap" id="grid">${gridTable()}</div>
-      <div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`;
+    m.innerHTML = tableBar() + `<div class="gridwrap" id="grid">${weekView()}</div>` + (S.view === 'board'
+      ? `<div class="legend"><span>マグネットを同じ日の別の現場へドラッグすると、その日の現場が変わります</span><span>× ＝ 未配置に戻す</span><span>マグネットを押すと、現場とメモを変えられます</span></div>`
+      : `<div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`);
   } else if (S.tab === 'people') m.innerHTML = peoplePanel();
   else if (S.tab === 'sites') m.innerHTML = sitesPanel();
   else if (S.tab === 'history') {
@@ -884,12 +925,14 @@ function renderMain() {
     startHistory();
   }
   else { m.innerHTML = `<section class="panel"><h2>設定</h2><div id="sset" class="set">${settingsBody()}</div></section>`; drawQR(); }
+  mountBoard();   // ホワイトボードならドラッグを付ける（ほかの画面なら前のを外す）
 }
 function tableBar() {
   const days = weekDays();
   return `<div class="bar">
     <div class="seg"><button data-act="week" data-d="-7">◀ 前週</button><button data-act="week" data-d="0">今週</button><button data-act="week" data-d="7">次週 ▶</button></div>
     <div class="wk">${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</div>
+    <div class="seg dark">${[['table', '表'], ['board', 'ホワイトボード']].map(([k, l]) => `<button data-act="view" data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div class="seg dark">${[['all', '全員'], ...KINDS].map(([k, l]) => `<button data-act="filter" data-k="${k}" class="${S.filter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <input id="search" type="search" placeholder="名前で検索…" value="${esc(S.search)}" autocomplete="off">
     <span class="sp"></span>
@@ -938,6 +981,162 @@ function gridTable() {
   </tr>`).join('');
   return `<table class="grid">${head}<tbody>${rows}</tbody></table>`;
 }
+const weekView = () => S.view === 'board' ? boardTable() : gridTable();
+
+/* ---- ホワイトボード（現場ごと。人のマグネットを、同じ日の別の現場へドラッグして配置を変える） ---- */
+// 1人は1日に1か所だけなので、どの日の列にも各人のマグネットがちょうど1つある（いちばん上の「未配置」か、どこかの現場）
+function boardRows() {
+  const days = weekDays(), people = visiblePeople();
+  const at = {};   // at[現場ID][日付] = [人…]。'' は未配置
+  for (const p of people) for (const d of days) {
+    const k = ds(d);
+    ((at[cellOf(p.id, k)?.site || ''] ||= {})[k] ||= []).push(p);
+  }
+  const act = sortedSites(false);
+  const rows = [{ id: '', pool: true }, ...act.filter(s => s.kind !== 'off'), ...act.filter(s => s.kind === 'off')];
+  // 完了・削除した現場でも、この週に予定が入っていれば行を出す（予定を隠さない）。そこへは置けない
+  const extra = Object.keys(at).filter(id => id && !rows.some(r => r.id === id))
+    .map(id => ({ id, ...(S.company.sites[id] || { name: '', gone: true }), locked: true }))
+    .sort((a, b) => !!a.gone - !!b.gone || (a.order ?? 0) - (b.order ?? 0));
+  return { days, rows: rows.concat(extra), at };
+}
+function boardRowHead(r) {
+  if (r.pool) return '<th class="nm">未配置<span class="sub">まだ決まっていない人</span></th>';
+  const ca = colorAttr(r.locked ? null : r, `nm${r.kind === 'off' ? ' off' : ''}`);
+  const name = r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name);
+  return `<th class="${ca.cls}"${ca.style}>${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}</th>`;
+}
+function magnet(p, k, r, faded) {
+  return `<span class="mg${faded ? ' faded' : ''}" data-act="mg" data-kind="${esc(p.kind)}" data-pid="${esc(p.id)}" data-date="${k}" role="button" tabindex="0" title="${esc(p.name)}">${esc(p.name)}${r.pool ? '' : `<span class="x" data-act="unassign" data-pid="${esc(p.id)}" data-date="${k}" role="button" aria-label="${esc(p.name)} を未配置に戻す">×</span>`}</span>`;
+}
+function boardTable() {
+  if (!S.company || !S.weekLoaded) return loadingHtml();
+  const { days, rows, at } = boardRows(), today = todayStr();
+  const head = `<thead><tr><th class="nm">現場</th>${days.map(d => {
+    const k = ds(d), h = holidayName(k);
+    return `<th class="${dayCls(d)}${k === today ? ' tdy' : ''}">${DOW[d.getDay()]} ${md(d)}${k === today ? '<span class="today">今日</span>' : ''}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
+  }).join('')}</tr></thead>`;
+  if (!visiblePeople().length) {
+    const msg = sortedPeople(false).length ? '該当する人がいません' : '「人の登録」タブから実習生を登録してください';
+    return `<table class="grid board">${head}</table><div class="empty">${msg}</div>`;
+  }
+  const body = rows.map(r => `<tr class="${r.pool ? 'pool' : ''}">${boardRowHead(r)}${days.map(d => {
+    const k = ds(d), list = at[r.id]?.[k] || [], rest = isRestDay(d);
+    // 未配置のマスは表と同じ色（平日は黄色、日曜・祝日は灰色）。日曜・祝日の未配置は休みなので薄く出す
+    const ca = r.pool ? { cls: list.length ? (rest ? 'rest' : 'unset') : '', style: '' }
+      : r.locked ? { cls: 'lock', style: '' } : colorAttr(r, r.kind === 'off' ? 'off' : '');
+    const notes = list.filter(p => cellOf(p.id, k)?.note).map(p =>
+      `<div class="bnote" data-act="mg" data-pid="${esc(p.id)}" data-date="${k}"><b>${esc(p.name)}</b>${esc(cellOf(p.id, k).note)}</div>`).join('');
+    return `<td class="${ca.cls}"${ca.style}><div class="mlist" data-site="${esc(r.id)}" data-date="${k}"${r.locked ? ' data-lock="1"' : ''}>${list.map(p => magnet(p, k, r, r.pool && rest)).join('')}</div>${notes}</td>`;
+  }).join('')}</tr>`).join('');
+  return `<table class="grid board">${head}<tbody>${body}</tbody></table>`;
+}
+// ドラッグの部品（SortableJS。現場配置ボードと同じ版）は、ホワイトボードを開いたときに読み込む
+let sortLoader = null, sortables = [], mountGen = 0;
+// 1か所から読めなければ、もう1か所（現場配置ボードが使っている所）から読む
+const SORTABLE_SRC = ['https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js', 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'];
+function loadSortable() {
+  const one = src => new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('sortable')); };
+    document.head.appendChild(s);
+  });
+  return sortLoader ||= one(SORTABLE_SRC[0]).catch(() => one(SORTABLE_SRC[1])).catch(e => { sortLoader = null; throw e; });
+}
+let sortFailed = false;   // 読み込めなかったら、描き直すたびには読み直さない（知らせも1回だけ）。「ホワイトボード」を押し直すと読み直す
+// 描き直すたびに前のドラッグを外してから付け直す（外さないと描き直すたびに溜まっていく）
+async function mountBoard() {
+  const gen = ++mountGen;
+  // ドラッグの途中で画面ごと描き直された（ログアウト等）。destroy では onEnd が来ないので、ここで片付ける
+  const midDrag = S.dragging;
+  if (midDrag) { S.dragging = false; S.pending = false; document.querySelectorAll('.sortable-fallback').forEach(n => n.remove()); }
+  sortables.forEach(s => s.destroy()); sortables = [];
+  if (midDrag) clearSortableClick();
+  const lists = () => document.querySelectorAll('#grid .mlist');
+  if (S.tab !== 'table' || S.view !== 'board' || !lists().length || sortFailed) return;
+  try { await loadSortable(); }
+  catch (e) {
+    // 待っている間に描き直されても、知らせは今ホワイトボードを見ていれば1回だけ出す
+    if (!sortFailed && S.tab === 'table' && S.view === 'board') toast('ドラッグの部品を読み込めませんでした。マグネットを押すと現場を選べます', true);
+    sortFailed = true; return;
+  }
+  if (gen !== mountGen) return;   // 読み込みを待つ間に描き直された。新しい方が付ける
+  for (const el of lists()) {
+    sortables.push(window.Sortable.create(el, {
+      // 同じ日の列の中だけで動かせる。完了・削除した現場へは置けない（取り出すのはよい）
+      // （put に true を渡すと、どの列からでも受け取ってしまう。同じ日の名前だけを並べる）
+      group: { name: 'd' + el.dataset.date, pull: true, put: el.dataset.lock ? false : ['d' + el.dataset.date] },
+      sort: false, animation: 0,
+      // 以下は現場配置ボードと同じ（iPad で確かめた値。delay と touchStartThreshold でスクロールとドラッグを見分ける）。
+      // fallbackTolerance だけは 3→8。3px（スマホで約0.5mm）の指ぶれでドラッグになると、ふつうのタップが消えるため
+      forceFallback: true, fallbackOnBody: true, fallbackTolerance: 8,
+      delay: 80, delayOnTouchOnly: true, touchStartThreshold: 4,
+      filter: '.x', preventOnFilter: false,   // × を押したときはドラッグにしない（iPhone でタップが消えないよう preventDefault もしない）
+      onStart() { S.dragging = true; },
+      // 動き始めた直後に離すと、Sortable は onStart も onEnd も出さずに終わることがある。そのときも印を消す
+      onUnchoose() { if (!S.dragging) setTimeout(clearSortableClick, 0); },
+      onEnd: boardDragEnd,
+    }));
+  }
+}
+// iPhone などでは動かした後に click が来ないため、Sortable の「次の click を捨てる」印が残り、次のタップが効かなくなる。
+// document へ空の click を送って印を消す（#app には届かないので、どのボタンも動かない。印が無ければ何も起きない）
+const clearSortableClick = () => document.dispatchEvent(new MouseEvent('click'));
+// ドラッグを離したとき
+function boardDragEnd(ev) {
+  const waited = S.pending, moved = S.dragging;   // moved＝onStart が来た（本当に動かした）
+  S.dragging = false; S.pending = false;
+  const pid = ev.item.dataset.pid;
+  // 行き先は、離した点の下のマス（同じ日・完了していない現場・元のマス以外）。ev.to は使わない：
+  // Sortable は置けない所（別の日・完了した現場・表の外）で離しても元に戻さず、途中で通った同じ日のマスに残すうえ、
+  // 仮の位置は 50ms ごとにしか動かない（自動スクロール中などは1つ前のマスのまま）。行き先が無ければ描き直して元に戻す
+  const oe = ev.originalEvent, pt = oe && (oe.changedTouches?.[0] || oe);
+  const hit = moved && pt && pt.clientX != null ? document.elementFromPoint(pt.clientX, pt.clientY) : null;
+  const list = hit?.closest('#grid td')?.querySelector('.mlist');
+  const dest = list && list !== ev.from && list.dataset.date === ev.from.dataset.date && !list.dataset.lock ? list : null;
+  // マウスで動かして離すと、同じ流れで click が来てマグネットの画面が開いてしまうので、動かした後の click は捨てる
+  const eat = e => { e.stopPropagation(); e.preventDefault(); };
+  if (moved) window.addEventListener('click', eat, true);
+  // Sortable が後片付けを終えてから書く・描き直す
+  setTimeout(() => {
+    if (moved) { window.removeEventListener('click', eat, true); clearSortableClick(); }
+    if (dest) dropMagnet(pid, dest.dataset.date, dest.dataset.site);
+    // 動かさずに離したとき（長押ししただけ）は、待たせたデータが無ければ描き直さない
+    // （描き直すと、この後に来るタップが消えた要素に当たって画面が開かない）
+    else if (ev.from !== ev.to || waited) refresh();
+  }, 0);
+}
+async function dropMagnet(pid, date, site) {
+  if (!S.company?.people[pid] || (cellOf(pid, date)?.site || '') === site) { refresh(); return; }
+  if (!(await setCell(pid, date, { site }))) refresh();   // 書けなかったらマグネットを元の場所に戻す
+}
+// マグネットを押したとき：その人のその日の現場とメモを変える画面（ドラッグしにくいスマホでも使える）
+function editMagnet(pid, date) {
+  const p = S.company?.people[pid]; if (!p) return;
+  const c = cellOf(pid, date) || {};
+  const wrap = document.createElement('div');
+  wrap.className = 'modal';
+  wrap.innerHTML = `<form class="modalBox" role="dialog" aria-modal="true"><h3>${esc(p.name)}　${dayLabel(date)}</h3>
+    <label class="mrow">現場<select name="site">${cellOptions(siteOptionsBase(), c.site)}</select></label>
+    <label class="mrow">メモ<input name="note" maxlength="200" value="${esc(c.note || '')}" placeholder="例：7:00 事務所集合" autocomplete="off"></label>
+    <div class="btns"><button type="button" class="btn" data-k="no">キャンセル</button><button class="btn primary">保存</button></div></form>`;
+  const f = wrap.querySelector('form');
+  const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+  const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey, true); };
+  wrap.addEventListener('click', e => { if (e.target === wrap || e.target.closest('[data-k=no]')) close(); });
+  f.addEventListener('submit', e => {
+    e.preventDefault();
+    // 開いたときから自分が変えた所だけ書く（開いている間にほかの人が変えた所を、古い値で戻さない）
+    const patch = {}, site = f.elements.site.value, note = f.elements.note.value.trim();
+    if (site !== (c.site || '')) patch.site = site;
+    if (note !== (c.note || '')) patch.note = note;
+    close();
+    if (Object.keys(patch).length) setCell(pid, date, patch);
+  });
+  document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(wrap);
+  f.elements.site.focus();
+}
 /* ---- 編集履歴の文（何を変えたかを、そのときの名前で残す） ---- */
 const dayLabel = k => { const d = pd(k); return `${md(d)}（${DOW[d.getDay()]}）`; };
 const siteLabel = id => !id ? '未配置' : S.company?.sites?.[id]?.name || '（削除された現場）';
@@ -963,9 +1162,10 @@ function fieldHist(coll, x, f, v) {
 function setCell(pid, date, patch) {
   const cur = cellOf(pid, date) || {};
   const where = `${personLabel(pid)} の ${dayLabel(date)}`;
-  const hist = 'site' in patch
-    ? `${where} を「${siteLabel(cur.site)}」→「${siteLabel(patch.site)}」に変更`
-    : patch.note ? `${where} のメモを「${short(patch.note)}」にした` : `${where} のメモを消した`;
+  // 現場とメモを一度に変えたとき（マグネットを押した画面）は1行にまとめる
+  const site = 'site' in patch ? `を「${siteLabel(cur.site)}」→「${siteLabel(patch.site)}」に変更` : '';
+  const note = !('note' in patch) ? '' : patch.note ? `メモを「${short(patch.note)}」にした` : 'メモを消した';
+  const hist = `${where} ${site && note ? `${site}、${note}` : site || 'の' + note}`;
   return store.setCells(ds(mondayOf(pd(date))), { [pid]: { [date]: patch } }, hist);
 }
 function startNote(el) {
@@ -1061,8 +1261,24 @@ function furi(s, viewer) {
 }
 function printWeek() {
   const days = weekDays();
-  $('#print').innerHTML = `<h1>${esc(S.company.name)}　週間配置表<small>${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</small></h1>${allTable(visiblePeople(), days, true)}`;
+  $('#print').innerHTML = `<h1>${esc(S.company.name)}　週間配置表<small>${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</small></h1>${S.view === 'board' ? boardPrint() : allTable(visiblePeople(), days, true)}`;
   window.print();
+}
+// ホワイトボードで見ているときの印刷：現場×日のマスに名前を並べる（日曜・祝日の未配置は休みなので書かない）
+function boardPrint() {
+  if (!visiblePeople().length) return '<div class="empty">表示する人がいません</div>';
+  const { days, rows, at } = boardRows();
+  return `<table class="vt"><thead><tr><th>現場</th>${days.map(d => {
+    const h = holidayName(ds(d));
+    return `<th class="${dayCls(d)}">${md(d)}<br>${DOW[d.getDay()]}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
+  }).join('')}</tr></thead><tbody>${rows.map(r => `<tr><th>${r.pool ? '未配置' : r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name)}</th>${days.map(d => {
+    const k = ds(d), list = r.pool && isRestDay(d) ? [] : at[r.id]?.[k] || [];
+    const ca = r.pool || r.locked ? { cls: '', style: '' } : colorAttr(r, r.kind === 'off' ? 'off' : '');
+    return `<td class="${ca.cls}"${ca.style}>${list.map(p => {
+      const n = cellOf(p.id, k)?.note;
+      return `<div>${esc(p.name)}${n ? `<div class="vnote">${esc(n)}</div>` : ''}</div>`;
+    }).join('')}</td>`;
+  }).join('')}</tr>`).join('')}</tbody></table>`;
 }
 
 /* ---- 人の登録 ---- */
@@ -1332,11 +1548,14 @@ app.addEventListener('click', e => {
   if (!b || !app.contains(b) || b.tagName === 'SELECT') return;
   const d = b.dataset;
   // 週のデータが届く前に表を使う操作をすると、空の表を元に計算してしまう
-  if (['fill', 'copyPrev', 'print'].includes(d.act) && !(S.company && S.weekLoaded)) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
+  if (['fill', 'copyPrev', 'print', 'mg', 'unassign'].includes(d.act) && !(S.company && S.weekLoaded)) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
   switch (d.act) {
     case 'tab': S.tab = d.tab; render(); break;
     case 'week': goWeek(+d.d); break;
     case 'filter': S.filter = d.k; renderMain(); break;
+    case 'view': S.view = d.v; lsSet('jsched_view', S.view); sortFailed = false; renderMain(); break;
+    case 'mg': if (S.role === 'edit') editMagnet(d.pid, d.date); break;
+    case 'unassign': if (S.role === 'edit') setCell(d.pid, d.date, { site: '' }); break;
     case 'note': if (S.role === 'edit') startNote(b); break;
     case 'fill': fillRow(d.pid); break;
     case 'copyPrev': copyPrevWeek(); break;
@@ -1394,12 +1613,19 @@ app.addEventListener('change', e => {
 app.addEventListener('input', e => {
   if (e.target.id === 'search') {
     S.search = e.target.value;
-    const g = $('#grid'); if (g) g.innerHTML = gridTable();
+    const g = $('#grid'); if (g) { g.innerHTML = weekView(); mountBoard(); }
   }
   if (e.target.id === 'hsearch') {
     S.hist.q = e.target.value;
     const h = $('#hlist'); if (h) h.innerHTML = historyList();
   }
+});
+// マグネットはキーボードでも開ける（Enter・スペース）
+app.addEventListener('keydown', e => {
+  const m = e.target.closest?.('.mg');
+  if (!m || (e.key !== 'Enter' && e.key !== ' ')) return;
+  e.preventDefault();
+  if (S.role === 'edit' && S.company && S.weekLoaded) editMagnet(m.dataset.pid, m.dataset.date);
 });
 app.addEventListener('submit', async e => {
   e.preventDefault();
