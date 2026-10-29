@@ -133,6 +133,9 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 @media (hover:hover){.smemo.empty{color:transparent}td:hover>.smemo.empty{color:var(--faint)}}   /* マウスの端末では、空のメモ欄は指したときだけ出す */
 .smemoIn{width:100%;margin-top:4px;padding:3px 5px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
 @media (hover:none){.smemoIn,.noteIn{font-size:16px}}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
+/* 指の端末では、並べ替えできるマス（現場の行）のマグネットを行の幅いっぱいに伸ばす。
+   短い名前の右の空いた所に指があると Sortable が反応せず、その人の前に入れられないため */
+@media (hover:none){.mlist:not([data-site=""]):not([data-lock]) .mg{flex-grow:1}}
 .board th.bk,.board td.bk{min-width:150px;max-width:220px;background:#fffdf3}
 .board td.bk .smemo{margin-top:0;min-height:22px}
 .board td.bk .smemo.empty{color:var(--faint)}
@@ -1045,7 +1048,7 @@ function renderMain() {
   const m = $('#main'); if (!m) return;
   if (S.tab === 'table') {
     m.innerHTML = tableBar() + `<div class="gridwrap" id="grid">${weekView()}</div>` + (S.view === 'board'
-      ? `<div class="legend"><span>マグネットを同じ日の別の行（現場・休み・未配置）へドラッグすると、その日の予定が変わります</span><span>マグネットを押すと、現場とメモを変えられます</span></div>`
+      ? `<div class="legend"><span>マグネットを同じ日の別の行（現場・休み・未配置）へドラッグすると、その日の予定が変わります</span><span>同じマスの中でドラッグすると、並び順を変えられます</span><span>マグネットを押すと、現場とメモを変えられます</span></div>`
       : `<div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`);
   } else if (S.tab === 'people') m.innerHTML = peoplePanel();
   else if (S.tab === 'sites') m.innerHTML = sitesPanel();
@@ -1116,6 +1119,14 @@ function gridTable() {
 const weekView = () => S.view === 'board' ? boardTable() : gridTable();
 
 /* ---- ホワイトボード（現場ごと。人のマグネットを、同じ日の別の現場へドラッグして配置を変える） ---- */
+// マスの中の並び順は cells[人][日].rank（ドラッグで並べたときだけ書く）と、並べたときの現場 rankSite。
+// 現場が変わった後に残った rank（公開前の版を開いたままの端末・同時編集で残ったもの）は使わない。
+// ただし公開前の版の端末で A→B→A と戻されると、前の rank が生き返る（旧版は site しか書かないので見分けられない。並びがずれるだけ）。
+// rank の無い人は後ろに、人の登録の順で（sort は安定なので元の並びのまま）
+const cellRank = c => c?.site && c.rankSite === c.site && Number.isFinite(c.rank) ? c.rank : null;
+const rankOf = (pid, k) => cellRank(cellOf(pid, k)) ?? Infinity;
+const cmpRank = (x, y) => x === y ? 0 : x - y;   // Infinity 同士を 0 にする（引き算だと NaN）
+const byRank = k => (a, b) => cmpRank(rankOf(a.id, k), rankOf(b.id, k));
 // 1人は1日に1か所だけなので、どの日の列にも各人のマグネットがちょうど1つある（いちばん上の「未配置」か、どこかの現場）
 function boardRows() {
   const days = weekDays(), people = visiblePeople();
@@ -1124,6 +1135,7 @@ function boardRows() {
     const k = ds(d);
     ((at[cellOf(p.id, k)?.site || ''] ||= {})[k] ||= []).push(p);
   }
+  for (const byDay of Object.values(at)) for (const [k, list] of Object.entries(byDay)) list.sort(byRank(k));
   const act = sortedSites(false);
   const rows = [{ id: '', pool: true }, ...act.filter(s => s.kind !== 'off'), ...act.filter(s => s.kind === 'off')];
   // 完了・削除した現場でも、この週に予定かメモが入っていれば行を出す（隠さない）。そこへは置けない
@@ -1233,7 +1245,8 @@ async function mountBoard() {
       // 同じ日の列の中だけで動かせる。完了・削除した現場へは置けない（取り出すのはよい）
       // （put に true を渡すと、どの列からでも受け取ってしまう。同じ日の名前だけを並べる）
       group: { name: 'd' + el.dataset.date, pull: true, put: el.dataset.lock ? false : ['d' + el.dataset.date] },
-      sort: false, animation: 0,
+      // マスの中の並べ替えは現場の行だけ（未配置の行と、完了・削除した現場の行は並べ替えない）
+      sort: !!el.dataset.site && !el.dataset.lock, animation: 0,
       // 以下は現場配置ボードと同じ（iPad で確かめた値。delay と touchStartThreshold でスクロールとドラッグを見分ける）。
       // fallbackTolerance だけは 3→8。3px（スマホで約0.5mm）の指ぶれでドラッグになると、ふつうのタップが消えるため
       forceFallback: true, fallbackOnBody: true, fallbackTolerance: 8,
@@ -1253,28 +1266,80 @@ function boardDragEnd(ev) {
   const waited = S.pending, moved = S.dragging;   // moved＝onStart が来た（本当に動かした）
   S.dragging = false; S.pending = false;
   const pid = ev.item.dataset.pid;
-  // 行き先は、離した点の下のマス（同じ日・完了していない現場・元のマス以外）。ev.to は使わない：
+  // 行き先は、離した点の下のマス（同じ日・完了していない現場。元のマスなら並べ替え）。ev.to は使わない：
   // Sortable は置けない所（別の日・完了した現場・表の外）で離しても元に戻さず、途中で通った同じ日のマスに残すうえ、
   // 仮の位置は 50ms ごとにしか動かない（自動スクロール中などは1つ前のマスのまま）。行き先が無ければ描き直して元に戻す
   const oe = ev.originalEvent, pt = oe && (oe.changedTouches?.[0] || oe);
   const hit = moved && pt && pt.clientX != null ? document.elementFromPoint(pt.clientX, pt.clientY) : null;
   const list = hit?.closest('#grid td')?.querySelector('.mlist');
-  const dest = list && list !== ev.from && list.dataset.date === ev.from.dataset.date && !list.dataset.lock ? list : null;
+  const dest = list && list.dataset.date === ev.from.dataset.date && !list.dataset.lock ? list : null;
+  // 現場のマスでの並び：Sortable が仮に置いた所（見えていた順）。仮の位置がまだ別のマスなら、離した点から決める。
+  // 元のマスの元の位置で離したときは並びを書かない（待っている間にほかの端末が並べ替えていたら、それを戻さない）
+  const still = dest === ev.from && ev.to === ev.from && ev.oldIndex === ev.newIndex;
+  const order = !dest?.dataset.site || still ? null
+    : dest === ev.to ? [...dest.querySelectorAll('.mg')].map(m => m.dataset.pid) : orderAt(dest, pid, pt);
   // マウスで動かして離すと、同じ流れで click が来てマグネットの画面が開いてしまうので、動かした後の click は捨てる
   const eat = e => { e.stopPropagation(); e.preventDefault(); };
   if (moved) window.addEventListener('click', eat, true);
   // Sortable が後片付けを終えてから書く・描き直す
   setTimeout(() => {
     if (moved) { window.removeEventListener('click', eat, true); clearSortableClick(); }
-    if (dest) dropMagnet(pid, dest.dataset.date, dest.dataset.site);
-    // 動かさずに離したとき（長押ししただけ）は、待たせたデータが無ければ描き直さない
-    // （描き直すと、この後に来るタップが消えた要素に当たって画面が開かない）
-    else if (ev.from !== ev.to || waited) refresh();
+    if (dest && dropMagnet(pid, dest.dataset.date, dest.dataset.site, order, ev.from.dataset.site)) return;
+    // 書くものが無いとき：動かさずに離したとき（長押ししただけ）は、待たせたデータが無ければ描き直さない
+    // （描き直すと、この後に来るタップが消えた要素に当たって画面が開かない）。Sortable が動かしたままなら元に戻す
+    if (ev.from !== ev.to || ev.oldIndex !== ev.newIndex || waited) refresh();
   }, 0);
 }
-async function dropMagnet(pid, date, site) {
-  if (!S.company?.people[pid] || (cellOf(pid, date)?.site || '') === site) { refresh(); return; }
-  if (!(await setCell(pid, date, { site }))) refresh();   // 書けなかったらマグネットを元の場所に戻す
+// 離した点から、そのマスの何番目に入るかを決める（マグネットは左から右へ、はみ出したら次の行へ並ぶ）
+function orderAt(list, pid, pt) {
+  const ids = [];
+  let at = -1;
+  for (const m of list.querySelectorAll('.mg')) {
+    if (m.dataset.pid === pid) continue;
+    const r = m.getBoundingClientRect();
+    if (at < 0 && pt && (pt.clientY < r.top || (pt.clientY <= r.bottom && pt.clientX < r.left + r.width / 2))) at = ids.length;
+    ids.push(m.dataset.pid);
+  }
+  ids.splice(at < 0 ? ids.length : at, 0, pid);
+  return ids;
+}
+// マグネットを離した先に書く（別のマスなら現場を変え、現場のマスなら並び順も）。from＝つかんだときに見えていた現場。
+// 書くものが無ければ false
+function dropMagnet(pid, date, site, order, from) {
+  if (!S.company?.people[pid]) return false;
+  const cur = cellOf(pid, date) || {}, moving = (cur.site || '') !== site;
+  // 元のマスで離したのに、待っている間にほかの端末がこの人のこの日を変えていた：古い画面のまま書き戻さず、新しい状態を見せる
+  if (site === from && moving) { refresh(); return true; }
+  const out = {};
+  // 別のマスへ動かしたら、前の現場で並べた順は消す（並び順を書くときは下で上書き）
+  if (moving) out[pid] = cur.rank != null ? { site, rank: null } : { site };
+  const ranks = site && order ? rankPatch(pid, date, site, order, moving) : null;
+  for (const [id, rank] of Object.entries(ranks?.patch || {})) out[id] = { ...out[id], rank, rankSite: site };
+  if (!Object.keys(out).length) return false;
+  const hist = moving ? cellHist(pid, date, { site })
+    : `現場「${siteLabel(site)}」の ${dayLabel(date)} のマグネットの順番を「${ranks.order.map(personLabel).join('、')}」に変更`;
+  store.setCells(ds(mondayOf(pd(date))), Object.fromEntries(Object.entries(out).map(([id, c]) => [id, { [date]: c }])), hist)
+    .then(ok => { if (!ok) refresh(); });   // 書けなかったらマグネットを元の場所に戻す
+  return true;
+}
+// 動かした人（pid）だけを、見えていた並び（order）で直前にいた人の後ろ（いなければ直後の人の前）に入れて rank に直す。
+// ほかの人同士の順は今のデータのまま（待っている間にほかの端末が並べ替えた分や、検索・区分で隠れている人・帰国退職の人の場所を戻さない）。
+// rank を書かなくても同じ並びになるとき（並べ替えずに別のマスの末尾へ入れただけなど）は書かない
+function rankPatch(pid, date, site, order, moving) {
+  const rk = id => id === pid && moving ? Infinity : rankOf(id, date);
+  const base = sortedPeople(true).filter(p => p.id === pid || cellOf(p.id, date)?.site === site)
+    .sort((a, b) => cmpRank(rk(a.id), rk(b.id))).map(p => p.id);
+  const rest = base.filter(id => id !== pid), i = order.indexOf(pid);
+  // 待っている間にほかの端末がこのマスから動かした人は、目印にしない
+  const prev = order.slice(0, Math.max(i, 0)).reverse().find(id => rest.includes(id));
+  const after = order.slice(i + 1).find(id => rest.includes(id));
+  if (i < 0 || (!prev && !after)) return null;
+  const next = [...rest];
+  next.splice(prev ? rest.indexOf(prev) + 1 : rest.indexOf(after), 0, pid);
+  if (next.every((id, j) => id === base[j])) return null;
+  const patch = {};
+  next.forEach((id, j) => { if (rk(id) !== j + 1) patch[id] = j + 1; });
+  return { patch, order: next };
 }
 // マグネットを押したとき：その人のその日の現場とメモを変える画面（ドラッグしにくいスマホでも使える）
 function editMagnet(pid, date) {
@@ -1346,14 +1411,19 @@ function fieldHist(coll, x, f, v) {
   }
 }
 
-function setCell(pid, date, patch) {
+function cellHist(pid, date, patch) {
   const cur = cellOf(pid, date) || {};
   const where = `${personLabel(pid)} の ${dayLabel(date)}`;
   // 現場とメモを一度に変えたとき（マグネットを押した画面）は1行にまとめる
   const site = 'site' in patch ? `を「${siteLabel(cur.site)}」→「${siteLabel(patch.site)}」に変更` : '';
   const note = !('note' in patch) ? '' : patch.note ? `メモを「${short(patch.note)}」にした` : 'メモを消した';
-  const hist = `${where} ${site && note ? `${site}、${note}` : site || 'の' + note}`;
-  return store.setCells(ds(mondayOf(pd(date))), { [pid]: { [date]: patch } }, hist);
+  return `${where} ${site && note ? `${site}、${note}` : site || 'の' + note}`;
+}
+function setCell(pid, date, patch) {
+  const cur = cellOf(pid, date) || {};
+  // 現場を変えたら、前の現場のマスで並べた順（rank）は消す（新しい現場では後ろに付く）
+  const w = 'site' in patch && patch.site !== (cur.site || '') && cur.rank != null ? { ...patch, rank: null } : patch;
+  return store.setCells(ds(mondayOf(pd(date))), { [pid]: { [date]: w } }, cellHist(pid, date, patch));
 }
 function startNote(el) {
   const { pid, date } = el.dataset;
@@ -1387,7 +1457,7 @@ async function fillRow(pid) {
   for (const d of days) {
     const k = ds(d);
     if (isRestDay(d) || cellOf(pid, k)?.site) continue;
-    out[k] = { site }; n++;
+    out[k] = cellOf(pid, k)?.rank != null ? { site, rank: null } : { site }; n++;
   }
   if (!n) { toast('空いている日がありません（日曜・祝日は埋めません）'); return; }
   const sname = S.company.sites[site].name;
@@ -1402,8 +1472,31 @@ async function copyPrevWeek() {
   let prev;
   try { prev = await store.getWeek(ds(prevMon)); } catch (e) { toast('前の週を読み込めませんでした：' + errMsg(e), true); return; }
   if (moved()) { toast('週を移ったので、コピーをやめました'); return; }
-  const out = {}; let n = 0, over = 0;
-  const skipped = new Set();
+  const plan = copyPlan(prev);
+  if (!plan.n && !plan.ro) { toast('前の週からコピーする予定はありません'); return; }
+  const { n, over, ro, skipped } = plan;
+  const restNote = [...skipped].sort().map(k => `${md(pd(k))}（${holidayName(k) || '日曜'}）`).join('、');
+  const msg = `前の週（${md(prevMon)}〜）の現場とマグネットの並び順を、この週にコピーします。\n\n` +
+    (n ? `${n} マスを書き込みます。` : '現場はすべて前の週と同じです。') +
+    (over ? `\nそのうち ${over} マスは今入っている現場を上書きします。` : '') +
+    (ro ? `\n${n ? 'ほかに、' : ''}ホワイトボードの ${ro} か所は、マグネットの並び順だけを前の週に合わせます。` : '') +
+    '\n前の週で空いていたマスは、この週の内容をそのまま残します（ホワイトボードでは前の週の人の後ろに並べます）。' +
+    '\nメモはコピーしません（この週のメモはそのまま残ります）。' +
+    (restNote ? `\n${restNote} は休みの日なので空けておきます。` : '');
+  if (!(await ask(msg, 'コピーする'))) return;
+  if (moved()) { toast('週を移ったので、コピーをやめました'); return; }
+  // 確認の画面を出している間に、ほかの端末が変えたかもしれないので、書く直前に作り直す
+  const p = copyPlan(prev);
+  if (!p.n && !p.ro) { toast('前の週からコピーする予定はありません'); return; }
+  const ok = await store.setCells(ds(mon), p.out, `前の週（${md(prevMon)}〜）の現場を ${md(mon)}〜 の週へコピー（${[p.n && `${p.n} マス`, p.ro && `並び順だけ ${p.ro} か所`].filter(Boolean).join('、')}）`);
+  if (ok) toast(p.n ? `${p.n} マスをコピーしました` : `マグネットの並び順を ${p.ro} か所合わせました`);
+}
+// 前の週の予定から、この週に書くものを作る。n＝現場を書くマス（人×日）、over＝そのうち今の現場を上書きするマス、
+// ro＝現場は同じで並び順だけ合わせるホワイトボードのマス（現場×日）
+function copyPlan(prev) {
+  const out = {}, skipped = new Set(), boxes = new Map();
+  let n = 0, over = 0, ro = 0;
+  const put = (pid, nd, v) => { (out[pid] ||= {})[nd] = { ...out[pid]?.[nd], ...v }; };
   for (const [pid, days] of Object.entries(prev?.cells || {})) {
     const p = S.company.people[pid];
     if (!p || p.retired) continue;
@@ -1412,24 +1505,36 @@ async function copyPrevWeek() {
       const nd = ds(addDays(pd(d), 7));
       // 日曜・祝日には書き込まない（休みの日に現場が出ると実習生が出勤してしまうため）
       if (isRestDay(pd(nd))) { skipped.add(nd); continue; }
-      const cur = cellOf(pid, nd);
-      if (cur?.site === c.site) continue;
-      if (cur?.site) over++;
-      (out[pid] ||= {})[nd] = { site: c.site };
-      n++;
+      const cur = cellOf(pid, nd), moving = cur?.site !== c.site;
+      if (moving) {
+        if (cur?.site) over++;
+        put(pid, nd, cur?.rank != null ? { site: c.site, rank: null } : { site: c.site });
+        n++;
+      }
+      const key = nd + '\n' + c.site;
+      if (!boxes.has(key)) boxes.set(key, { nd, site: c.site, prev: [], moved: false });
+      const b = boxes.get(key);
+      b.prev.push({ id: pid, rank: cellRank(c) ?? Infinity });
+      b.moved ||= moving;
     }
   }
-  if (!n) { toast('前の週からコピーする予定はありません'); return; }
-  const restNote = [...skipped].sort().map(k => `${md(pd(k))}（${holidayName(k) || '日曜'}）`).join('、');
-  const msg = `前の週（${md(prevMon)}〜）の現場を、この週にコピーします。\n\n${n} マスを書き込みます。` +
-    (over ? `\nそのうち ${over} マスは今入っている現場を上書きします。` : '') +
-    '\n前の週で空いていたマスは、この週の内容をそのまま残します。' +
-    '\nメモはコピーしません（この週のメモはそのまま残ります）。' +
-    (restNote ? `\n${restNote} は休みの日なので空けておきます。` : '');
-  if (!(await ask(msg, 'コピーする'))) return;
-  if (moved()) { toast('週を移ったので、コピーをやめました'); return; }
-  const ok = await store.setCells(ds(mon), out, `前の週（${md(prevMon)}〜）の現場を ${md(mon)}〜 の週へコピー（${n} マス）`);
-  if (ok) toast(`${n} マスをコピーしました`);
+  // マグネットの並び順：前の週にそのマスにいた人を前の週の順に並べ、この週だけの人はその後ろに今の順で並べる。
+  // 現場だけ書いたときの並びと同じなら rank は書かない。帰国・退職の人はホワイトボードに出ないので並べない（fromPrev と同じ）
+  const reg = sortedPeople(false).map(p => p.id);
+  const byReg = (a, b) => reg.indexOf(a.id) - reg.indexOf(b.id);
+  for (const { nd, site, prev: pv, moved } of boxes.values()) {
+    const fromPrev = pv.sort((a, b) => cmpRank(a.rank, b.rank) || byReg(a, b)).map(x => x.id);
+    const others = reg.filter(id => !fromPrev.includes(id) && !out[id]?.[nd] && cellOf(id, nd)?.site === site)
+      .sort((a, b) => cmpRank(rankOf(a, nd), rankOf(b, nd)));
+    const want = [...fromPrev, ...others];
+    const shownRank = id => out[id]?.[nd]?.site ? Infinity : rankOf(id, nd);   // 現場だけ書いたときの順位
+    const shown = reg.filter(id => want.includes(id)).sort((a, b) => cmpRank(shownRank(a), shownRank(b)));
+    if (want.every((id, i) => id === shown[i])) continue;
+    // 現場も一緒に書く（確認の後にほかの端末がこの人を動かしていても、rank だけ残って食い違わないように）
+    want.forEach((id, i) => { if (shownRank(id) !== i + 1) put(id, nd, { site, rank: i + 1, rankSite: site }); });
+    if (!moved) ro++;
+  }
+  return { out, n, over, ro, skipped };
 }
 function allTable(people, days, print) {
   if (!people.length) return `<div class="empty">${print ? '表示する人がいません' : vt('nobody')}</div>`;
