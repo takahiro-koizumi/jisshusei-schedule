@@ -123,11 +123,30 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .mlist{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:30px}
 .mg{display:inline-flex;align-items:center;max-width:100%;min-height:26px;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;line-height:1.2;color:#fff;background:linear-gradient(180deg,#ff7373 0%,#e94747 100%);box-shadow:0 1px 2px rgba(0,0,0,.15);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;word-break:break-all}
 .mg:focus-visible{outline:2px solid var(--dark);outline-offset:1px}
+.mg.cc{background:var(--mc);color:var(--mt);border:1px solid rgba(0,0,0,.15)}   /* 人ごとに選んだ色（[style] で選ぶと、ドラッグ中に Sortable が付ける style にも当たる） */
+.mg.cw{border-color:#999}
+.mg.cc.cd::before,.mg.cc.cd .x{background:rgba(0,0,0,.55)}   /* 実/特の丸の指定（[data-kind]）より強くする */
+.mg.cc.cd .x:hover{background:rgba(220,53,69,.85)}
 .mg[data-kind=jisshu],.mg[data-kind=tokutei]{border-radius:14px;padding-left:4px}
-.mg[data-kind=jisshu]::before,.mg[data-kind=tokutei]::before{content:'実';display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:14px;height:14px;padding:0 3px;margin-right:4px;border-radius:50%;background:rgba(0,0,0,.3);font-size:9px}
+.mg[data-kind=jisshu]::before,.mg[data-kind=tokutei]::before{content:'実';display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:14px;height:14px;padding:0 3px;margin-right:4px;border-radius:50%;background:rgba(0,0,0,.3);color:#fff;font-size:9px}
 .mg[data-kind=tokutei]::before{content:'特'}
 .mg.faded{opacity:.5;min-height:20px;padding:2px 6px;font-size:11px}   /* 日曜・祝日の未配置＝休み。場所を取らないよう小さく */
-.mg .x{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;margin-left:5px;border-radius:50%;background:rgba(0,0,0,.35);font-size:10px;cursor:pointer}
+.mg .x{display:inline-flex;align-items:center;justify-content:center;flex:none;width:15px;height:15px;margin-left:5px;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;font-size:10px;cursor:pointer}
+/* 現場のメモ：マスごと（その日）と、右端の備考（その週） */
+.smemo{font-size:11px;line-height:1.35;margin-top:4px;padding:2px 4px;border:1px dashed transparent;border-radius:3px;word-break:break-all;white-space:pre-wrap;cursor:pointer;color:#7a4b00;background:rgba(255,248,214,.85)}
+.smemo.empty{background:none;color:var(--faint)}
+.smemo:hover{border-color:var(--line2)}
+@media (hover:hover){.smemo.empty{color:transparent}td:hover>.smemo.empty{color:var(--faint)}}   /* マウスの端末では、空のメモ欄は指したときだけ出す */
+.smemoIn{width:100%;margin-top:4px;padding:3px 5px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
+@media (hover:none){.smemoIn,.noteIn{font-size:16px}}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
+.board th.bk,.board td.bk{min-width:150px;max-width:220px;background:#fffdf3}
+.board td.bk .smemo{margin-top:0;min-height:22px}
+.board td.bk .smemo.empty{color:var(--faint)}
+.mg.pv{cursor:default;touch-action:auto;user-select:auto;-webkit-user-select:auto;margin-right:6px;flex:none;max-width:110px;overflow:hidden;white-space:nowrap}
+.pcs{display:flex;flex-wrap:wrap;gap:6px}
+.pcs button{width:30px;height:30px;border-radius:6px;border:2px solid rgba(0,0,0,.15);padding:0;font-size:10px;line-height:1}
+.pcs button.def{background:linear-gradient(180deg,#ff7373 0%,#e94747 100%);color:#fff}
+.pcs button.on{outline:3px solid var(--dark);outline-offset:1px}
 .mg .x:hover{background:rgba(220,53,69,.85)}
 .bnote{font-size:11px;color:#444;margin-top:4px;word-break:break-all;cursor:pointer;line-height:1.35}
 .bnote b{font-weight:600;margin-right:3px}
@@ -227,6 +246,13 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .vs{font-size:19px;font-weight:700;word-break:break-all}
 .vmuted{color:var(--faint);font-weight:400}
 .vnote{font-size:14px;color:#444;white-space:pre-wrap;word-break:break-all;margin-top:2px}
+.vday>:not(.vd){grid-column:2}
+.vsm{font-size:14px;color:#7a4b00;background:#fff8d6;border-radius:6px;padding:3px 8px;margin-top:4px;white-space:pre-wrap;word-break:break-all}
+.vweek{margin-top:14px;background:#fffdf3;border:1px solid #f0dca0;border-radius:10px;padding:10px 12px}
+.vwh{font-weight:700;margin-bottom:6px}
+.vwi{padding:6px 0;border-top:1px solid #f3e7c0}
+.vwh+.vwi{border-top:0}
+.vwi .vs{font-size:16px}
 .furi{display:inline-flex;flex-direction:column;line-height:1.3}
 .furi .fk{font-size:.6em;font-weight:400;color:var(--sub)}
 .vall{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
@@ -263,6 +289,7 @@ table.vt{border-collapse:collapse;font-size:13px;min-width:100%}
   #print table.vt{width:100%;font-size:9pt}
   #print .vt th,#print .vt td{border:1px solid #888}
   #print .vt td.off,#print .vt td.col,#print .vt thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #print .pmemo{font-size:8pt;color:#7a4b00;margin-top:2px;white-space:pre-wrap}
 }
 
 @media (max-width:700px){
@@ -391,6 +418,28 @@ function nextSiteColor(kind) {
   const used = new Set(Object.values(S.company?.sites || {}).filter(s => !s.done).map(s => s.color));
   return (SITE_COLORS.find(c => c[0] && !used.has(c[0])) || SITE_COLORS[1])[0];
 }
+// 人のマグネットの色 [保存する値, 名前]。'' は標準（現場配置ボードと同じ赤）。人ごとに people[id].color へ保存
+const PERSON_COLORS = [
+  ['', '標準（赤）'], ['#c0392b', 'えんじ'], ['#ff8fa3', 'ピンク'], ['#e67e22', 'オレンジ'], ['#f5c518', '黄'],
+  ['#2ecc71', '黄緑'], ['#27ae60', '緑'], ['#1a9c8c', '青緑'], ['#5dade2', '水色'], ['#3498db', '青'],
+  ['#3d5bd9', '藍'], ['#9b59b6', '紫'], ['#8b4513', '茶'], ['#7f8c8d', '灰'], ['#2c3e50', '紺'], ['#000000', '黒'], ['#ffffff', '白'],
+];
+const personColorLabel = v => PERSON_COLORS.find(c => c[0] === (v || ''))?.[1] || v;
+// 地の色が明るいときは黒い字、暗いときは白い字（現場配置ボードと同じ計算）
+function textColorFor(bg) {
+  const m = String(bg).replace('#', '');
+  const lum = (0.299 * parseInt(m.slice(0, 2), 16) + 0.587 * parseInt(m.slice(2, 4), 16) + 0.114 * parseInt(m.slice(4, 6), 16)) / 255;
+  return lum > 0.55 ? '#222' : '#fff';   // 0.62 だと黄緑・水色・オレンジが白い字で読みにくい
+}
+// マグネットに付ける class と style。選べる色だけを使う（ほかの値が入っていたら標準のまま）
+function magnetColor(color) {
+  if (!color || !PERSON_COLORS.some(c => c[0] === color)) return { cls: '', style: '' };
+  const dark = textColorFor(color) === '#222';   // 明るい地の色：実/特の丸と × の地を濃くして白い字を読めるように
+  return { cls: ' cc' + (dark ? ' cd' : '') + (color === '#ffffff' ? ' cw' : ''), style: ` style="--mc:${color};--mt:${textColorFor(color)}"` };
+}
+function personColorOptions(cur) {
+  return PERSON_COLORS.map(([v, l]) => `<option value="${v}"${(cur || '') === v ? ' selected' : ''}${v ? ` style="background:${v};color:${textColorFor(v)}"` : ''}>${l}</option>`).join('');
+}
 const KIND_SHORT = Object.fromEntries(KINDS.map(k => [k[0], k[2]]));
 const TABS = [['table', '予定表'], ['people', '人の登録'], ['sites', '現場の登録'], ['history', '履歴'], ['settings', '設定']];
 
@@ -415,6 +464,7 @@ const VT = {
   loading:   { ja: '読み込み中…', id: 'Memuat…', si: 'පූරණය වෙමින්…' },
   slow:      { ja: '読み込みに時間がかかっています。<br>電波の良い所で、もう一度開いてください。', id: 'Pemuatan memakan waktu lama.<br>Buka lagi di tempat dengan sinyal yang bagus.', si: 'පූරණය වීමට වැඩි වේලාවක් ගත වේ.<br>හොඳ සංඥා ඇති තැනක නැවත විවෘත කරන්න.' },
   reload:    { ja: '再読み込み', id: 'Muat ulang', si: 'නැවත පූරණය කරන්න' },
+  siteMemo:  { ja: `${R('現場', 'げんば')}の メモ`, id: 'Catatan lokasi kerja', si: 'වැඩබිමේ සටහන්' },
   admin:     { ja: '事務所の方（ログイン）', id: 'Untuk staf kantor (masuk)', si: 'කාර්යාල කාර්ය මණ්ඩලය සඳහා (පිවිසෙන්න)' },
   nobody:    { ja: 'まだ だれも いません', id: 'Belum ada nama yang terdaftar', si: 'තවම කිසිවෙකු ලියාපදිංචි කර නැත' },
   demo:      { ja: 'お試しモード', id: 'Mode uji coba', si: 'අත්හදා බැලීමේ ප්‍රකාරය' },
@@ -448,8 +498,11 @@ const S = {
   company: null, notFound: false,
   weekStart: mondayOf(new Date()), week: { cells: {} },
   tab: 'table', filter: 'all', search: '',
-  view: lsGet('jsched_view') === 'board' ? 'board' : 'table',   // 予定表の見せ方：表（人ごと）／ホワイトボード（現場ごと）。端末ごとに覚える
+  // 予定表の見せ方：ホワイトボード（現場ごと。メイン）／表（人ごと）。端末ごとに覚える。
+  // キーを v2 にしたのは、ホワイトボードをメインにした日（2026-10-29）に、前の日に「表」を選んだ端末もいったんホワイトボードで開くため
+  view: lsGet('jsched_view2') === 'table' ? 'table' : 'board',
   dragging: false,       // マグネットをドラッグしている間は、届いたデータで描き直さない（つかんだ物が消えるため）
+  ptrDown: false,        // ホワイトボードを押している間も同じ（押した物が消えると click が出ない）
   vtab: 'me', me: '',
   editors: [],           // 編集できる人のメールアドレス（編集画面のときだけ読む）
   editorsLoaded: false,  // 一覧が届く前に追加・削除すると、空の一覧を元にしてしまう
@@ -579,6 +632,7 @@ function seedDemo() {
    ['船橋市 宅地造成工事', 'ふなばしし たくち ぞうせい こうじ', 'site', 'sky'], ['千葉市 擁壁工事', 'ちばし ようへき こうじ', 'site', 'orange'],
    ['資材置場', 'しざい おきば', 'site', 'gray']]
     .forEach(([name, kana, kind, color], i) => { sites['s_demo' + i] = { name, kana, kind, color, order: i + 1, done: false }; });
+  people.p_demo5.color = '#3498db';   // マグネットの色の見本
   const mon = mondayOf(new Date()), cells = {};
   [[2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 0], [4, 4, 4, 4, 4, 4], [1, 2, 2, 2, 2, 2], [5, 4, 4, 4, 4, 0], [2, 2, 3, 3, 3, '']]
     .forEach((row, i) => {
@@ -586,7 +640,8 @@ function seedDemo() {
       row.forEach((si, j) => { if (si !== '') pc[ds(addDays(mon, j))] = { site: 's_demo' + si, note: '' }; });
     });
   cells.p_demo0[ds(mon)].note = '7:00 事務所集合';
-  return { company: { name: 'お試し株式会社', people, sites }, weeks: { [ds(mon)]: { cells } }, editors: [] };
+  const memos = { s_demo2: { [ds(addDays(mon, 1))]: '8:00 現地集合・弁当持参', week: '駐車場は北側の空き地' } };
+  return { company: { name: 'お試し株式会社', people, sites }, weeks: { [ds(mon)]: { cells, memos } }, editors: [] };
 }
 function makeDemoStore() {
   const KEY = 'jsched_demo_v1';
@@ -620,6 +675,7 @@ function makeDemoStore() {
     },
     async getWeek(m) { return clone(data.weeks[m] || { cells: {} }); },
     async setCells(m, cells, hist) { deepMerge((data.weeks[m] ||= { cells: {} }).cells, cells); return done(hist); },
+    async setMemos(m, memos, hist) { deepMerge((data.weeks[m] ||= { cells: {} }).memos ||= {}, memos); return done(hist); },
     async patch(obj, hist) { deepMerge(data.company, obj); return done(hist); },
     async removeField(path, hist) {
       let o = data.company; for (const k of path.slice(0, -1)) o = o?.[k];
@@ -713,22 +769,28 @@ const Cloud = {
     // 書き込みと編集履歴を1回のまとめ書き（batch）にする＝片方だけ残ることがない。
     // 履歴を書くルールがまだ公開されていないとき（permission-denied）は、履歴なしで書き直して知らせる
     // （ルールの貼り直しより先にアプリを公開しても、編集が止まらないように）。結果は true / false
-    async function commit(apply, hist) {
+    // deniedMsg＝新しい種類のデータ（現場のメモ）で、ルールがまだ古くて断られたときの知らせ
+    async function commit(apply, hist, deniedMsg) {
       const run = withHist => {
         const b = F.writeBatch(db);
         apply(b);
         if (withHist && hist) b.set(F.doc(hcol), { at: F.serverTimestamp(), by: Cloud.auth.currentUser?.email || '', text: String(hist).slice(0, 500) });
         return b.commit();
       };
+      const denied = e => String(e?.code || '').includes('permission-denied');
       try { await run(true); return true; }
       catch (e) {
-        if (hist && String(e?.code || '').includes('permission-denied')) {
+        if (hist && denied(e)) {
           try {
             await run(false);
             if (!histWarned) { histWarned = true; toast('保存しました（編集履歴は残せませんでした。Firebase のルールの更新が必要です）', true); }
             return true;
-          } catch (e2) { fail(e2); return false; }
+          } catch (e2) {
+            if (deniedMsg && denied(e2)) { console.error(e2); toast(deniedMsg, true); return false; }
+            fail(e2); return false;
+          }
         }
+        if (deniedMsg && denied(e)) { console.error(e); toast(deniedMsg, true); return false; }
         fail(e); return false;
       }
     }
@@ -737,6 +799,11 @@ const Cloud = {
       onWeek(m, cb) { return F.onSnapshot(wref(m), META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : { cells: {} }); }, e => { console.error(e); toast('読み込めませんでした：' + errMsg(e)); }); },
       async getWeek(m) { const s = await F.getDoc(wref(m)); return s.exists() ? s.data() : { cells: {} }; },
       setCells(m, cells, hist) { return commit(b => b.set(wref(m), { cells }, { merge: true }), hist); },
+      // 現場のメモ memos[現場ID][日付 or 'week']。週の文書の memos に1か所ずつ merge で書く（cells と同じく、同時に別の所を書いても消し合わない）
+      setMemos(m, memos, hist) {
+        return commit(b => b.set(wref(m), { memos }, { merge: true }), hist,
+          'メモを保存できませんでした。Firebase のルールの更新が必要です（現場のメモを書けるルールを貼って「公開」してください）');
+      },
       patch(obj, hist) { return commit(b => b.set(cref, obj, { merge: true }), hist); },
       removeField(path, hist) { return commit(b => b.update(cref, new F.FieldPath(...path), F.deleteField()), hist); },
       onEditors(cb, onErr) { return F.onSnapshot(aref, s => { if (s.exists()) cb(s.data().editors || []); }, e => { console.error(e); onErr?.(e); }); },
@@ -815,7 +882,7 @@ function subscribeWeek() {
     w = w || {}; w.cells ||= {};
     // 書き込むと、サーバーの確認だけの知らせ（中身は同じ）がもう1回来る。それで描き直すと、
     // ホワイトボードで次につかみかけたマグネットやタップが消えるので、中身が変わったときだけ描き直す
-    const same = S.weekLoaded && stableJson(w.cells) === stableJson(S.week.cells);
+    const same = S.weekLoaded && stableJson([w.cells, w.memos || {}]) === stableJson([S.week.cells, S.week.memos || {}]);
     S.week = w;
     S.weekLoaded = true; S.slowW = false;
     if (!same) refresh();
@@ -846,6 +913,26 @@ document.addEventListener('focusout', () => {
   if (!S.pending) return;
   setTimeout(() => { if (S.pending && !editingIn($('#main'))) { S.pending = false; refresh(); } }, 0);
 });
+// かな漢字変換を確定する Enter か（Safari は変換が終わった後に isComposing=false・keyCode 229 で送ってくる）
+const imeEnter = e => e.isComposing || e.keyCode === 229;
+// ホワイトボードを押している間は描き直さない（押している物が消えると click が出ず、押し直すことになる）。
+// 離したら、待たせた描き直しをする。窓の外で離した等で離したことが届かないときのため、5秒で戻す
+let ptrTimer = 0;
+const flushPending = () => { if (S.pending && !editingIn($('#main'))) { S.pending = false; refresh(); } };
+const ptrRelease = () => {
+  clearTimeout(ptrTimer);
+  if (!S.ptrDown) return;
+  setTimeout(() => { S.ptrDown = false; flushPending(); }, 0);
+};
+document.addEventListener('pointerdown', e => {
+  const was = S.ptrDown;
+  S.ptrDown = !!e.target?.closest?.('#grid');
+  clearTimeout(ptrTimer);
+  if (S.ptrDown) ptrTimer = setTimeout(ptrRelease, 5000);
+  else if (was) setTimeout(flushPending, 0);   // 押したままの指を残して別の所を押した：待たせた描き直しをここで済ませる
+}, true);
+['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, ptrRelease, true));
+window.addEventListener('blur', ptrRelease);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.screen === 'app') refresh(); });
 
 // データが届いたときに描き直す領域。入力欄やボタンのある所は入れない
@@ -867,7 +954,7 @@ function refresh() {
   const [id, fn, after] = REGIONS[S.tab];
   const el = document.getElementById(id);
   if (!el) return renderMain();
-  if (editingIn(el) || (S.dragging && id === 'grid')) { S.pending = true; return; }
+  if (editingIn(el) || ((S.dragging || S.ptrDown) && id === 'grid')) { S.pending = true; return; }
   el.innerHTML = fn();
   after?.();
 }
@@ -932,7 +1019,7 @@ function tableBar() {
   return `<div class="bar">
     <div class="seg"><button data-act="week" data-d="-7">◀ 前週</button><button data-act="week" data-d="0">今週</button><button data-act="week" data-d="7">次週 ▶</button></div>
     <div class="wk">${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</div>
-    <div class="seg dark">${[['table', '表'], ['board', 'ホワイトボード']].map(([k, l]) => `<button data-act="view" data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="seg dark">${[['board', 'ホワイトボード'], ['table', '表']].map(([k, l]) => `<button data-act="view" data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div class="seg dark">${[['all', '全員'], ...KINDS].map(([k, l]) => `<button data-act="filter" data-k="${k}" class="${S.filter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <input id="search" type="search" placeholder="名前で検索…" value="${esc(S.search)}" autocomplete="off">
     <span class="sp"></span>
@@ -994,8 +1081,9 @@ function boardRows() {
   }
   const act = sortedSites(false);
   const rows = [{ id: '', pool: true }, ...act.filter(s => s.kind !== 'off'), ...act.filter(s => s.kind === 'off')];
-  // 完了・削除した現場でも、この週に予定が入っていれば行を出す（予定を隠さない）。そこへは置けない
-  const extra = Object.keys(at).filter(id => id && !rows.some(r => r.id === id))
+  // 完了・削除した現場でも、この週に予定かメモが入っていれば行を出す（隠さない）。そこへは置けない
+  const memoSites = Object.keys(S.week.memos || {}).filter(id => Object.values(S.week.memos[id] || {}).some(v => v));
+  const extra = [...new Set([...Object.keys(at), ...memoSites])].filter(id => id && !rows.some(r => r.id === id))
     .map(id => ({ id, ...(S.company.sites[id] || { name: '', gone: true }), locked: true }))
     .sort((a, b) => !!a.gone - !!b.gone || (a.order ?? 0) - (b.order ?? 0));
   return { days, rows: rows.concat(extra), at };
@@ -1007,7 +1095,8 @@ function boardRowHead(r) {
   return `<th class="${ca.cls}"${ca.style}>${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}</th>`;
 }
 function magnet(p, k, r, faded) {
-  return `<span class="mg${faded ? ' faded' : ''}" data-act="mg" data-kind="${esc(p.kind)}" data-pid="${esc(p.id)}" data-date="${k}" role="button" tabindex="0" title="${esc(p.name)}">${esc(p.name)}${r.pool ? '' : `<span class="x" data-act="unassign" data-pid="${esc(p.id)}" data-date="${k}" role="button" aria-label="${esc(p.name)} を未配置に戻す">×</span>`}</span>`;
+  const mc = magnetColor(p.color);
+  return `<span class="mg${mc.cls}${faded ? ' faded' : ''}"${mc.style} data-act="mg" data-kind="${esc(p.kind)}" data-pid="${esc(p.id)}" data-date="${k}" role="button" tabindex="0" title="${esc(p.name)}">${esc(p.name)}${r.pool ? '' : `<span class="x" data-act="unassign" data-pid="${esc(p.id)}" data-date="${k}" role="button" aria-label="${esc(p.name)} を未配置に戻す">×</span>`}</span>`;
 }
 function boardTable() {
   if (!S.company || !S.weekLoaded) return loadingHtml();
@@ -1015,7 +1104,7 @@ function boardTable() {
   const head = `<thead><tr><th class="nm">現場</th>${days.map(d => {
     const k = ds(d), h = holidayName(k);
     return `<th class="${dayCls(d)}${k === today ? ' tdy' : ''}">${DOW[d.getDay()]} ${md(d)}${k === today ? '<span class="today">今日</span>' : ''}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
-  }).join('')}</tr></thead>`;
+  }).join('')}<th class="bk">備考<div class="hol">この週</div></th></tr></thead>`;
   if (!visiblePeople().length) {
     const msg = sortedPeople(false).length ? '該当する人がいません' : '「人の登録」タブから実習生を登録してください';
     return `<table class="grid board">${head}</table><div class="empty">${msg}</div>`;
@@ -1027,9 +1116,42 @@ function boardTable() {
       : r.locked ? { cls: 'lock', style: '' } : colorAttr(r, r.kind === 'off' ? 'off' : '');
     const notes = list.filter(p => cellOf(p.id, k)?.note).map(p =>
       `<div class="bnote" data-act="mg" data-pid="${esc(p.id)}" data-date="${k}"><b>${esc(p.name)}</b>${esc(cellOf(p.id, k).note)}</div>`).join('');
-    return `<td class="${ca.cls}"${ca.style}><div class="mlist" data-site="${esc(r.id)}" data-date="${k}"${r.locked ? ' data-lock="1"' : ''}>${list.map(p => magnet(p, k, r, r.pool && rest)).join('')}</div>${notes}</td>`;
-  }).join('')}</tr>`).join('');
+    return `<td class="${ca.cls}"${ca.style}><div class="mlist" data-site="${esc(r.id)}" data-date="${k}"${r.locked ? ' data-lock="1"' : ''}>${list.map(p => magnet(p, k, r, r.pool && rest)).join('')}</div>${notes}${r.pool ? '' : memoBox(r.id, k)}</td>`;
+  }).join('')}<td class="bk">${r.pool ? '' : memoBox(r.id, 'week')}</td></tr>`).join('');
   return `<table class="grid board">${head}<tbody>${body}</tbody></table>`;
+}
+// 現場のメモ（key＝日付ならその日のマス、'week' なら右端の備考）。押すと書ける
+const memoOf = (sid, key) => S.week.memos?.[sid]?.[key] || '';
+function memoBox(sid, key) {
+  const v = memoOf(sid, key);
+  return `<div class="smemo${v ? '' : ' empty'}" data-act="memo" data-site="${esc(sid)}" data-key="${key}" role="button" tabindex="0">${v ? esc(v) : (key === 'week' ? '＋備考' : '＋メモ')}</div>`;
+}
+const memoWhere = (sid, key, mon) => `現場「${siteLabel(sid)}」の ${key === 'week' ? `${md(pd(mon))}〜 の週の備考` : `${dayLabel(key)} のメモ`}`;
+function startMemo(el) {
+  const { site, key } = el.dataset;
+  const mon = ds(S.weekStart);   // 書き始めた週に書く（待っている間に週を移っても、別の週へ書かない）
+  const cur = memoOf(site, key);
+  const inp = document.createElement('input');
+  inp.className = 'smemoIn'; inp.value = cur; inp.maxLength = key === 'week' ? 300 : 200;
+  inp.placeholder = key === 'week' ? '備考（Enterで確定）' : 'メモ（Enterで確定）';
+  el.replaceWith(inp); inp.focus();
+  let done = false;
+  const finish = save => {
+    if (done) return; done = true;
+    const v = inp.value.trim(), changed = save && v !== cur, shown = changed ? v : cur;
+    inp.blur();
+    // 描き直しを待たずに元の欄へ戻す（入力欄が残ると、そこに打った文字はどこにも保存されない。
+    // また描き直すと、次に押しかけた別のメモやマグネットが消えて、押し直すことになる）
+    el.textContent = shown || (key === 'week' ? '＋備考' : '＋メモ');
+    el.classList.toggle('empty', !shown);
+    inp.replaceWith(el);
+    if (changed) store.setMemos(mon, { [site]: { [key]: v } }, `${memoWhere(site, key, mon)}を${v ? `「${short(v)}」にした` : '消した'}`);
+  };
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !imeEnter(e)) { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') finish(false);
+  });
+  inp.addEventListener('blur', () => finish(true));
 }
 // ドラッグの部品（SortableJS。現場配置ボードと同じ版）は、ホワイトボードを開いたときに読み込む
 let sortLoader = null, sortables = [], mountGen = 0;
@@ -1114,16 +1236,28 @@ async function dropMagnet(pid, date, site) {
 function editMagnet(pid, date) {
   const p = S.company?.people[pid]; if (!p) return;
   const c = cellOf(pid, date) || {};
+  const color0 = magnetColor(p.color).cls ? p.color : '';   // 選べない値が入っていたら標準として扱う
+  let color = color0;
   const wrap = document.createElement('div');
   wrap.className = 'modal';
   wrap.innerHTML = `<form class="modalBox" role="dialog" aria-modal="true"><h3>${esc(p.name)}　${dayLabel(date)}</h3>
     <label class="mrow">現場<select name="site">${cellOptions(siteOptionsBase(), c.site)}</select></label>
     <label class="mrow">メモ<input name="note" maxlength="200" value="${esc(c.note || '')}" placeholder="例：7:00 事務所集合" autocomplete="off"></label>
+    <div class="mrow">マグネットの色（${esc(p.name)} さんの全部の日）<div class="pcs" role="radiogroup" aria-label="マグネットの色">${PERSON_COLORS.map(([v, l]) =>
+      `<button type="button" class="${v ? '' : 'def'}${v === color ? ' on' : ''}" data-c="${v}" title="${l}" aria-label="${l}" role="radio" aria-checked="${v === color}"${v ? ` style="background:${v}"` : ''}>${v ? '' : '標準'}</button>`).join('')}</div></div>
     <div class="btns"><button type="button" class="btn" data-k="no">キャンセル</button><button class="btn primary">保存</button></div></form>`;
   const f = wrap.querySelector('form');
   const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
   const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey, true); };
-  wrap.addEventListener('click', e => { if (e.target === wrap || e.target.closest('[data-k=no]')) close(); });
+  wrap.addEventListener('click', e => {
+    const sw = e.target.closest('[data-c]');
+    if (sw) {
+      color = sw.dataset.c;
+      f.querySelectorAll('[data-c]').forEach(x => { x.classList.toggle('on', x === sw); x.setAttribute('aria-checked', x === sw); });
+      return;
+    }
+    if (e.target === wrap || e.target.closest('[data-k=no]')) close();
+  });
   f.addEventListener('submit', e => {
     e.preventDefault();
     // 開いたときから自分が変えた所だけ書く（開いている間にほかの人が変えた所を、古い値で戻さない）
@@ -1132,7 +1266,14 @@ function editMagnet(pid, date) {
     if (note !== (c.note || '')) patch.note = note;
     close();
     if (Object.keys(patch).length) setCell(pid, date, patch);
+    // 色は人の登録（会社の文書）に書く。その人の全部の日のマグネットが変わる
+    if (color !== color0 && S.company?.people[pid]) {
+      const cur = S.company.people[pid];
+      store.patch({ people: { [pid]: { color } } }, fieldHist('people', cur, 'color', color));
+    }
   });
+  // Safari では変換を確定する Enter で画面ごと保存されてしまうので止める
+  f.elements.note.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode === 229) e.preventDefault(); });
   document.addEventListener('keydown', onKey, true);
   document.body.appendChild(wrap);
   f.elements.site.focus();
@@ -1152,7 +1293,9 @@ function fieldHist(coll, x, f, v) {
     case 'name': return `${coll === 'people' ? '人' : '現場'}の名前を「${x.name}」→「${v}」に変更`;
     case 'kana': return `${who}のふりがなを「${x.kana || ''}」→「${v}」に変更`;
     case 'kind': return coll === 'people' ? `${who}の区分を ${kindLabel(x.kind)} → ${kindLabel(v)} に変更` : `${who}の種類を ${siteKindLabel(x.kind)} → ${siteKindLabel(v)} に変更`;
-    case 'color': return `${who}の色を ${colorLabel(x.color)} → ${colorLabel(v)} に変更`;
+    case 'color': return coll === 'people'
+      ? `${who}のマグネットの色を ${personColorLabel(x.color)} → ${personColorLabel(v)} に変更`
+      : `${who}の色を ${colorLabel(x.color)} → ${colorLabel(v)} に変更`;
     case 'retired': return v ? `${who}を「帰国・退職」にした` : `${who}を「在籍」に戻した`;
     case 'done': return v ? `${who}を「完了」にした` : `${who}を「稼働中」に戻した`;
     default: return `${who}の ${f} を変更`;
@@ -1177,12 +1320,16 @@ function startNote(el) {
   let done = false;
   const finish = save => {
     if (done) return; done = true;
-    const v = inp.value.trim();
+    const v = inp.value.trim(), changed = save && v !== cur, shown = changed ? v : cur;
     inp.blur();
-    if (save && v !== cur) setCell(pid, date, { note: v }); else refresh();
+    // 描き直しを待たずに元の欄へ戻す（入力欄が残ると、そこに打った文字はどこにも保存されない。startMemo と同じ）
+    el.textContent = shown || '＋メモ';
+    el.classList.toggle('has', !!shown);
+    inp.replaceWith(el);
+    if (changed) setCell(pid, date, { note: v });
   };
   inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); finish(true); }
+    if (e.key === 'Enter' && !imeEnter(e)) { e.preventDefault(); finish(true); }
     else if (e.key === 'Escape') finish(false);
   });
   inp.addEventListener('blur', () => finish(true));
@@ -1271,14 +1418,14 @@ function boardPrint() {
   return `<table class="vt"><thead><tr><th>現場</th>${days.map(d => {
     const h = holidayName(ds(d));
     return `<th class="${dayCls(d)}">${md(d)}<br>${DOW[d.getDay()]}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
-  }).join('')}</tr></thead><tbody>${rows.map(r => `<tr><th>${r.pool ? '未配置' : r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name)}</th>${days.map(d => {
+  }).join('')}<th>備考</th></tr></thead><tbody>${rows.map(r => `<tr><th>${r.pool ? '未配置' : r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name)}</th>${days.map(d => {
     const k = ds(d), list = r.pool && isRestDay(d) ? [] : at[r.id]?.[k] || [];
     const ca = r.pool || r.locked ? { cls: '', style: '' } : colorAttr(r, r.kind === 'off' ? 'off' : '');
     return `<td class="${ca.cls}"${ca.style}>${list.map(p => {
       const n = cellOf(p.id, k)?.note;
       return `<div>${esc(p.name)}${n ? `<div class="vnote">${esc(n)}</div>` : ''}</div>`;
-    }).join('')}</td>`;
-  }).join('')}</tr>`).join('')}</tbody></table>`;
+    }).join('')}${!r.pool && memoOf(r.id, k) ? `<div class="pmemo">${esc(memoOf(r.id, k))}</div>` : ''}</td>`;
+  }).join('')}<td>${!r.pool && memoOf(r.id, 'week') ? `<div class="pmemo">${esc(memoOf(r.id, 'week'))}</div>` : ''}</td></tr>`).join('')}</tbody></table>`;
 }
 
 /* ---- 人の登録 ---- */
@@ -1288,20 +1435,27 @@ function peoplePanel() {
       <label>名前<input name="nm" required maxlength="40" placeholder="例：グエン・ヴァン・ナム"></label>
       <label>ふりがな（なくても可）<input name="kn" maxlength="60"></label>
       <label>区分<select name="kd">${KINDS.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label>
+      <label>マグネットの色<select name="pc">${personColorOptions('')}</select></label>
       <button class="btn primary">追加</button>
     </form>
     <div id="plist">${peopleList()}</div></section>`;
+}
+// 人の登録の一覧に出すマグネットの見本（押しても何も起きない）
+function magnetPreview(p) {
+  const mc = magnetColor(p.color);
+  return `<span class="mg pv${mc.cls}"${mc.style} data-kind="${esc(p.kind)}" aria-hidden="true">${esc(String(p.name).slice(0, 6))}</span>`;
 }
 function peopleList() {
   if (!S.company) return '<div class="empty">読み込み中…</div>';
   const list = sortedPeople(true);
   if (!list.length) return '<div class="empty">まだ登録されていません</div>';
-  return `<table class="list"><thead><tr><th>並び順</th><th>名前</th><th>ふりがな</th><th>区分</th><th>状態</th><th></th></tr></thead><tbody>${list.map((p, i) => `
+  return `<table class="list"><thead><tr><th>並び順</th><th>名前</th><th>ふりがな</th><th>区分</th><th>マグネット</th><th>状態</th><th></th></tr></thead><tbody>${list.map((p, i) => `
     <tr class="${p.retired ? 'retired' : ''}">
       <td class="ord"><button class="mini" data-act="move" data-coll="people" data-id="${esc(p.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="people" data-id="${esc(p.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
       <td><input data-coll="people" data-f="name" data-id="${esc(p.id)}" value="${esc(p.name)}" maxlength="40"></td>
       <td><input data-coll="people" data-f="kana" data-id="${esc(p.id)}" value="${esc(p.kana || '')}" maxlength="60"></td>
       <td><select data-coll="people" data-f="kind" data-id="${esc(p.id)}">${KINDS.map(k => `<option value="${k[0]}" ${p.kind === k[0] ? 'selected' : ''}>${k[1]}</option>`).join('')}</select></td>
+      <td><span class="clr">${magnetPreview(p)}<select data-coll="people" data-f="color" data-id="${esc(p.id)}" aria-label="マグネットの色">${personColorOptions(p.color)}</select></span></td>
       <td><select data-coll="people" data-f="retired" data-id="${esc(p.id)}"><option value="">在籍</option><option value="1" ${p.retired ? 'selected' : ''}>帰国・退職</option></select></td>
       <td><button class="mini danger" data-act="del" data-coll="people" data-id="${esc(p.id)}">削除</button></td>
     </tr>`).join('')}</tbody></table>
@@ -1488,8 +1642,16 @@ function meView(people, days) {
       <div class="vd"><span class="md">${mdL(d)}</span><span class="dw">${vDow(d)}</span>${k === today ? `<span class="today">${vt('today')}</span>` : ''}${hol ? `<span class="holb">${vt('holiday')}</span>` : ''}</div>
       <div class="vs">${body}</div>
       ${c?.note ? `<div class="vnote" lang="ja">${esc(c.note)}</div>` : ''}
+      ${s && memoOf(c.site, k) ? `<div class="vsm" lang="ja">📌 ${esc(memoOf(c.site, k))}</div>` : ''}
     </div>`;
-  }).join('')}</div>`;
+  }).join('')}</div>${weekMemos(days)}`;
+}
+// 実習生の画面：この週に行く現場の「備考」（事務所がホワイトボードの右端に書いたもの）
+function weekMemos(days) {
+  const ids = [...new Set(days.map(d => cellOf(S.me, ds(d))?.site).filter(id => id && S.company.sites[id] && memoOf(id, 'week')))];
+  if (!ids.length) return '';
+  return `<div class="vweek"><div class="vwh">📌 ${vt('siteMemo')}</div>${ids.map(id =>
+    `<div class="vwi"><div class="vs">${furi(S.company.sites[id], true)}</div><div class="vnote" lang="ja">${esc(memoOf(id, 'week'))}</div></div>`).join('')}</div>`;
 }
 
 /* =====================================================================
@@ -1548,15 +1710,16 @@ app.addEventListener('click', e => {
   if (!b || !app.contains(b) || b.tagName === 'SELECT') return;
   const d = b.dataset;
   // 週のデータが届く前に表を使う操作をすると、空の表を元に計算してしまう
-  if (['fill', 'copyPrev', 'print', 'mg', 'unassign'].includes(d.act) && !(S.company && S.weekLoaded)) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
+  if (['fill', 'copyPrev', 'print', 'mg', 'unassign', 'memo'].includes(d.act) && !(S.company && S.weekLoaded)) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
   switch (d.act) {
     case 'tab': S.tab = d.tab; render(); break;
     case 'week': goWeek(+d.d); break;
     case 'filter': S.filter = d.k; renderMain(); break;
-    case 'view': S.view = d.v; lsSet('jsched_view', S.view); sortFailed = false; renderMain(); break;
+    case 'view': S.view = d.v; lsSet('jsched_view2', S.view); sortFailed = false; renderMain(); break;
     case 'mg': if (S.role === 'edit') editMagnet(d.pid, d.date); break;
     case 'unassign': if (S.role === 'edit') setCell(d.pid, d.date, { site: '' }); break;
     case 'note': if (S.role === 'edit') startNote(b); break;
+    case 'memo': if (S.role === 'edit') startMemo(b); break;
     case 'fill': fillRow(d.pid); break;
     case 'copyPrev': copyPrevWeek(); break;
     case 'print': printWeek(); break;
@@ -1620,12 +1783,13 @@ app.addEventListener('input', e => {
     const h = $('#hlist'); if (h) h.innerHTML = historyList();
   }
 });
-// マグネットはキーボードでも開ける（Enter・スペース）
+// マグネットと現場のメモはキーボードでも開ける（Enter・スペース）
 app.addEventListener('keydown', e => {
-  const m = e.target.closest?.('.mg');
+  const m = e.target.closest?.('.mg, .smemo');
   if (!m || (e.key !== 'Enter' && e.key !== ' ')) return;
   e.preventDefault();
-  if (S.role === 'edit' && S.company && S.weekLoaded) editMagnet(m.dataset.pid, m.dataset.date);
+  if (S.role !== 'edit' || !S.company || !S.weekLoaded) return;
+  if (m.classList.contains('smemo')) startMemo(m); else editMagnet(m.dataset.pid, m.dataset.date);
 });
 app.addEventListener('submit', async e => {
   e.preventDefault();
@@ -1635,9 +1799,9 @@ app.addEventListener('submit', async e => {
     const coll = kind === 'addPerson' ? 'people' : 'sites';
     const name = val('nm'); if (!name) return;
     const item = coll === 'people'
-      ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', order: nextOrder('people'), retired: false }
+      ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', color: val('pc'), order: nextOrder('people'), retired: false }
       : { name, kana: val('kn'), kind: val('kd') || 'site', color: val('cl'), order: nextOrder('sites'), done: false };
-    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}）`;
+    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}${item.color ? `・マグネット ${personColorLabel(item.color)}` : ''}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}）`;
     if (!(await store.patch({ [coll]: { [newId(coll === 'people' ? 'p_' : 's_')]: item } }, hist))) return;   // 失敗したら入力を残す
     f.reset();
     if (coll === 'people') f.querySelector('[name=kd]').value = item.kind;
