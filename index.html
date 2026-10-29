@@ -28,7 +28,7 @@ ruby rt{font-size:.55em;font-weight:400}
 .btn.primary:hover{background:#3b4859}
 .btn.danger{color:#b4233c;border-color:#efb7c0}
 .btn.ghost{border-color:transparent;background:transparent;color:var(--sub)}
-.mini{border:1px solid var(--line2);background:#fff;border-radius:4px;padding:2px 7px;font-size:12px}
+.mini{border:1px solid var(--line2);background:#fff;border-radius:4px;padding:2px 7px;font-size:12px;white-space:nowrap}
 .mini.danger{color:#b4233c;border-color:#efb7c0}
 .link{border:0;background:none;color:#2156b8;text-decoration:underline;padding:4px}
 .empty{padding:28px 16px;text-align:center;color:var(--sub)}
@@ -120,6 +120,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .board tr.pool th.nm{background:#fff8d6}
 .board tr.pool td{border-bottom:2px solid #d4d2c4}
 .board .sub{display:block;font-size:10px;color:var(--sub);font-weight:400}
+.board .term{display:block;font-size:10px;color:#555;font-weight:400;margin-top:2px}   /* 現場名の下の工期 */
 .mlist{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:30px}
 .mg{display:inline-flex;align-items:center;max-width:100%;min-height:26px;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;line-height:1.2;color:#fff;background:linear-gradient(180deg,#ff7373 0%,#e94747 100%);box-shadow:0 1px 2px rgba(0,0,0,.15);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;word-break:break-all}
 .mg:focus-visible{outline:2px solid var(--dark);outline-offset:1px}
@@ -155,6 +156,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .mrow select,.mrow input{padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;font-size:16px;color:var(--ink)}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
 
 .panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;max-width:980px}
+.panel.wide{max-width:1240px}   /* 現場の登録（工期の欄の分だけ広い） */
 .panel h2{margin:0 0 12px;font-size:16px}
 .panel h3{margin:20px 0 6px;font-size:14px}
 .panel p{margin:4px 0}
@@ -169,6 +171,12 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .list tr.retired td{background:#f6f6f6}
 .list tr.retired input{color:var(--sub)}
 .list td.ord{white-space:nowrap}
+.terms{display:flex;align-items:center;gap:4px;flex-wrap:wrap;color:var(--ink)}   /* 工期の始め〜終わり。狭いときは「〜終わり」を次の行へ */
+.terms .te{display:inline-flex;align-items:center;gap:4px}
+.addrow .terms input{width:150px}
+.list .terms input{width:auto;min-width:0}
+.terms.bad input{border-color:#d33}   /* 始め＞終わり（2台で同時に直したとき） */
+#slist{overflow-x:auto}   /* 狭い画面では一覧の中だけ横に動かす */
 .set label.row input{max-width:360px}
 .urlrow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .urlrow input{flex:1 1 300px;font-size:13px}
@@ -291,6 +299,7 @@ a.vtr{text-decoration:underline}
   #print .vt th,#print .vt td{border:1px solid #888}
   #print .vt td.off,#print .vt td.col,#print .vt thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #print .pmemo{font-size:8pt;color:#7a4b00;margin-top:2px;white-space:pre-wrap}
+  #print .pterm{font-size:7pt;font-weight:400;color:#444;margin-top:1px;word-break:normal}   /* 現場名の break-all を外す（日付の数字の途中で折り返さない） */
 }
 
 @media (max-width:700px){
@@ -350,6 +359,13 @@ const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 
 const mondayOf = d => addDays(d, -((d.getDay() + 6) % 7));
 const todayStr = () => ds(new Date());
 const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
+const isYmd = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
+const ymd = k => { const d = pd(k); return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`; };
+// 現場の工期（sites[id].start・end は 'YYYY-MM-DD'。片方だけでもよい）。無ければ ''。
+// 2台で同時に始めと終わりを直すと逆順が残ることがあるので、そのときは確かめるよう添える
+const termBad = s => isYmd(s?.start) && isYmd(s?.end) && s.start > s.end;
+const termText = s => isYmd(s?.start) || isYmd(s?.end)
+  ? `${isYmd(s.start) ? ymd(s.start) : ''}〜${isYmd(s.end) ? ymd(s.end) : ''}${termBad(s) ? '（日付を確かめてください）' : ''}` : '';
 const DOW = ['日', '月', '火', '水', '木', '金', '土'];
 const DOW_KANA = ['にち', 'げつ', 'か', 'すい', 'もく', 'きん', 'ど'];
 
@@ -545,7 +561,7 @@ const S = {
   cid: null, user: null, errMsg: '',
   company: null, notFound: false,
   weekStart: mondayOf(new Date()), week: { cells: {} },
-  tab: 'table', filter: 'all', search: '',
+  tab: 'table', search: '',
   // 予定表の見せ方：ホワイトボード（現場ごと。メイン）／表（人ごと）。端末ごとに覚える。
   // キーを v2 にしたのは、ホワイトボードをメインにした日（2026-10-29）に、前の日に「表」を選んだ端末もいったんホワイトボードで開くため
   view: lsGet('jsched_view2') === 'table' ? 'table' : 'board',
@@ -570,8 +586,7 @@ const sortedSites = withDone => sortList(S.company?.sites, s => withDone || !s.d
 function visiblePeople() {
   const q = S.search.trim().toLowerCase();
   return sortedPeople(false).filter(p =>
-    (S.filter === 'all' || p.kind === S.filter) &&
-    (!q || String(p.name).toLowerCase().includes(q) || String(p.kana || '').toLowerCase().includes(q)));
+    !q || String(p.name).toLowerCase().includes(q) || String(p.kana || '').toLowerCase().includes(q));
 }
 function nextOrder(coll) { return Math.max(0, ...Object.values(S.company?.[coll] || {}).map(x => x.order || 0)) + 1; }
 const cellOf = (pid, k) => S.week.cells?.[pid]?.[k] || null;
@@ -682,6 +697,8 @@ function seedDemo() {
     .forEach(([name, kana, kind, color], i) => { sites['s_demo' + i] = { name, kana, kind, color, order: i + 1, done: false }; });
   people.p_demo5.color = '#3498db';   // マグネットの色の見本
   const mon = mondayOf(new Date()), cells = {};
+  // 工期の見本
+  [[2, -45, 60], [3, -120, 150], [4, -14, 25]].forEach(([i, a, b]) => Object.assign(sites['s_demo' + i], { start: ds(addDays(mon, a)), end: ds(addDays(mon, b)) }));
   [[2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 0], [4, 4, 4, 4, 4, 4], [1, 2, 2, 2, 2, 2], [5, 4, 4, 4, 4, 0], [2, 2, 3, 3, 3, '']]
     .forEach((row, i) => {
       const pc = cells['p_demo' + i] = {};
@@ -1003,7 +1020,10 @@ function refresh() {
   const el = document.getElementById(id);
   if (!el) return renderMain();
   if (editingIn(el) || ((S.dragging || S.ptrDown) && id === 'grid')) { S.pending = true; return; }
+  // 工期の欄に入れたまま保存していない値（逆順などで止めた分）は、描き直しても残す（もう片方を直したら2つまとめて書く）
+  const keep = id === 'slist' ? [...el.querySelectorAll('.terms input[data-f]')].filter(x => x.value !== x.defaultValue && !x.validity?.badInput).map(x => [x.dataset.id, x.dataset.f, x.value]) : [];
   el.innerHTML = fn();
+  for (const [sid, f, v] of keep) { const x = el.querySelector(`.terms input[data-id="${CSS.escape(sid)}"][data-f="${f}"]`); if (x) x.value = v; }
   after?.();
 }
 function render() {
@@ -1068,7 +1088,6 @@ function tableBar() {
     <div class="seg"><button data-act="week" data-d="-7">◀ 前週</button><button data-act="week" data-d="0">今週</button><button data-act="week" data-d="7">次週 ▶</button></div>
     <div class="wk">${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</div>
     <div class="seg dark">${[['board', 'ホワイトボード'], ['table', '表']].map(([k, l]) => `<button data-act="view" data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
-    <div class="seg dark">${[['all', '全員'], ...KINDS].map(([k, l]) => `<button data-act="filter" data-k="${k}" class="${S.filter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <input id="search" type="search" placeholder="名前で検索…" value="${esc(S.search)}" autocomplete="off">
     <span class="sp"></span>
     <button class="btn" data-act="copyPrev">前の週をコピー</button>
@@ -1148,8 +1167,8 @@ function boardRows() {
 function boardRowHead(r) {
   if (r.pool) return '<th class="nm">未配置<span class="sub">まだ決まっていない人</span></th>';
   const ca = colorAttr(r.locked ? null : r, `nm${r.kind === 'off' ? ' off' : ''}`);
-  const name = r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name);
-  return `<th class="${ca.cls}"${ca.style}>${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}</th>`;
+  const name = r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name), term = termText(r);
+  return `<th class="${ca.cls}"${ca.style}>${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}${term ? `<span class="term">工期 ${term}</span>` : ''}</th>`;
 }
 function magnet(p, k, faded) {
   const mc = magnetColor(p.color);
@@ -1323,7 +1342,7 @@ function dropMagnet(pid, date, site, order, from) {
   return true;
 }
 // 動かした人（pid）だけを、見えていた並び（order）で直前にいた人の後ろ（いなければ直後の人の前）に入れて rank に直す。
-// ほかの人同士の順は今のデータのまま（待っている間にほかの端末が並べ替えた分や、検索・区分で隠れている人・帰国退職の人の場所を戻さない）。
+// ほかの人同士の順は今のデータのまま（待っている間にほかの端末が並べ替えた分や、検索で隠れている人・帰国退職の人の場所を戻さない）。
 // rank を書かなくても同じ並びになるとき（並べ替えずに別のマスの末尾へ入れただけなど）は書かない
 function rankPatch(pid, date, site, order, moving) {
   const rk = id => id === pid && moving ? Infinity : rankOf(id, date);
@@ -1567,7 +1586,7 @@ function boardPrint() {
   return `<table class="vt"><thead><tr><th>現場</th>${days.map(d => {
     const h = holidayName(ds(d));
     return `<th class="${dayCls(d)}">${md(d)}<br>${DOW[d.getDay()]}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
-  }).join('')}<th>備考</th></tr></thead><tbody>${rows.map(r => `<tr><th>${r.pool ? '未配置' : r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name)}</th>${days.map(d => {
+  }).join('')}<th>備考</th></tr></thead><tbody>${rows.map(r => `<tr><th>${r.pool ? '未配置' : r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name)}${!r.pool && termText(r) ? `<div class="pterm">工期 ${termText(r)}</div>` : ''}</th>${days.map(d => {
     const k = ds(d), list = r.pool && isRestDay(d) ? [] : at[r.id]?.[k] || [];
     const ca = r.pool || r.locked ? { cls: '', style: '' } : colorAttr(r, r.kind === 'off' ? 'off' : '');
     return `<td class="${ca.cls}"${ca.style}>${list.map(p => {
@@ -1613,12 +1632,13 @@ function peopleList() {
 
 /* ---- 現場の登録 ---- */
 function sitesPanel() {
-  return `<section class="panel"><h2>現場の登録</h2>
+  return `<section class="panel wide"><h2>現場の登録</h2>
     <form class="addrow" data-form="addSite">
       <label>現場名<input name="nm" required maxlength="60" placeholder="例：柏市 新築外構工事"></label>
       <label>ふりがな（実習生の画面に出ます）<input name="kn" maxlength="80" placeholder="例：かしわし しんちく がいこう こうじ"></label>
       <label>種類<select name="kd"><option value="site">現場</option><option value="off">休み・研修など</option></select></label>
       <label>色<select name="cl">${colorOptions(nextSiteColor())}</select></label>
+      <label>工期（なくても可）<span class="terms"><input type="date" name="ts" aria-label="工期の始め"><span class="te">〜<input type="date" name="te" aria-label="工期の終わり"></span></span></label>
       <button class="btn primary">追加</button>
     </form>
     <div id="slist">${siteList()}</div></section>`;
@@ -1627,17 +1647,18 @@ function siteList() {
   if (!S.company) return '<div class="empty">読み込み中…</div>';
   const list = sortedSites(true);
   if (!list.length) return '<div class="empty">まだ登録されていません</div>';
-  return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>種類</th><th>色</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
+  return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>種類</th><th>色</th><th>工期</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
     <tr class="${s.done ? 'retired' : ''}">
       <td class="ord"><button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
       <td><input data-coll="sites" data-f="name" data-id="${esc(s.id)}" value="${esc(s.name)}" maxlength="60"></td>
       <td><input data-coll="sites" data-f="kana" data-id="${esc(s.id)}" value="${esc(s.kana || '')}" maxlength="80"></td>
       <td><select data-coll="sites" data-f="kind" data-id="${esc(s.id)}"><option value="site">現場</option><option value="off" ${s.kind === 'off' ? 'selected' : ''}>休み・研修など</option></select></td>
       <td><span class="clr">${swatch(s.color)}<select data-coll="sites" data-f="color" data-id="${esc(s.id)}" aria-label="色">${colorOptions(s.color)}</select></span></td>
+      <td>${s.kind === 'off' && !termText(s) ? '<span class="hint">―</span>' : `<span class="terms${termBad(s) ? ' bad' : ''}"><input type="date" data-coll="sites" data-f="start" data-id="${esc(s.id)}" value="${isYmd(s.start) ? s.start : ''}" aria-label="工期の始め"><span class="te">〜<input type="date" data-coll="sites" data-f="end" data-id="${esc(s.id)}" value="${isYmd(s.end) ? s.end : ''}" aria-label="工期の終わり"></span></span>`}</td>
       <td><select data-coll="sites" data-f="done" data-id="${esc(s.id)}"><option value="">稼働中</option><option value="1" ${s.done ? 'selected' : ''}>完了</option></select></td>
       <td><button class="mini danger" data-act="del" data-coll="sites" data-id="${esc(s.id)}">削除</button></td>
     </tr>`).join('')}</tbody></table>
-    <p class="hint">終わった現場は「完了」にすると予定表の選択肢から消えます（これまでの予定は残ります）。</p>`;
+    <p class="hint">終わった現場は「完了」にすると予定表の選択肢から消えます（これまでの予定は残ります）。工期を入れると、ホワイトボードの現場名の下に出ます。</p>`;
 }
 /* ---- 編集履歴 ---- */
 function historyList() {
@@ -1863,7 +1884,6 @@ app.addEventListener('click', e => {
   switch (d.act) {
     case 'tab': S.tab = d.tab; render(); break;
     case 'week': goWeek(+d.d); break;
-    case 'filter': S.filter = d.k; renderMain(); break;
     case 'view': S.view = d.v; lsSet('jsched_view2', S.view); sortFailed = false; renderMain(); break;
     case 'mg': if (S.role === 'edit') editMagnet(d.pid, d.date); break;
     case 'note': if (S.role === 'edit') startNote(b); break;
@@ -1906,15 +1926,10 @@ app.addEventListener('change', e => {
   }
   if (d.act === 'site') { t.blur(); setCell(d.pid, d.date, { site: t.value }); return; }
   if (d.act === 'pickMe') { S.me = t.value; lsSet('jsched_me_' + S.cid, S.me); render(); return; }
-  if (d.coll && d.f) {
-    const cur = S.company[d.coll]?.[d.id]; if (!cur) return;
-    let v = t.value.trim();
-    if (d.f === 'name' && !v) { toast('名前は空にできません'); t.value = cur.name; return; }
-    if (d.f === 'retired' || d.f === 'done') v = t.value === '1';
-    if ((cur[d.f] ?? (typeof v === 'boolean' ? false : '')) === v) return;   // 変わっていない
-    store.patch({ [d.coll]: { [d.id]: { [d.f]: v } } }, fieldHist(d.coll, cur, d.f, v));
-    return;
-  }
+  // 工期の日付：カレンダーで選んだときはすぐ書く。キーで打っているときは欄から出たときに書く
+  // （PC で年を打っている途中にも change が来て「0002年」などになるため）
+  if (t.type === 'date' && d.coll) { if (Date.now() - (t._kd || 0) > 400) saveTerm(t); return; }
+  if (d.coll && d.f) { saveField(t); return; }
   if (t.id === 'coNameIn') {
     const v = t.value.trim();
     if (!v) { toast('会社名は空にできません'); t.value = S.company?.name || ''; return; }
@@ -1922,6 +1937,50 @@ app.addEventListener('change', e => {
     store.patch({ name: v }, `会社名を「${S.company?.name || ''}」→「${v}」に変更`);
   }
 });
+app.addEventListener('keydown', e => { if (e.target.type === 'date' && e.target.dataset.coll) e.target._kd = Date.now(); });
+// 工期の欄から出たとき。ほかのウィンドウやタブへ移っただけ（フォーカスは欄に残る）なら書かない
+app.addEventListener('focusout', e => {
+  const t = e.target;
+  if (t.type === 'date' && t.dataset.coll) setTimeout(() => { if (document.activeElement !== t) saveTerm(t); }, 0);
+});
+// 人・現場の登録の一覧で変えた欄を書く
+function saveField(t) {
+  const d = t.dataset;
+  const cur = S.company?.[d.coll]?.[d.id]; if (!cur) return;
+  let v = t.value.trim();
+  if (d.f === 'name' && !v) { toast('名前は空にできません'); t.value = cur.name; return; }
+  if (d.f === 'retired' || d.f === 'done') v = t.value === '1';
+  if ((cur[d.f] ?? (typeof v === 'boolean' ? false : '')) === v) return;   // 変わっていない
+  store.patch({ [d.coll]: { [d.id]: { [d.f]: v } } }, fieldHist(d.coll, cur, d.f, v));
+}
+const okTermDate = v => !v || (isYmd(v) && v >= '2000-01-01' && v <= '2100-12-31');
+// 現場の工期（一覧）。同じ行の始めと終わりの欄を見て、描いたときの値（defaultValue）から変えた欄だけを書く
+// （触っただけの欄は書かない＝ほかの端末が変えた工期を、描き直し待ちの古い値で書き戻さない）。
+// 逆順や読めない日付は書かずに知らせ、入れた値は欄に残す（延期で始めから直しても、終わりを直した時点で2つまとめて書ける）
+let termWarned = false;   // 工期の注意を出した（書けたら「保存しました」に替える。注意が残ると保存されなかったように読める）
+const termWarn = msg => { termWarned = true; toast(msg, true); };
+const TERM_BAD = '工期の日付を確かめてください（年・月・日をすべて入れるか、すべて消してください。2000年〜2100年）';
+function saveTerm(t) {
+  const id = t.dataset.id, cur = S.company?.sites?.[id]; if (!cur) return;
+  const box = t.closest('.terms'), old = f => isYmd(cur[f]) ? cur[f] : '';
+  const ins = box ? [...box.querySelectorAll('input[data-f]')] : [t];
+  // 年・月・日の一部だけ消した（または入れた）欄は value が '' になるので、「消した」と取り違えない
+  if (ins.some(x => x.validity?.badInput)) { termWarn(TERM_BAD); return; }
+  const next = { start: old('start'), end: old('end') }, changed = [];
+  for (const x of ins) {
+    if (x.value === x.defaultValue) continue;
+    next[x.dataset.f] = x.value; changed.push(x);
+  }
+  if (changed.some(x => !okTermDate(x.value))) { termWarn(TERM_BAD); return; }
+  if (next.start && next.end && next.start > next.end) { termWarn('工期の終わりが始めより前です。もう片方の日付も直すと保存されます'); return; }
+  const patch = {};
+  for (const x of changed) if (x.value !== old(x.dataset.f)) patch[x.dataset.f] = x.value;
+  changed.forEach(x => { x.defaultValue = x.value; });   // 書いた値を「描いたときの値」にする（続けて欄を出ても二重に書かない）
+  const has = Object.keys(patch).length;
+  if (termWarned) { termWarned = false; toastHoldUntil = 0; if (has) toast('工期を保存しました'); else $('#toast').classList.remove('show'); }
+  if (!has) return;
+  store.patch({ sites: { [id]: patch } }, `現場「${cur.name}」の工期を ${termText(cur) || 'なし'} → ${termText({ ...cur, ...patch }) || 'なし'} に変更`);
+}
 app.addEventListener('input', e => {
   if (e.target.id === 'search') {
     S.search = e.target.value;
@@ -1947,10 +2006,13 @@ app.addEventListener('submit', async e => {
   if (kind === 'addPerson' || kind === 'addSite') {
     const coll = kind === 'addPerson' ? 'people' : 'sites';
     const name = val('nm'); if (!name) return;
+    const ts = val('ts'), te = val('te');
+    if (coll === 'sites' && (!(okTermDate(ts) && okTermDate(te)) || [...f.querySelectorAll('.terms input')].some(x => x.validity?.badInput))) { toast(TERM_BAD, true); return; }
+    if (coll === 'sites' && ts && te && ts > te) { toast('工期の終わりが始めより前になっています', true); return; }
     const item = coll === 'people'
       ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', color: val('pc'), order: nextOrder('people'), retired: false }
-      : { name, kana: val('kn'), kind: val('kd') || 'site', color: val('cl'), order: nextOrder('sites'), done: false };
-    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}${item.color ? `・マグネット ${personColorLabel(item.color)}` : ''}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}）`;
+      : { name, kana: val('kn'), kind: val('kd') || 'site', color: val('cl'), start: ts, end: te, order: nextOrder('sites'), done: false };
+    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}${item.color ? `・マグネット ${personColorLabel(item.color)}` : ''}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}${termText(item) ? `・工期 ${termText(item)}` : ''}）`;
     if (!(await store.patch({ [coll]: { [newId(coll === 'people' ? 'p_' : 's_')]: item } }, hist))) return;   // 失敗したら入力を残す
     f.reset();
     if (coll === 'people') f.querySelector('[name=kd]').value = item.kind;
