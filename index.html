@@ -1575,10 +1575,10 @@ async function deleteItem(coll, id) {
 }
 
 /* ---- 設定 ---- */
-function viewerUrl(preview) {
+function viewerUrl() {
   const base = location.origin + location.pathname;
   if (S.mode === 'demo') return base + '?view=1';
-  return base + '?c=' + encodeURIComponent(S.cid) + (preview ? '&as=view' : '');
+  return base + '?c=' + encodeURIComponent(S.cid);
 }
 function settingsBody() {
   return `<label class="row">会社名<input id="coNameIn" value="${esc(S.company?.name || '')}" maxlength="40"></label>
@@ -1766,7 +1766,7 @@ app.addEventListener('click', e => {
     case 'fill': fillRow(d.pid); break;
     case 'copyPrev': copyPrevWeek(); break;
     case 'print': printWeek(); break;
-    case 'openView': window.open(viewerUrl(true), '_blank'); break;
+    case 'openView': window.open(viewerUrl(), '_blank'); break;
     case 'copyUrl': copyText(d.u === 'editor' ? editorUrl() : d.u === 'page' ? location.origin + location.pathname : viewerUrl(),
       b.closest('.urlrow')?.querySelector('input')); break;
     case 'move': moveItem(d.coll, d.id, +d.d); break;
@@ -1786,7 +1786,8 @@ app.addEventListener('click', e => {
     case 'logout': ask('ログアウトしますか？', 'ログアウト').then(ok => { if (ok) Cloud.logout(); }); break;
     case 'logoutNow': Cloud.logout(); break;
     case 'googleLogin': googleLogin(b); break;
-    case 'recheck': S.screen = 'loading'; render(); afterAuth(Cloud.auth.currentUser); break;
+    // 「もう一度確かめる」は編集者かどうかを確かめ直す（実習生用のURLから来ていても、実習生の画面にしない）
+    case 'recheck': S.screen = 'loading'; render(); loginRequested = true; afterAuth(Cloud.auth.currentUser); break;
     case 'edDel': removeEditor(d.email); break;
     case 'reload': location.reload(); break;
   }
@@ -1958,11 +1959,14 @@ async function afterAuth(user) {
   const gen = ++authGen;
   S.user = user || null;
   stopData();
-  // ログインボタンを押した直後は、URLの会社IDより自分の会社を優先する
-  const preferMine = loginRequested && !!user;
+  // ログインボタンを押した直後（ログイン画面を出している間に別のタブでログインした場合も）は、URLの会社IDより自分の会社を優先する
+  const preferMine = (loginRequested || S.screen === 'login') && !!user;
   loginRequested = false;
   const cParam = params.get('c');
-  const forceView = !preferMine && !!cParam && params.get('as') === 'view';
+  // 会社IDの付いたURL（実習生用のURL・QR）は、編集できる人がログインしたままの端末で開いても実習生の画面にする
+  // （自分のスマホで QR を試すと編集画面になってしまうため）。編集するのは会社IDの無いURLからか、
+  // 実習生の画面の下の「事務所の方（ログイン）」を押したとき（preferMine）
+  const forceView = !preferMine && !!cParam;
   const isCode = (e, c) => String(e?.code || '').includes(c);
   try {
     if (user && !forceView) {
@@ -1973,11 +1977,10 @@ async function afterAuth(user) {
         catch (e) { if (!isCode(e, 'permission-denied')) throw e; console.error(e); }   // 読めない＝編集者ではない
       }
       if (gen !== authGen) return;
-      if (mine && (!cParam || cParam === mine || preferMine)) {
+      if (mine) {
         S.role = 'edit'; S.cid = mine; lsSet('jsched_cid', mine);
         if (preferMine && location.search) { history.replaceState(null, '', location.pathname); params = new URLSearchParams(); }
-      } else if (cParam && !preferMine) { S.role = 'view'; S.cid = cParam; }
-      else {
+      } else {
         // 編集できる人ではない。まだ予定表が無く、最初の登録ができる人なら登録画面へ
         // （ルールで読めない人は permission-denied → 登録されていません）
         let locked = true;
