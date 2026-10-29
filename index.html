@@ -131,6 +131,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .smemo{font-size:11px;line-height:1.35;margin-top:4px;padding:2px 4px;border:1px dashed transparent;border-radius:3px;word-break:break-all;white-space:pre-wrap;cursor:pointer;color:#7a4b00;background:rgba(255,248,214,.85)}
 .smemo.empty{background:none;color:var(--faint)}
 .smemo:hover{border-color:var(--line2)}
+.smemo.ro{cursor:default}.smemo.ro:hover{border-color:transparent}   /* 日送りで2つの週にまたがっているときの備考（見るだけ） */
 @media (hover:hover){.smemo.empty{color:transparent}td:hover>.smemo.empty{color:var(--faint)}}   /* マウスの端末では、空のメモ欄は指したときだけ出す */
 .smemoIn{width:100%;margin-top:4px;padding:3px 5px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
 @media (hover:none){.smemoIn,.noteIn{font-size:16px}}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
@@ -560,7 +561,9 @@ const S = {
   screen: 'loading',     // loading / login / create / error / app
   cid: null, user: null, errMsg: '',
   company: null, notFound: false,
-  weekStart: mondayOf(new Date()), week: { cells: {} },
+  // weekStart＝表示する7日の1日目（事務所の画面は日送りで月曜以外になることがある）。
+  // weeks[月曜]＝その週の文書、subsW[月曜]＝その購読。7日が2つの週にまたがるときは2つ読む
+  weekStart: mondayOf(new Date()), weeks: {}, subsW: {},
   tab: 'table', search: '',
   // 予定表の見せ方：ホワイトボード（現場ごと。メイン）／表（人ごと）。端末ごとに覚える。
   // キーを v2 にしたのは、ホワイトボードをメインにした日（2026-10-29）に、前の日に「表」を選んだ端末もいったんホワイトボードで開くため
@@ -571,12 +574,18 @@ const S = {
   editors: [],           // 編集できる人のメールアドレス（編集画面のときだけ読む）
   editorsLoaded: false,  // 一覧が届く前に追加・削除すると、空の一覧を元にしてしまう
   hist: { list: [], loaded: false, n: 100, q: '', err: '' },   // 編集履歴（n＝読む件数）
-  unsubC: null, unsubW: null, unsubE: null, unsubH: null, pending: false,
+  unsubC: null, unsubE: null, unsubH: null, pending: false,
 };
 let store = null;
 
 function weekDays() { return Array.from({ length: 7 }, (_, i) => addDays(S.weekStart, i)); }
 const isThisWeek = () => ds(S.weekStart) === ds(mondayOf(new Date()));
+const isMonStart = () => S.weekStart.getDay() === 1;
+// その日が入っている週の月曜（週の文書の名前）。表を描くたびに何千回も呼ぶので覚えておく
+const wkMemo = new Map();
+const wkOf = k => { let m = wkMemo.get(k); if (!m) wkMemo.set(k, m = ds(mondayOf(pd(k)))); return m; };
+// 表示する7日が入っている週（月曜はじまりなら1つ、日送りでずれていれば2つ）
+const shownWeeks = () => [...new Set([ds(mondayOf(S.weekStart)), ds(mondayOf(addDays(S.weekStart, 6)))])];
 function sortList(map, keep) {
   return Object.entries(map || {}).map(([id, v]) => ({ id, ...v })).filter(keep)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name).localeCompare(String(b.name), 'ja'));
@@ -589,7 +598,7 @@ function visiblePeople() {
     !q || String(p.name).toLowerCase().includes(q) || String(p.kana || '').toLowerCase().includes(q));
 }
 function nextOrder(coll) { return Math.max(0, ...Object.values(S.company?.[coll] || {}).map(x => x.order || 0)) + 1; }
-const cellOf = (pid, k) => S.week.cells?.[pid]?.[k] || null;
+const cellOf = (pid, k) => S.weeks[wkOf(k)]?.cells?.[pid]?.[k] || null;
 
 let toastTimer, toastHoldUntil = 0;
 // important＝警告・エラー。出ている間は、ふつうの知らせ（「追加しました」など）で上書きしない
@@ -740,6 +749,7 @@ function makeDemoStore() {
     },
     async getWeek(m) { return clone(data.weeks[m] || { cells: {} }); },
     async setCells(m, cells, hist) { deepMerge((data.weeks[m] ||= { cells: {} }).cells, cells); return done(hist); },
+    async setCellsWeeks(byWeek, hist) { for (const [m, cells] of Object.entries(byWeek)) deepMerge((data.weeks[m] ||= { cells: {} }).cells, cells); return done(hist); },
     async setMemos(m, memos, hist) { deepMerge((data.weeks[m] ||= { cells: {} }).memos ||= {}, memos); return done(hist); },
     async patch(obj, hist) { deepMerge(data.company, obj); return done(hist); },
     async removeField(path, hist) {
@@ -864,6 +874,8 @@ const Cloud = {
       onWeek(m, cb) { return F.onSnapshot(wref(m), META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : { cells: {} }); }, e => { console.error(e); toast('読み込めませんでした：' + errMsg(e)); }); },
       async getWeek(m) { const s = await F.getDoc(wref(m)); return s.exists() ? s.data() : { cells: {} }; },
       setCells(m, cells, hist) { return commit(b => b.set(wref(m), { cells }, { merge: true }), hist); },
+      // 日送りで2つの週にまたがるとき（byWeek[月曜]＝cells）。1回のまとめ書きなので、片方の週だけ書けて残ることがない
+      setCellsWeeks(byWeek, hist) { return commit(b => { for (const [m, cells] of Object.entries(byWeek)) b.set(wref(m), { cells }, { merge: true }); }, hist); },
       // 現場のメモ memos[現場ID][日付 or 'week']。週の文書の memos に1か所ずつ merge で書く（cells と同じく、同時に別の所を書いても消し合わない）
       setMemos(m, memos, hist) {
         return commit(b => b.set(wref(m), { memos }, { merge: true }), hist,
@@ -890,7 +902,8 @@ const Cloud = {
    データの購読と再描画
    ===================================================================== */
 function stopData() {
-  S.unsubC?.(); S.unsubW?.(); S.unsubE?.(); S.unsubH?.(); S.unsubC = S.unsubW = S.unsubE = S.unsubH = null;
+  S.unsubC?.(); S.unsubE?.(); S.unsubH?.(); S.unsubC = S.unsubE = S.unsubH = null;
+  Object.values(S.subsW).forEach(s => s.off?.()); S.subsW = {}; S.weeks = {};
   clearTimeout(S.slowTimer); clearTimeout(S.weekSlowTimer);
 }
 // 編集履歴は「履歴」タブを開いたときに読み始める（開かない人の読み取りを増やさない）
@@ -936,22 +949,31 @@ function startData() {
   }
 }
 function subscribeWeek() {
-  S.unsubW?.();
   clearTimeout(S.weekSlowTimer);
-  S.week = { cells: {} }; S.weekLoaded = false; S.slowW = false;
-  const m = ds(S.weekStart);
+  const need = shownWeeks(), key = need.join();
+  // 表示から外れた週だけやめる。日送りで同じ週を見続けるときは読み直さない（1日ずらすたびに「読み込み中」にしない）
+  for (const m of Object.keys(S.subsW)) if (!need.includes(m)) { S.subsW[m].off?.(); delete S.subsW[m]; delete S.weeks[m]; }
+  const loaded = () => shownWeeks().every(m => m in S.weeks);
+  S.weekLoaded = loaded(); S.slowW = false;
   // 週のデータが10秒来なくても「時間がかかっています」を出す（会社とは別に数える）
-  S.weekSlowTimer = setTimeout(() => { if (!S.weekLoaded && m === ds(S.weekStart)) { S.slowW = true; refresh(); } }, 10000);
-  S.unsubW = store.onWeek(m, w => {
-    if (m !== ds(S.weekStart)) return;
-    w = w || {}; w.cells ||= {};
-    // 書き込むと、サーバーの確認だけの知らせ（中身は同じ）がもう1回来る。それで描き直すと、
-    // ホワイトボードで次につかみかけたマグネットやタップが消えるので、中身が変わったときだけ描き直す
-    const same = S.weekLoaded && stableJson([w.cells, w.memos || {}]) === stableJson([S.week.cells, S.week.memos || {}]);
-    S.week = w;
-    S.weekLoaded = true; S.slowW = false;
-    if (!same) refresh();
-  });
+  S.weekSlowTimer = setTimeout(() => { if (!S.weekLoaded && key === shownWeeks().join()) { S.slowW = true; refresh(); } }, 10000);
+  for (const m of need) {
+    if (S.subsW[m]) continue;
+    // お試しモードは購読した場で1回目が来る（off が入る前）ので、印は先に置く
+    const sub = S.subsW[m] = {};
+    sub.off = store.onWeek(m, w => {
+      if (S.subsW[m] !== sub) return;
+      w = w || {}; w.cells ||= {};
+      // 書き込むと、サーバーの確認だけの知らせ（中身は同じ）がもう1回来る。それで描き直すと、
+      // ホワイトボードで次につかみかけたマグネットやタップが消えるので、中身が変わったときだけ描き直す
+      const old = S.weeks[m], was = S.weekLoaded;
+      const same = old && stableJson([w.cells, w.memos || {}]) === stableJson([old.cells, old.memos || {}]);
+      S.weeks[m] = w;
+      S.weekLoaded = loaded();
+      if (S.weekLoaded) S.slowW = false;
+      if (!same || S.weekLoaded !== was) refresh();
+    });
+  }
 }
 // キーの順に関係なく同じ中身なら同じ文字列にする（Firestore はキーの順を保たない）
 const stableJson = o => JSON.stringify(o, (k, v) => isObj(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : v);
@@ -1085,8 +1107,8 @@ function renderMain() {
 function tableBar() {
   const days = weekDays();
   return `<div class="bar">
-    <div class="seg"><button data-act="week" data-d="-7">◀ 前週</button><button data-act="week" data-d="0">今週</button><button data-act="week" data-d="7">次週 ▶</button></div>
-    <div class="wk">${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</div>
+    <div class="seg"><button data-act="week" data-d="-7">◀◀ 前週</button><button data-act="week" data-d="-1">◀ 前日</button><button data-act="week" data-d="0">今週</button><button data-act="week" data-d="1">翌日 ▶</button><button data-act="week" data-d="7">次週 ▶▶</button></div>
+    <div class="wk">${days[0].getFullYear()}年 ${md(days[0])}（${DOW[days[0].getDay()]}）〜 ${md(days[6])}（${DOW[days[6].getDay()]}）</div>
     <div class="seg dark">${[['board', 'ホワイトボード'], ['table', '表']].map(([k, l]) => `<button data-act="view" data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <input id="search" type="search" placeholder="名前で検索…" value="${esc(S.search)}" autocomplete="off">
     <span class="sp"></span>
@@ -1157,8 +1179,10 @@ function boardRows() {
   for (const byDay of Object.values(at)) for (const [k, list] of Object.entries(byDay)) list.sort(byRank(k));
   const act = sortedSites(false);
   const rows = [{ id: '', pool: true }, ...act.filter(s => s.kind !== 'off'), ...act.filter(s => s.kind === 'off')];
-  // 完了・削除した現場でも、この週に予定かメモが入っていれば行を出す（隠さない）。そこへは置けない
-  const memoSites = Object.keys(S.week.memos || {}).filter(id => Object.values(S.week.memos[id] || {}).some(v => v));
+  // 完了・削除した現場でも、表示中の7日に予定かメモ（週の備考を含む）が入っていれば行を出す（隠さない）。そこへは置けない
+  const shown = new Set(days.map(ds));
+  const memoSites = shownWeeks().flatMap(m => Object.entries(S.weeks[m]?.memos || {})
+    .filter(([, v]) => Object.entries(v || {}).some(([k, t]) => t && (k === 'week' || shown.has(k)))).map(([id]) => id));
   const extra = [...new Set([...Object.keys(at), ...memoSites])].filter(id => id && !rows.some(r => r.id === id))
     .map(id => ({ id, ...(S.company.sites[id] || { name: '', gone: true }), locked: true }))
     .sort((a, b) => !!a.gone - !!b.gone || (a.order ?? 0) - (b.order ?? 0));
@@ -1180,7 +1204,7 @@ function boardTable() {
   const head = `<thead><tr><th class="nm">現場</th>${days.map(d => {
     const k = ds(d), h = holidayName(k);
     return `<th class="${dayCls(d)}${k === today ? ' tdy' : ''}">${DOW[d.getDay()]} ${md(d)}${k === today ? '<span class="today">今日</span>' : ''}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
-  }).join('')}<th class="bk">備考<div class="hol">この週</div></th></tr></thead>`;
+  }).join('')}<th class="bk">備考<div class="hol">${isMonStart() ? 'この週' : '週ごと（見るだけ）'}</div></th></tr></thead>`;
   if (!visiblePeople().length) {
     const msg = sortedPeople(false).length ? '該当する人がいません' : '「人の登録」タブから実習生を登録してください';
     return `<table class="grid board">${head}</table><div class="empty">${msg}</div>`;
@@ -1193,11 +1217,19 @@ function boardTable() {
     const notes = list.filter(p => cellOf(p.id, k)?.note).map(p =>
       `<div class="bnote" data-act="mg" data-pid="${esc(p.id)}" data-date="${k}"><b>${esc(p.name)}</b>${esc(cellOf(p.id, k).note)}</div>`).join('');
     return `<td class="${ca.cls}"${ca.style}><div class="mlist" data-site="${esc(r.id)}" data-date="${k}"${r.locked ? ' data-lock="1"' : ''}>${list.map(p => magnet(p, k, r.pool && rest)).join('')}</div>${notes}${r.pool ? '' : memoBox(r.id, k)}</td>`;
-  }).join('')}<td class="bk">${r.pool ? '' : memoBox(r.id, 'week')}</td></tr>`).join('');
+  }).join('')}<td class="bk">${r.pool ? '' : weekMemoCell(r.id)}</td></tr>`).join('');
   return `<table class="grid board">${head}<tbody>${body}</tbody></table>`;
 }
-// 現場のメモ（key＝日付ならその日のマス、'week' なら右端の備考）。押すと書ける
-const memoOf = (sid, key) => S.week.memos?.[sid]?.[key] || '';
+// 現場のメモ（key＝日付ならその日のマス、'week' なら右端の備考＝月曜はじまりで表示している週のもの）。押すと書ける
+const memoOf = (sid, key) => (key === 'week' ? S.weeks[ds(S.weekStart)] : S.weeks[wkOf(key)])?.memos?.[sid]?.[key] || '';
+// 右端の備考の中身 [見出し, 文]。日送りで7日が2つの週にまたがっているときは、両方の週の備考を見出し付きで
+const weekNotes = sid => (isMonStart() ? [['', memoOf(sid, 'week')]]
+  : shownWeeks().map(m => [`${md(pd(m))}〜 の週`, S.weeks[m]?.memos?.[sid]?.week || ''])).filter(([, v]) => v);
+// 2つの週にまたがっているときは、どちらの週に書くか決まらないので見せるだけにする
+function weekMemoCell(sid) {
+  if (isMonStart()) return memoBox(sid, 'week');
+  return weekNotes(sid).map(([h, v]) => `<div class="smemo ro" title="備考は月曜からの表示で書けます（「今週」で戻ります）"><b>${h}</b>\n${esc(v)}</div>`).join('');
+}
 function memoBox(sid, key) {
   const v = memoOf(sid, key);
   return `<div class="smemo${v ? '' : ' empty'}" data-act="memo" data-site="${esc(sid)}" data-key="${key}" role="button" tabindex="0">${v ? esc(v) : (key === 'week' ? '＋備考' : '＋メモ')}</div>`;
@@ -1205,7 +1237,8 @@ function memoBox(sid, key) {
 const memoWhere = (sid, key, mon) => `現場「${siteLabel(sid)}」の ${key === 'week' ? `${md(pd(mon))}〜 の週の備考` : `${dayLabel(key)} のメモ`}`;
 function startMemo(el) {
   const { site, key } = el.dataset;
-  const mon = ds(S.weekStart);   // 書き始めた週に書く（待っている間に週を移っても、別の週へ書かない）
+  // 書き始めた週に書く（待っている間に週を移っても、別の週へ書かない）。日のメモはその日の週、備考は表示中の週（月曜はじまりのときだけ出る）
+  const mon = key === 'week' ? ds(S.weekStart) : wkOf(key);
   const cur = memoOf(site, key);
   const inp = document.createElement('input');
   inp.className = 'smemoIn'; inp.value = cur; inp.maxLength = key === 'week' ? 300 : 200;
@@ -1480,11 +1513,16 @@ async function fillRow(pid) {
   }
   if (!n) { toast('空いている日がありません（日曜・祝日は埋めません）'); return; }
   const sname = S.company.sites[site].name;
-  const ok = await store.setCells(ds(S.weekStart), { [pid]: out },
+  // 日送りで7日が2つの週にまたがっていれば、日ごとにその週の文書へ（1回でまとめて書く）
+  const byWeek = {};
+  for (const [k, c] of Object.entries(out)) ((byWeek[wkOf(k)] ||= {})[pid] ||= {})[k] = c;
+  const ok = await store.setCellsWeeks(byWeek,
     `${p.name} の空いている ${n} 日（${Object.keys(out).sort().map(dayLabel).join('、')}）を「${sname}」で埋めた`);
   if (ok) toast(`${p.name} さんの空いている ${n} 日を「${sname}」にしました`);
 }
 async function copyPrevWeek() {
+  // 日送りで月曜以外から見ているときは、どの週へコピーするか決まらないので使わない
+  if (!isMonStart()) { toast('「前の週をコピー」は月曜からの表示で使えます（「今週」を押すと月曜からに戻ります）', true); return; }
   // 押したときの週に固定する（待っている間に週を移っても、別の週へ書かない）
   const mon = S.weekStart, moved = () => ds(S.weekStart) !== ds(mon);
   const prevMon = addDays(mon, -7);
@@ -1576,7 +1614,7 @@ function furi(s, viewer) {
 }
 function printWeek() {
   const days = weekDays();
-  $('#print').innerHTML = `<h1>${esc(S.company.name)}　週間配置表<small>${days[0].getFullYear()}年 ${md(days[0])}（月）〜 ${md(days[6])}（日）</small></h1>${S.view === 'board' ? boardPrint() : allTable(visiblePeople(), days, true)}`;
+  $('#print').innerHTML = `<h1>${esc(S.company.name)}　週間配置表<small>${days[0].getFullYear()}年 ${md(days[0])}（${DOW[days[0].getDay()]}）〜 ${md(days[6])}（${DOW[days[6].getDay()]}）</small></h1>${S.view === 'board' ? boardPrint() : allTable(visiblePeople(), days, true)}`;
   window.print();
 }
 // ホワイトボードで見ているときの印刷：現場×日のマスに名前を並べる（日曜・祝日の未配置は休みなので書かない）
@@ -1593,7 +1631,7 @@ function boardPrint() {
       const n = cellOf(p.id, k)?.note;
       return `<div>${esc(p.name)}${n ? `<div class="vnote">${esc(n)}</div>` : ''}</div>`;
     }).join('')}${!r.pool && memoOf(r.id, k) ? `<div class="pmemo">${esc(memoOf(r.id, k))}</div>` : ''}</td>`;
-  }).join('')}<td>${!r.pool && memoOf(r.id, 'week') ? `<div class="pmemo">${esc(memoOf(r.id, 'week'))}</div>` : ''}</td></tr>`).join('')}</tbody></table>`;
+  }).join('')}<td>${r.pool ? '' : weekNotes(r.id).map(([h, v]) => `<div class="pmemo">${h ? h + '\n' : ''}${esc(v)}</div>`).join('')}</td></tr>`).join('')}</tbody></table>`;
 }
 
 /* ---- 人の登録 ---- */
