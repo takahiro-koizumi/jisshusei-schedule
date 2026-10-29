@@ -111,7 +111,12 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 
 /* ---- ホワイトボード（現場×日。人のマグネットをドラッグして配置する。現場配置ボードと同じ見た目） ---- */
 .board th,.board td{border-color:#e2e0d2}
-.board td{min-width:128px;padding:4px}
+.board td{min-width:128px;padding:4px;height:1px}   /* height は最低の高さ。指定があると中の .bcell が行の高さいっぱいに伸びる */
+/* マスの中身：マグネット → 人のメモ → いちばん下に現場のメモ（マグネットの数がちがっても、同じ行のメモの位置がそろう） */
+.bcell{display:flex;flex-direction:column;gap:4px;height:100%}
+.bcell>*{flex-shrink:0}
+.bcell>.bnote{margin-top:0}
+.bcell>.smemo,.bcell>.smemoIn{margin-top:auto}
 .board td.col{background:color-mix(in srgb,var(--sc) 45%,#fff);box-shadow:none}
 .board td.lock{background:#f3f3f1}
 .board th.nm{background:#f8f8f4}
@@ -132,7 +137,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .smemo.empty{background:none;color:var(--faint)}
 .smemo:hover{border-color:var(--line2)}
 .smemo.ro{cursor:default}.smemo.ro:hover{border-color:transparent}   /* 日送りで2つの週にまたがっているときの備考（見るだけ） */
-@media (hover:hover){.smemo.empty{color:transparent}td:hover>.smemo.empty{color:var(--faint)}}   /* マウスの端末では、空のメモ欄は指したときだけ出す */
+@media (hover:hover){.smemo.empty{color:transparent}td:hover .smemo.empty{color:var(--faint)}}   /* マウスの端末では、空のメモ欄は指したときだけ出す */
 .smemoIn{width:100%;margin-top:4px;padding:3px 5px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
 @media (hover:none){.smemoIn,.noteIn{font-size:16px}}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
 /* 指の端末では、並べ替えできるマス（現場の行）のマグネットを行の幅いっぱいに伸ばす。
@@ -1216,7 +1221,7 @@ function boardTable() {
       : r.locked ? { cls: 'lock', style: '' } : colorAttr(r, r.kind === 'off' ? 'off' : '');
     const notes = list.filter(p => cellOf(p.id, k)?.note).map(p =>
       `<div class="bnote" data-act="mg" data-pid="${esc(p.id)}" data-date="${k}"><b>${esc(p.name)}</b>${esc(cellOf(p.id, k).note)}</div>`).join('');
-    return `<td class="${ca.cls}"${ca.style}><div class="mlist" data-site="${esc(r.id)}" data-date="${k}"${r.locked ? ' data-lock="1"' : ''}>${list.map(p => magnet(p, k, r.pool && rest)).join('')}</div>${notes}${r.pool ? '' : memoBox(r.id, k)}</td>`;
+    return `<td class="${ca.cls}"${ca.style}><div class="bcell"><div class="mlist" data-site="${esc(r.id)}" data-date="${k}"${r.locked ? ' data-lock="1"' : ''}>${list.map(p => magnet(p, k, r.pool && rest)).join('')}</div>${notes}${r.pool ? '' : memoBox(r.id, k)}</div></td>`;
   }).join('')}<td class="bk">${r.pool ? '' : weekMemoCell(r.id)}</td></tr>`).join('');
   return `<table class="grid board">${head}<tbody>${body}</tbody></table>`;
 }
