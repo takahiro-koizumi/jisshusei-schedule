@@ -117,6 +117,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .bcell>*{flex-shrink:0}
 .bcell>.bnote{margin-top:0}
 .bcell>.smemo,.bcell>.smemoIn{margin-top:auto}
+.nostretch .board td,.nostretch .bcell{height:auto}   /* 伸ばせないブラウザ（checkCellStretch）は前の並びに戻す */
 .board td.col{background:color-mix(in srgb,var(--sc) 45%,#fff);box-shadow:none}
 .board td.lock{background:#f3f3f1}
 .board th.nm{background:#f8f8f4}
@@ -1267,6 +1268,14 @@ function startMemo(el) {
   });
   inp.addEventListener('blur', () => finish(true));
 }
+// Firefox は、高さを決めた td の中の height:100% を行の高さで計算しない（.bcell が 0 になり、マグネットが下の行に重なる）。
+// 描いた後に伸びていなければ、メモを下にそろえるのをやめて前の並び（中身のすぐ下）に戻す。ブラウザ名ではなく結果で見分ける
+function checkCellStretch() {
+  const root = document.documentElement;
+  if (root.classList.contains('nostretch')) return;
+  const c = document.querySelector('#grid .bcell');
+  if (c && c.offsetHeight + 2 < c.scrollHeight) root.classList.add('nostretch');
+}
 // ドラッグの部品（SortableJS。現場配置ボードと同じ版）は、ホワイトボードを開いたときに読み込む
 let sortLoader = null, sortables = [], mountGen = 0;
 // 1か所から読めなければ、もう1か所（現場配置ボードが使っている所）から読む
@@ -1282,6 +1291,7 @@ function loadSortable() {
 let sortFailed = false;   // 読み込めなかったら、描き直すたびには読み直さない（知らせも1回だけ）。「ホワイトボード」を押し直すと読み直す
 // 描き直すたびに前のドラッグを外してから付け直す（外さないと描き直すたびに溜まっていく）
 async function mountBoard() {
+  checkCellStretch();
   const gen = ++mountGen;
   // ドラッグの途中で画面ごと描き直された（ログアウト等）。destroy では onEnd が来ないので、ここで片付ける
   const midDrag = S.dragging;
