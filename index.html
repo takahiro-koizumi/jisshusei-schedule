@@ -128,6 +128,8 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .board tr.pool td{border-bottom:2px solid #d4d2c4}
 .board .sub{display:block;font-size:10px;color:var(--sub);font-weight:400}
 .board .term{display:block;font-size:10px;color:#555;font-weight:400;margin-top:2px}   /* 現場名の下の工期 */
+.board .addr{display:block;font-size:10px;color:#1d4f91;font-weight:400;margin-top:2px;text-decoration:none;word-break:break-all}   /* 現場名の下の住所（地図のリンク） */
+.board .addr:hover{text-decoration:underline}
 .mlist{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:30px}
 .mg{display:inline-flex;align-items:center;max-width:100%;min-height:26px;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;line-height:1.2;color:#fff;background:linear-gradient(180deg,#ff7373 0%,#e94747 100%);box-shadow:0 1px 2px rgba(0,0,0,.15);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;word-break:break-all}
 .mg:focus-visible{outline:2px solid var(--dark);outline-offset:1px}
@@ -297,6 +299,8 @@ table.sum{border-collapse:separate;border-spacing:0;min-width:100%;font-variant-
 .vmuted{color:var(--faint);font-weight:400}
 .vnote{font-size:14px;color:#444;white-space:pre-wrap;word-break:break-all;margin-top:2px}
 .vday>:not(.vd){grid-column:2}
+.vaddr{display:inline-block;font-size:14px;color:#1d4f91;text-decoration:underline;word-break:break-all;margin-top:2px}   /* 現場の住所（地図のリンク） */
+.vaddrs{background:#fff;border-color:var(--line)}
 .vsm{font-size:14px;color:#7a4b00;background:#fff8d6;border-radius:6px;padding:3px 8px;margin-top:4px;white-space:pre-wrap;word-break:break-all}
 .vweek{margin-top:14px;background:#fffdf3;border:1px solid #f0dca0;border-radius:10px;padding:10px 12px}
 .vwh{font-weight:700;margin-bottom:6px}
@@ -581,6 +585,7 @@ const VT = {
   slow:      { ja: '読み込みに時間がかかっています。<br>電波の良い所で、もう一度開いてください。', id: 'Pemuatan memakan waktu lama.<br>Buka lagi di tempat dengan sinyal yang bagus.', si: 'පූරණය වීමට වැඩි වේලාවක් ගත වේ.<br>හොඳ සංඥා ඇති තැනක නැවත විවෘත කරන්න.' },
   reload:    { ja: '再読み込み', id: 'Muat ulang', si: 'නැවත පූරණය කරන්න' },
   siteMemo:  { ja: `${R('現場', 'げんば')}の メモ`, id: 'Catatan lokasi kerja', si: 'වැඩබිමේ සටහන්' },
+  siteAddr:  { ja: `${R('現場', 'げんば')}の ${R('住所', 'じゅうしょ')}`, id: 'Alamat lokasi kerja', si: 'වැඩබිමේ ලිපිනය' },
   openTr:    { ja: '', id: 'Lihat terjemahan (Google)', si: 'පරිවර්තනය බලන්න (Google)' },
   admin:     { ja: '事務所の方（ログイン）', id: 'Untuk staf kantor (masuk)', si: 'කාර්යාල කාර්ය මණ්ඩලය සඳහා (පිවිසෙන්න)' },
   work:      { ja: R('出勤', 'しゅっきん'), id: 'Hari kerja', si: 'වැඩ දින' },
@@ -828,6 +833,8 @@ function seedDemo() {
   people.p_demo5.color = '#3498db';   // マグネットの色の見本
   people.p_demo6.color = '#2c3e50'; people.p_demo7.color = '#9b59b6';
   const mon = mondayOf(new Date()), cells = {};
+  // 住所の見本（プレイヤーの画面にも出る）
+  sites.s_demo2.address = '千葉県柏市〇〇1-2-3'; sites.s_demo3.address = '千葉県船橋市〇〇4-5-6';
   // 工期の見本
   [[2, -45, 60], [3, -120, 150], [4, -14, 25]].forEach(([i, a, b]) => Object.assign(sites['s_demo' + i], { start: ds(addDays(mon, a)), end: ds(addDays(mon, b)) }));
   [[2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 0], [4, 4, 4, 4, 4, 4], [1, 2, 2, 2, 2, 2], [5, 4, 4, 4, 4, 0], [2, 2, 3, 3, 3, '']]
@@ -856,8 +863,8 @@ function seedDemo() {
   }
   // 管理側の見本：工事情報（発注者・住所・金額・構造・階数）と、月ごとの担当
   const priv = { sites: {
-    s_demo2: { client: 'お試し住宅株式会社', address: '千葉県柏市〇〇1-2-3', amount: 12800000, structure: '木造', floors: '2階' },
-    s_demo3: { client: 'お試し不動産株式会社', address: '千葉県船橋市〇〇4-5-6', amount: 186000000, structure: 'RC造', floors: '地上5階' },
+    s_demo2: { client: 'お試し住宅株式会社', amount: 12800000, structure: '木造', floors: '2階' },
+    s_demo3: { client: 'お試し不動産株式会社', amount: 186000000, structure: 'RC造', floors: '地上5階' },
     s_demo4: { client: 'お試し商事株式会社', amount: 42500000, structure: 'S造', floors: '3階' },
   } };
   const months = {}, m0 = firstOfMonth(new Date());
@@ -1460,6 +1467,11 @@ function termIn(s, first) {
 const monAssign = (k, sid) => new Set(Object.entries(S.mon[k]?.assign?.[sid] || {}).filter(([, v]) => v).map(([id]) => id));
 const monMemo = (k, sid) => S.mon[k]?.memos?.[sid] || '';
 const siteInfo = sid => S.priv?.sites?.[sid] || {};
+// 現場の住所。プレイヤーにも見せるので会社の文書 sites[id].address に置く（2026-10-30 から）。
+// それより前に管理側の工事情報（private）へ入れた住所は、編集者の画面でだけ代わりに出す（工事情報の画面で保存するとこちらへ移る）
+const siteAddr = sid => String(S.company?.sites?.[sid]?.address || siteInfo(sid).address || '').trim();
+const mapUrl = a => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a);
+const addrLink = (a, cls) => `<a class="${cls}" lang="ja" href="${esc(mapUrl(a))}" target="_blank" rel="noopener">📍${esc(a)}</a>`;
 const yen = n => Number.isFinite(n) ? n.toLocaleString('ja-JP') + '円' : '';
 const peopleIn = set => sortedPeople(true).filter(p => set.has(p.id));
 // マスの延べ人工の内訳「名前 日数」。登録に無い（削除された）人も出す（足すと延べ人工になるように）
@@ -1502,10 +1514,10 @@ function adminView() {
 function adminRowHead(s) {
   const info = siteInfo(s.id), spec = [info.structure, info.floors].filter(Boolean).join('・');
   const ca = colorAttr(s.done ? null : s, 'nm');
-  const any = info.client || info.address || spec || Number.isFinite(info.amount);
+  const addr = siteAddr(s.id), any = info.client || addr || spec || Number.isFinite(info.amount);
   return `<th class="${ca.cls}"${ca.style} data-act="ainfo" data-site="${esc(s.id)}" role="button" tabindex="0">${s.kana ? `<span class="sub">${esc(s.kana)}</span>` : ''}${s.done ? '（完了）' : ''}${esc(s.name)}`
     + (info.client ? `<span class="ainfo">発注者 ${esc(info.client)}</span>` : '')
-    + (info.address ? `<span class="ainfo">📍${esc(info.address)}</span>` : '')
+    + (addr ? `<span class="ainfo">📍${esc(addr)}</span>` : '')
     + (spec ? `<span class="ainfo">${esc(spec)}</span>` : '')
     + (Number.isFinite(info.amount) ? `<span class="amt">${yen(info.amount)}</span>` : '')
     + (termText(s) ? `<span class="term">工期 ${termText(s)}</span>` : '')
@@ -1574,16 +1586,17 @@ function editSiteInfo(sid) {
   const s = S.company?.sites[sid]; if (!s) return;
   if (!S.privLoaded) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
   const info = siteInfo(sid), st0 = isYmd(s.start) ? s.start : '', en0 = isYmd(s.end) ? s.end : '';
-  const map = info.address ? ` <a href="${esc('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(info.address))}" target="_blank" rel="noopener">地図で見る ↗</a>` : '';
+  const addr0 = siteAddr(sid), pubAddr = String(s.address || '').trim();
+  const map = addr0 ? ` <a href="${esc(mapUrl(addr0))}" target="_blank" rel="noopener">地図で見る ↗</a>` : '';
   const f = formModal(`<h3>${esc(s.name)}</h3>
     <label class="mrow">発注者<input name="client" maxlength="60" value="${esc(info.client || '')}" placeholder="例：〇〇建設株式会社" autocomplete="off"></label>
-    <label class="mrow"><span>住所${map}</span><input name="address" maxlength="120" value="${esc(info.address || '')}" placeholder="例：東京都〇〇区〇〇1-2-3" autocomplete="off"></label>
+    <label class="mrow"><span>住所${map}</span><input name="address" maxlength="120" value="${esc(addr0)}" placeholder="例：東京都〇〇区〇〇1-2-3" autocomplete="off"></label>
     <label class="mrow">金額（円）<input name="amount" inputmode="numeric" maxlength="20" value="${Number.isFinite(info.amount) ? info.amount.toLocaleString('ja-JP') : ''}" placeholder="例：12800000" autocomplete="off"></label>
     <label class="mrow">構造<input name="structure" list="structList" maxlength="20" value="${esc(info.structure || '')}" placeholder="例：RC造" autocomplete="off"></label>
     <datalist id="structList">${STRUCTS.map(x => `<option value="${x}">`).join('')}</datalist>
     <label class="mrow">階数<input name="floors" maxlength="20" value="${esc(info.floors || '')}" placeholder="例：地上5階" autocomplete="off"></label>
     <div class="mrow">工期<div class="mrow2"><input type="date" name="ts" value="${st0}" aria-label="工期の始め">〜<input type="date" name="te" value="${en0}" aria-label="工期の終わり"></div></div>
-    <p class="hint">発注者・住所・金額・構造・階数は管理側にだけ出ます（プレイヤーの画面には出ません）。工期はホワイトボードの現場名の下にも出ます。</p>`, f => {
+    <p class="hint">住所はホワイトボードの現場名の下とプレイヤーの画面にも、地図のリンク付きで出ます。発注者・金額・構造・階数は管理側にだけ出ます（プレイヤーの画面には出ません）。工期はホワイトボードの現場名の下にも出ます。</p>`, f => {
     if (!S.company?.sites?.[sid]) { toast('この現場は削除されたので保存できません', true); return; }
     const amount = parseYen(f.elements.amount.value);
     if (amount === null) { toast('金額は数字で入れてください（例：12800000、1280万）', true); return false; }
@@ -1591,8 +1604,9 @@ function editSiteInfo(sid) {
     if ([f.elements.ts, f.elements.te].some(x => x.validity?.badInput) || !okTermDate(ts) || !okTermDate(te)) { toast(TERM_BAD, true); return false; }
     if (ts && te && ts > te) { toast('工期の終わりが始めより前になっています', true); return false; }
     const val = k => f.elements[k].value.trim();
-    const now = { client: val('client'), address: val('address'), amount, structure: val('structure'), floors: val('floors') };
-    const LB = { client: '発注者', address: '住所', amount: '金額', structure: '構造', floors: '階数' };
+    const addr = val('address');
+    const now = { client: val('client'), amount, structure: val('structure'), floors: val('floors') };
+    const LB = { client: '発注者', amount: '金額', structure: '構造', floors: '階数' };
     const show = (key, v) => key === 'amount' ? (Number.isFinite(v) ? yen(v) : 'なし') : (v || 'なし');
     const pp = {}, hist = [];
     for (const key of Object.keys(now)) {
@@ -1600,11 +1614,19 @@ function editSiteInfo(sid) {
       if (now[key] === old) continue;
       pp[key] = now[key]; hist.push(`${LB[key]}を「${show(key, old)}」→「${show(key, now[key])}」`);
     }
-    if (hist.length) store.setPrivate({ sites: { [sid]: pp } }, `管理側 物件「${s.name}」の${hist.join('、')}に変更`);
-    const tp = {};
+    // 前に工事情報（private）へ入れた住所は、下で会社の文書へ移すので private からは消す（欄を空にして消した場合も）
+    if (info.address) { pp.address = ''; if (!addr) hist.push(`住所を「${short(info.address)}」→「なし」`); }
+    if (Object.keys(pp).length) store.setPrivate({ sites: { [sid]: pp } }, hist.length ? `管理側 物件「${s.name}」の${hist.join('、')}に変更` : `管理側 物件「${s.name}」の住所を、プレイヤーにも見える現場の登録へ移した`);
+    const tp = {}, th = [];
     if (ts !== st0) tp.start = ts;
     if (te !== en0) tp.end = te;
-    if (Object.keys(tp).length) store.patch({ sites: { [sid]: tp } }, `現場「${s.name}」の工期を ${termText(s) || 'なし'} → ${termText({ ...s, ...tp }) || 'なし'} に変更`);
+    if (Object.keys(tp).length) th.push(`工期を ${termText(s) || 'なし'} → ${termText({ ...s, ...tp }) || 'なし'} に変更`);
+    // 住所は会社の文書（プレイヤーも読める）に書く
+    if (addr !== pubAddr) {
+      tp.address = addr;
+      th.push(addr && addr === addr0 ? `住所「${short(addr)}」をプレイヤーの画面にも出すようにした` : `住所を「${short(addr0) || 'なし'}」→「${short(addr) || 'なし'}」に変更`);
+    }
+    if (Object.keys(tp).length) store.patch({ sites: { [sid]: tp } }, `現場「${s.name}」の${th.join('、')}`);
   });
   if (!TOUCH) f.elements.client.focus();
 }
@@ -1641,8 +1663,8 @@ function boardRows() {
 function boardRowHead(r) {
   if (r.pool) return '<th class="nm">未配置<span class="sub">まだ決まっていない人</span></th>';
   const ca = colorAttr(r.locked ? null : r, `nm${r.kind === 'off' ? ' off' : ''}`);
-  const name = r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name), term = termText(r);
-  return `<th class="${ca.cls}"${ca.style}>${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}${term ? `<span class="term">工期 ${term}</span>` : ''}</th>`;
+  const name = r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name), term = termText(r), addr = r.gone ? '' : siteAddr(r.id);
+  return `<th class="${ca.cls}"${ca.style}>${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}${addr ? addrLink(addr, 'addr') : ''}${term ? `<span class="term">工期 ${term}</span>` : ''}</th>`;
 }
 function magnet(p, k, faded) {
   const mc = magnetColor(p.color);
@@ -1928,6 +1950,7 @@ function fieldHist(coll, x, f, v) {
     case 'side': return `${who}の側を ${sideLabel(x.side)} → ${sideLabel(v)} に変更`;
     case 'retired': return v ? `${who}を「帰国・退職」にした` : `${who}を「在籍」に戻した`;
     case 'done': return v ? `${who}を「完了」にした` : `${who}を「稼働中」に戻した`;
+    case 'address': return `${who}の住所を「${short(x.address) || 'なし'}」→「${short(v) || 'なし'}」に変更`;
     default: return `${who}の ${f} を変更`;
   }
 }
@@ -2097,7 +2120,7 @@ function boardPrint() {
   return `<table class="vt"><thead><tr><th>現場</th>${days.map(d => {
     const h = holidayName(ds(d));
     return `<th class="${dayCls(d)}">${md(d)}<br>${DOW[d.getDay()]}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
-  }).join('')}<th>備考</th></tr></thead><tbody>${rows.map(r => `<tr><th>${r.pool ? '未配置' : r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name)}${!r.pool && termText(r) ? `<div class="pterm">工期 ${termText(r)}</div>` : ''}</th>${days.map(d => {
+  }).join('')}<th>備考</th></tr></thead><tbody>${rows.map(r => `<tr><th>${r.pool ? '未配置' : r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name)}${!r.pool && !r.gone && siteAddr(r.id) ? `<div class="pterm">📍${esc(siteAddr(r.id))}</div>` : ''}${!r.pool && termText(r) ? `<div class="pterm">工期 ${termText(r)}</div>` : ''}</th>${days.map(d => {
     const k = ds(d), list = r.pool && isRestDay(d) ? [] : at[r.id]?.[k] || [];
     const ca = r.pool || r.locked ? { cls: '', style: '' } : colorAttr(r, r.kind === 'off' ? 'off' : '');
     return `<td class="${ca.cls}"${ca.style}>${list.map(p => {
@@ -2151,6 +2174,7 @@ function sitesPanel() {
     <form class="addrow" data-form="addSite">
       <label>現場名<input name="nm" required maxlength="60" placeholder="例：柏市 新築外構工事"></label>
       <label>ふりがな（プレイヤーの画面に出ます）<input name="kn" maxlength="80" placeholder="例：かしわし しんちく がいこう こうじ"></label>
+      <label>住所（なくても可。プレイヤーの画面に出ます）<input name="ad" maxlength="120" placeholder="例：東京都〇〇区〇〇1-2-3"></label>
       <label>種類<select name="kd"><option value="site">現場</option><option value="off">休み・研修など</option></select></label>
       <label>色<select name="cl">${colorOptions(nextSiteColor())}</select></label>
       <label>工期（なくても可）<span class="terms"><input type="date" name="ts" aria-label="工期の始め"><span class="te">〜<input type="date" name="te" aria-label="工期の終わり"></span></span></label>
@@ -2162,18 +2186,19 @@ function siteList() {
   if (!S.company) return '<div class="empty">読み込み中…</div>';
   const list = sortedSites(true);
   if (!list.length) return '<div class="empty">まだ登録されていません</div>';
-  return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>種類</th><th>色</th><th>工期</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
+  return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>住所</th><th>種類</th><th>色</th><th>工期</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
     <tr class="${s.done ? 'retired' : ''}">
       <td class="ord"><button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
       <td data-l="現場名"><input data-coll="sites" data-f="name" data-id="${esc(s.id)}" value="${esc(s.name)}" maxlength="60"></td>
       <td data-l="ふりがな"><input data-coll="sites" data-f="kana" data-id="${esc(s.id)}" value="${esc(s.kana || '')}" maxlength="80"></td>
+      <td data-l="住所">${s.kind === 'off' && !siteAddr(s.id) ? '<span class="hint">―</span>' : `<input data-coll="sites" data-f="address" data-id="${esc(s.id)}" value="${esc(siteAddr(s.id))}" maxlength="120" aria-label="住所">`}</td>
       <td data-l="種類"><select data-coll="sites" data-f="kind" data-id="${esc(s.id)}"><option value="site">現場</option><option value="off" ${s.kind === 'off' ? 'selected' : ''}>休み・研修など</option></select></td>
       <td data-l="色"><span class="clr">${swatch(s.color)}<select data-coll="sites" data-f="color" data-id="${esc(s.id)}" aria-label="色">${colorOptions(s.color)}</select></span></td>
       <td data-l="工期">${s.kind === 'off' && !termText(s) ? '<span class="hint">―</span>' : `<span class="terms${termBad(s) ? ' bad' : ''}"><input type="date" data-coll="sites" data-f="start" data-id="${esc(s.id)}" value="${isYmd(s.start) ? s.start : ''}" aria-label="工期の始め"><span class="te">〜<input type="date" data-coll="sites" data-f="end" data-id="${esc(s.id)}" value="${isYmd(s.end) ? s.end : ''}" aria-label="工期の終わり"></span></span>`}</td>
       <td data-l="状態"><select data-coll="sites" data-f="done" data-id="${esc(s.id)}"><option value="">稼働中</option><option value="1" ${s.done ? 'selected' : ''}>完了</option></select></td>
       <td class="dl"><button class="mini danger" data-act="del" data-coll="sites" data-id="${esc(s.id)}">削除</button></td>
     </tr>`).join('')}</tbody></table>
-    <p class="hint">終わった現場は「完了」にすると予定表の選択肢から消えます（これまでの予定は残ります）。工期を入れると、ホワイトボードの現場名の下に出ます。</p>`;
+    <p class="hint">終わった現場は「完了」にすると予定表の選択肢から消えます（これまでの予定は残ります）。工期を入れると、ホワイトボードの現場名の下に出ます。住所を入れると、ホワイトボードの現場名の下とプレイヤーの画面に、地図のリンク付きで出ます。</p>`;
 }
 /* ---- 編集履歴 ---- */
 function historyList() {
@@ -2309,7 +2334,7 @@ function renderViewer() {
     </div>
     <div class="vrange">${range}</div>
     <div class="vtabs"><button data-act="vtab" data-v="me" class="${S.vtab === 'me' ? 'on' : ''}">${vt('me')}</button><button data-act="vtab" data-v="all" class="${S.vtab === 'all' ? 'on' : ''}">${vt('all')}</button></div>
-    ${S.vtab === 'me' ? meView(people, days) : S.weekLoaded ? `<div class="vall">${allTable(people, days, false)}</div>` : loadingHtml()}
+    ${S.vtab === 'me' ? meView(people, days) : S.weekLoaded ? `<div class="vall">${allTable(people, days, false)}</div>${addrList(people, days)}` : loadingHtml()}
     ${S.mode === 'demo' ? `<p class="vdemo">${vt('demo')}</p>` : ''}
     <footer class="vfoot">${S.mode === 'cloud' ? `<button class="link" data-act="adminLogin">${vt('admin')}</button>` : ''}</footer>`);
 }
@@ -2326,6 +2351,7 @@ function meView(people, days) {
     return `<div class="${ca.cls}"${ca.style}>
       <div class="vd"><span class="md">${mdL(d)}</span><span class="dw">${vDow(d)}</span>${k === today ? `<span class="today">${vt('today')}</span>` : ''}${hol ? `<span class="holb">${vt('holiday')}</span>` : ''}</div>
       <div class="vs">${body}</div>
+      ${s && siteAddr(c.site) ? addrLink(siteAddr(c.site), 'vaddr') : ''}
       ${c?.note ? `<div class="vnote" lang="ja">${esc(c.note)}${trHtml(c.note)}</div>` : ''}
       ${s && memoOf(c.site, k) ? `<div class="vsm" lang="ja">📌 ${esc(memoOf(c.site, k))}${trHtml(memoOf(c.site, k))}</div>` : ''}
     </div>`;
@@ -2343,6 +2369,14 @@ function monthCard() {
     const s = S.company.sites[id];
     return `<div class="vmrow"><div class="vs">${s ? furi(s, true) : '<span lang="ja">（削除された現場）</span>'}</div><span class="vmn">${vDays(mine[id])}</span></div>`;
   }).join('')}<p class="vmnote">${vt('inclPlan')}</p></div>`;
+}
+// プレイヤーの画面「みんな」：この週に誰かが行く現場の住所（地図のリンク）
+function addrList(people, days) {
+  const used = new Set(people.flatMap(p => days.map(d => cellOf(p.id, ds(d))?.site)));
+  const list = sortedSites(true).filter(s => used.has(s.id) && siteAddr(s.id));
+  if (!list.length) return '';
+  return `<div class="vweek vaddrs"><div class="vwh">📍 ${vt('siteAddr')}</div>${list.map(s =>
+    `<div class="vwi"><div class="vs">${furi(s, true)}</div>${addrLink(siteAddr(s.id), 'vaddr')}</div>`).join('')}</div>`;
 }
 // 実習生の画面：この週に行く現場の「備考」（事務所がホワイトボードの右端に書いたもの）
 function weekMemos(days) {
@@ -2546,8 +2580,8 @@ app.addEventListener('submit', async e => {
     if (coll === 'sites' && ts && te && ts > te) { toast('工期の終わりが始めより前になっています', true); return; }
     const item = coll === 'people'
       ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', side: val('sd') === 'admin' ? 'admin' : '', color: val('pc'), order: nextOrder('people'), retired: false }
-      : { name, kana: val('kn'), kind: val('kd') || 'site', color: val('cl'), start: ts, end: te, order: nextOrder('sites'), done: false };
-    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}・${sideLabel(item.side)}${item.color ? `・マグネット ${personColorLabel(item.color)}` : ''}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}${termText(item) ? `・工期 ${termText(item)}` : ''}）`;
+      : { name, kana: val('kn'), address: val('ad'), kind: val('kd') || 'site', color: val('cl'), start: ts, end: te, order: nextOrder('sites'), done: false };
+    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}・${sideLabel(item.side)}${item.color ? `・マグネット ${personColorLabel(item.color)}` : ''}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}${termText(item) ? `・工期 ${termText(item)}` : ''}${item.address ? `・住所 ${short(item.address)}` : ''}）`;
     if (!(await store.patch({ [coll]: { [newId(coll === 'people' ? 'p_' : 's_')]: item } }, hist))) return;   // 失敗したら入力を残す
     f.reset();
     if (coll === 'people') { f.querySelector('[name=kd]').value = item.kind; f.querySelector('[name=sd]').value = item.side; }
