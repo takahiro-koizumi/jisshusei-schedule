@@ -36,10 +36,10 @@ ruby rt{font-size:.55em;font-weight:400}
 .center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center}
 .spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--dark);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#222;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:calc(100vw - 32px)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#222;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:70;max-width:calc(100vw - 32px)}   /* 入力画面（.modal 60）より手前。開いたまま出す注意が隠れないように */
 #toast.show{opacity:1;transform:translate(-50%,0)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
-.modalBox{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:440px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;padding:16px;z-index:60;overflow-y:auto;overscroll-behavior:contain}
+.modalBox{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:440px;box-shadow:0 8px 30px rgba(0,0,0,.25);margin:auto}   /* 画面より高いとき（横向き・小さいスマホ）は上から出してスクロール。収まるときは margin:auto で真ん中 */
 .modalMsg{margin:0 0 16px;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:60vh;overflow:auto}
 .modalBox .btns{display:flex;justify-content:flex-end;gap:8px}
 
@@ -140,10 +140,6 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .smemo.ro{cursor:default}.smemo.ro:hover{border-color:transparent}   /* 日送りで2つの週にまたがっているときの備考（見るだけ） */
 @media (hover:hover){.smemo.empty{color:transparent}td:hover .smemo.empty{color:var(--faint)}}   /* マウスの端末では、空のメモ欄は指したときだけ出す */
 .smemoIn{width:100%;margin-top:4px;padding:3px 5px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
-@media (hover:none){.smemoIn,.noteIn{font-size:16px}}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
-/* 指の端末では、並べ替えできるマス（現場の行）のマグネットを行の幅いっぱいに伸ばす。
-   短い名前の右の空いた所に指があると Sortable が反応せず、その人の前に入れられないため */
-@media (hover:none){.mlist:not([data-site=""]):not([data-lock]) .mg{flex-grow:1}}
 .board th.bk,.board td.bk{min-width:150px;max-width:220px;background:#fffdf3}
 .board td.bk .smemo{margin-top:0;min-height:22px}
 .board td.bk .smemo.empty{color:var(--faint)}
@@ -161,6 +157,48 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .modalBox h3{margin:0 0 12px;font-size:16px}
 .mrow{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--sub);margin-bottom:12px}
 .mrow select,.mrow input{padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;font-size:16px;color:var(--ink)}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
+.mrow textarea{padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;font-size:16px;font-family:inherit;color:var(--ink);resize:vertical}
+.mrow2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mrow2 input{flex:1 1 130px;min-width:0}
+.mrow input[type=date]{min-height:40px}   /* iPhone の Safari は空の日付欄を低く描く */
+.acks{display:flex;flex-wrap:wrap;gap:6px}
+.acks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:6px;padding:5px 8px;color:var(--ink);cursor:pointer}
+.acks input{width:18px;height:18px;margin:0}
+.mbreak{font-size:12px;color:var(--sub);background:#f7f8fa;border-radius:6px;padding:6px 8px;margin-bottom:12px}
+
+/* ---- プレイヤー側：月の集計（人×現場の日数） ---- */
+table.sum{border-collapse:separate;border-spacing:0;min-width:100%;font-variant-numeric:tabular-nums}
+.sum th,.sum td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:7px 10px;text-align:right;white-space:nowrap;background:#fff}
+.sum thead th{position:sticky;top:0;background:var(--head);z-index:2;font-weight:600;text-align:center;white-space:normal;min-width:64px;max-width:120px;font-size:12px}
+.sum thead th.col{background:var(--sc);box-shadow:inset 0 -3px 0 var(--sb)}
+.sum thead th.off{background:var(--off)}
+.sum th.nm{position:sticky;left:0;z-index:1;background:#fafaf8;text-align:left;min-width:110px}
+.sum thead th.nm{z-index:3;background:var(--head)}
+.sum td.work,.sum thead th.work{background:#eef4ff;font-weight:700}
+.sum .z{color:#c9cdd2;font-weight:400}
+.sum tfoot th,.sum tfoot td{background:#f3f3f0;font-weight:700}
+.sum tr.gone th.nm{color:var(--sub)}
+
+/* ---- 管理側（物件×月）。物件名の下に工事情報（発注者・住所・構造・階数・金額）と工期、マスに担当（管理の人）と、プレイヤーの延べ人工 ---- */
+.admin td{min-width:150px;cursor:pointer}
+.admin td.in{background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6}   /* 工期に入っている月 */
+.admin td.in.col{background:color-mix(in srgb,var(--sc) 55%,#fff);box-shadow:inset 0 3px 0 var(--sb)}
+@media (hover:hover){.admin td:hover,.admin th.nm[data-act]:hover{outline:2px solid var(--line2);outline-offset:-2px}}   /* iPhone はタップの後も :hover が残るので、マウスの端末だけ */
+.admin th.nm{min-width:190px;max-width:260px}
+.admin th.nm[data-act]{cursor:pointer}
+.admin .ainfo{display:block;font-size:11px;color:#333;font-weight:400;margin-top:2px}
+.admin .ainfo.add{color:var(--faint)}
+.admin .amt{display:block;font-size:12px;font-weight:700;color:#1d4f91;margin-top:2px;font-variant-numeric:tabular-nums}
+.alist{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-height:26px}
+.mg.ro{cursor:pointer;touch-action:auto}
+.atally{font-size:11px;color:#333;margin-top:6px}
+.atally.wait{color:var(--faint)}
+.anames{font-size:10px;color:var(--sub);word-break:break-all;line-height:1.4}
+.amemo{font-size:11px;line-height:1.35;color:#7a4b00;background:rgba(255,248,214,.9);border-radius:3px;padding:2px 4px;margin-top:4px;white-space:pre-wrap;word-break:break-all}
+.aerr{padding:8px 12px;margin-bottom:8px;background:#fff6e0;border:1px solid #f0c36d;border-radius:8px;font-size:13px}
+.admin tfoot th,.admin tfoot td{background:#f3f3f0;font-weight:700;cursor:default;font-variant-numeric:tabular-nums}
+.admin tfoot td:hover,.admin tr.pool td:hover{outline:0}
+.admin tr.pool td{cursor:default}
 
 .panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;max-width:980px}
 .panel.wide{max-width:1240px}   /* 現場の登録（工期の欄の分だけ広い） */
@@ -293,6 +331,13 @@ table.vt{border-collapse:collapse;font-size:13px;min-width:100%}
 .vtr.wait{color:var(--faint)}
 a.vtr{text-decoration:underline}
 .vt .vtr{font-size:11px}
+/* 実習生の画面「自分」：月の集計（その月に何日どこへ行くか） */
+.vmon{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.vmrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.vmrow.tot{font-weight:700;font-size:18px;border-top:0;padding-top:2px}
+.vmrow .vs{font-size:16px}
+.vmn{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+.vmnote{font-size:12px;color:var(--sub);margin:6px 0 0}
 
 #print{display:none}
 @media print{
@@ -307,6 +352,8 @@ a.vtr{text-decoration:underline}
   #print .vt td.off,#print .vt td.col,#print .vt thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #print .pmemo{font-size:8pt;color:#7a4b00;margin-top:2px;white-space:pre-wrap}
   #print .pterm{font-size:7pt;font-weight:400;color:#444;margin-top:1px;word-break:normal}   /* 現場名の break-all を外す（日付の数字の途中で折り返さない） */
+  #print table.sum{width:100%;font-size:9pt;border-collapse:collapse}
+  #print .sum th,#print .sum td{position:static;border:1px solid #888;padding:3px 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
 @media (max-width:700px){
@@ -320,7 +367,33 @@ a.vtr{text-decoration:underline}
   .addrow label{flex:1 1 100%}
   .hist li{grid-template-columns:44px 1fr}
   .hist .hx{grid-column:1/-1}
+  .addrow .terms input{width:auto;flex:1 1 130px;min-width:0}
+  .tabs{flex-wrap:wrap}
+  .topR{flex-wrap:wrap;min-width:0;max-width:100%}
+  .who{flex:1 1 100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* ログイン中のメールは1行に。長ければ「…」 */
+  .tabs button{white-space:nowrap;padding:6px 9px}   /* 「プレイヤー側」を途中で折らない（入らなければ次の行へ） */
+  .admin th.nm{min-width:118px}
+  .admin td{min-width:128px}
 }
+/* 人・現場の登録の一覧は、狭い画面（スマホ・タブレット縦）では1件ずつのカードにする（表のままだと右の列が画面の外に出る） */
+@media (max-width:900px){
+  .list thead{display:none}
+  .list,.list tbody{display:block}
+  .list tr{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:8px 10px;margin-bottom:10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .list tr.retired{background:#f6f6f6}
+  .list td{display:flex;align-items:center;gap:8px;flex:1 1 100%;min-width:0;padding:2px 0;border:0}
+  .list td[data-l]::before{content:attr(data-l);flex:none;width:5.5em;font-size:12px;color:var(--sub)}
+  .list td input,.list td select,.list td .clr,.list td .terms{flex:1 1 auto;min-width:0}
+  .list td .clr select{flex:1 1 auto;min-width:0}
+  .list td .terms input[data-f=start],.list td .terms .te{flex:1 1 100%}   /* 工期は「始め」と「〜終わり」を同じ幅で2行に */
+  .list td .terms .te input{flex:1 1 auto;min-width:0}
+  .list td.ord{order:-2;flex:1 1 auto}
+  .list td.dl{order:-1;flex:0 0 auto}
+}
+#plist{overflow-x:auto}   /* 念のため、はみ出しても一覧の中だけ横に動かす */
+/* 16px 未満だと iPhone で押したときに画面が拡大されたままになる（入力欄・選ぶ欄すべて）。
+   同じ詳しさの指定（.list input など）より後ろに置かないと効かない */
+@media (hover:none){.smemoIn,.noteIn,.list input,.list select,.addrow input,.addrow select,.addrow textarea,.set input,.urlrow input,.auth input,.auth textarea,#search,#hsearch,.grid select{font-size:16px}}
 </style>
 </head>
 <body>
@@ -367,6 +440,14 @@ const mondayOf = d => addDays(d, -((d.getDay() + 6) % 7));
 const todayStr = () => ds(new Date());
 const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
 const isYmd = v => /^\d{4}-\d{2}-\d{2}$/.test(v || '');
+// 月（その月の1日の Date で持つ）。monthKey は 'YYYY-MM'
+const firstOfMonth = d => new Date(d.getFullYear(), d.getMonth(), 1);
+const addMonths = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
+const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const monthLabel = k => { const [y, m] = k.split('-').map(Number); return `${y}年${m}月`; };
+function monthDays(first) { const out = []; for (let d = first; d.getMonth() === first.getMonth(); d = addDays(d, 1)) out.push(d); return out; }
+// first の月から n か月分にかかる週（月曜の日付 'YYYY-MM-DD'）
+function mondaysOf(first, n = 1) { const end = addMonths(first, n), out = []; for (let m = mondayOf(first); m < end; m = addDays(m, 7)) out.push(ds(m)); return out; }
 const ymd = k => { const d = pd(k); return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`; };
 // 現場の工期（sites[id].start・end は 'YYYY-MM-DD'。片方だけでもよい）。無ければ ''。
 // 2台で同時に始めと終わりを直すと逆順が残ることがあるので、そのときは確かめるよう添える
@@ -464,7 +545,16 @@ function personColorOptions(cur) {
   return PERSON_COLORS.map(([v, l]) => `<option value="${v}"${(cur || '') === v ? ' selected' : ''}${v ? ` style="background:${v};color:${textColorFor(v)}"` : ''}>${l}</option>`).join('');
 }
 const KIND_SHORT = Object.fromEntries(KINDS.map(k => [k[0], k[2]]));
-const TABS = [['table', '予定表'], ['people', '人の登録'], ['sites', '現場の登録'], ['history', '履歴'], ['settings', '設定']];
+// 人の「側」（people[id].side）。'' ＝プレイヤー（現場で働く人。日ごとの配置・月の集計・実習生の画面に出る）、
+// 'admin' ＝管理（管理側の月の表で物件の担当に選ぶ人。プレイヤー側には出さない）
+const SIDES = [['', 'プレイヤー'], ['admin', '管理']];
+const sideLabel = v => SIDES.find(s => s[0] === (v || ''))?.[1] || v;
+const isAdminP = p => p?.side === 'admin';
+const TABS = [['table', 'プレイヤー側'], ['admin', '管理側'], ['people', '人の登録'], ['sites', '現場の登録'], ['history', '履歴'], ['settings', '設定']];
+// 管理側の月の表に並べる月の数
+const ADMIN_MONTHS = 6;
+// 構造の候補（自由に書いてもよい）
+const STRUCTS = ['RC造', 'S造', 'SRC造', '木造', '軽量鉄骨造', 'RC造・S造'];
 
 /* ---------- 実習生の画面の言葉（日本語はルビ付き。ほかは訳だけ） ---------- */
 const LANGS = [['ja', '日本語'], ['id', 'Bahasa Indonesia'], ['si', 'සිංහල']];
@@ -490,6 +580,8 @@ const VT = {
   siteMemo:  { ja: `${R('現場', 'げんば')}の メモ`, id: 'Catatan lokasi kerja', si: 'වැඩබිමේ සටහන්' },
   openTr:    { ja: '', id: 'Lihat terjemahan (Google)', si: 'පරිවර්තනය බලන්න (Google)' },
   admin:     { ja: '事務所の方（ログイン）', id: 'Untuk staf kantor (masuk)', si: 'කාර්යාල කාර්ය මණ්ඩලය සඳහා (පිවිසෙන්න)' },
+  work:      { ja: R('出勤', 'しゅっきん'), id: 'Hari kerja', si: 'වැඩ දින' },
+  inclPlan:  { ja: `これからの ${R('予定', 'よてい')}も ${R('入', 'はい')}っています`, id: 'Termasuk jadwal yang akan datang', si: 'ඉදිරි වැඩ සටහන ද ඇතුළත්ය' },
   nobody:    { ja: 'まだ だれも いません', id: 'Belum ada nama yang terdaftar', si: 'තවම කිසිවෙකු ලියාපදිංචි කර නැත' },
   demo:      { ja: 'お試しモード', id: 'Mode uji coba', si: 'අත්හදා බැලීමේ ප්‍රකාරය' },
   loadFail:  { ja: '読み込みに失敗しました。<br>通信を確かめて、もう一度開いてください。', id: 'Gagal memuat.<br>Periksa koneksi internet, lalu buka lagi.', si: 'පූරණය කිරීම අසාර්ථක විය.<br>අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත විවෘත කරන්න.' },
@@ -499,6 +591,15 @@ const DOW_L = {
   id: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
   si: ['ඉරිදා', 'සඳුදා', 'අඟහරුවාදා', 'බදාදා', 'බ්‍රහස්පතින්දා', 'සිකුරාදා', 'සෙනසුරාදා'],
 };
+// 月の名前（実習生の画面の月の集計）。シンハラ語の4月は ්‍ර（ZWJ 入り）
+const MONTH_L = {
+  id: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+  si: ['ජනවාරි', 'පෙබරවාරි', 'මාර්තු', 'අප්‍රේල්', 'මැයි', 'ජූනි', 'ජූලි', 'අගෝස්තු', 'සැප්තැම්බර්', 'ඔක්තෝබර්', 'නොවැම්බර්', 'දෙසැම්බර්'],
+};
+// 日数の読み（ふつか・みっか…）。ほかは「〇にち」
+const DAY_READ = { 1: 'いちにち', 2: 'ふつか', 3: 'みっか', 4: 'よっか', 5: 'いつか', 6: 'むいか', 7: 'なのか', 8: 'ようか', 9: 'ここのか', 10: 'とおか', 14: 'じゅうよっか', 20: 'はつか', 24: 'にじゅうよっか' };
+const vDays = n => S.lang === 'id' ? `${n} hari` : S.lang === 'si' ? `දින ${n}` : DAY_READ[n] ? R(`${n}日`, DAY_READ[n]) : `${n}${R('日', 'にち')}`;
+const vMonthTitle = m => S.lang === 'id' ? `Rekap ${MONTH_L.id[m]}` : S.lang === 'si' ? `${MONTH_L.si[m]} මාසයේ සාරාංශය` : `${m + 1}${R('月', 'がつ')}の ${R('集計', 'しゅうけい')}`;
 // 最初から登録される「休み」「研修」だけは訳を添える（ほかの現場名は事務所が日本語で付けるので訳さない）
 const OFF_TR = { '休み': { id: 'Libur', si: 'නිවාඩු' }, '研修': { id: 'Pelatihan', si: 'පුහුණුව' } };
 function initLang() {
@@ -580,7 +681,13 @@ const S = {
   editors: [],           // 編集できる人のメールアドレス（編集画面のときだけ読む）
   editorsLoaded: false,  // 一覧が届く前に追加・削除すると、空の一覧を元にしてしまう
   hist: { list: [], loaded: false, n: 100, q: '', err: '' },   // 編集履歴（n＝読む件数）
-  unsubC: null, unsubE: null, unsubH: null, pending: false,
+  unsubC: null, unsubE: null, unsubH: null, unsubP: null, pending: false,
+  // 月の集計（プレイヤー側）と管理側の月の表。month＝見ている月（管理側はここから ADMIN_MONTHS か月）
+  month: firstOfMonth(new Date()),
+  wk: {}, wkLoaded: new Set(),     // 何週分かの配置 wk[月曜] = {cells}（見ている画面に要る週だけ読む）
+  mon: {}, monLoaded: new Set(),   // 管理側の月ごとの担当 mon['YYYY-MM'] = {assign:{現場ID:{人ID:true}}, memos:{現場ID:文字}}
+  priv: { sites: {} }, privLoaded: false,   // 管理側の工事情報 priv.sites[現場ID] = {client, address, amount, structure, floors}（実習生は読めない）
+  adminErr: '',
 };
 let store = null;
 
@@ -597,10 +704,12 @@ function sortList(map, keep) {
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || String(a.name).localeCompare(String(b.name), 'ja'));
 }
 const sortedPeople = withRetired => sortList(S.company?.people, p => withRetired || !p.retired);
+// プレイヤー側に出す人（管理の人を除く）
+const sortedPlayers = withRetired => sortedPeople(withRetired).filter(p => !isAdminP(p));
 const sortedSites = withDone => sortList(S.company?.sites, s => withDone || !s.done);
 function visiblePeople() {
   const q = S.search.trim().toLowerCase();
-  return sortedPeople(false).filter(p =>
+  return sortedPlayers(false).filter(p =>
     !q || String(p.name).toLowerCase().includes(q) || String(p.kana || '').toLowerCase().includes(q));
 }
 function nextOrder(coll) { return Math.max(0, ...Object.values(S.company?.[coll] || {}).map(x => x.order || 0)) + 1; }
@@ -639,6 +748,8 @@ const IN_APP = /\bLine\//.test(UA) ? 'LINE'
   : /MicroMessenger/.test(UA) ? 'WeChat'
   : /KAKAOTALK/i.test(UA) ? 'カカオトーク'
   : /; wv\)/.test(UA) ? 'アプリ' : '';
+// 指で操作する端末（スマホ・タブレット）。入力画面を開いたときに文字の欄へすぐ focus しない（キーボードで画面が隠れるため）
+const TOUCH = typeof matchMedia === 'function' && matchMedia('(hover:none)').matches;
 // 編集する人に渡すURL。LINE で送っても、開くと Safari・Chrome で開く（LINE の openExternalBrowser）
 const editorUrl = () => location.origin + location.pathname + '?openExternalBrowser=1';
 // ログイン画面を出す。LINE の中なら、まずふつうのブラウザで開き直す（それでも LINE の中なら案内を出す）
@@ -704,13 +815,15 @@ function deepMerge(t, s) {
 function seedDemo() {
   const people = {}, sites = {};
   [['グエン・ヴァン・ナム', '', 'jisshu'], ['チャン・ティ・ラン', '', 'jisshu'], ['レ・ミン・トゥアン', '', 'jisshu'],
-   ['ファム・クォック・フイ', '', 'jisshu'], ['ブイ・ドゥック・アイン', '', 'tokutei'], ['山田 太郎', 'やまだ たろう', 'other']]
-    .forEach(([name, kana, kind], i) => { people['p_demo' + i] = { name, kana, kind, order: i + 1, retired: false }; });
+   ['ファム・クォック・フイ', '', 'jisshu'], ['ブイ・ドゥック・アイン', '', 'tokutei'], ['山田 太郎', 'やまだ たろう', 'other'],
+   ['鈴木 一郎', 'すずき いちろう', 'other', 'admin'], ['佐藤 花子', 'さとう はなこ', 'other', 'admin']]
+    .forEach(([name, kana, kind, side], i) => { people['p_demo' + i] = { name, kana, kind, side: side || '', order: i + 1, retired: false }; });
   [['休み', 'やすみ', 'off', ''], ['研修', 'けんしゅう', 'off', ''], ['柏市 新築外構工事', 'かしわし しんちく がいこう こうじ', 'site', 'green'],
-   ['船橋市 宅地造成工事', 'ふなばしし たくち ぞうせい こうじ', 'site', 'sky'], ['千葉市 擁壁工事', 'ちばし ようへき こうじ', 'site', 'orange'],
+   ['船橋市 共同住宅新築工事', 'ふなばしし きょうどう じゅうたく しんちく こうじ', 'site', 'sky'], ['千葉市 事務所ビル改修工事', 'ちばし じむしょ びる かいしゅう こうじ', 'site', 'orange'],
    ['資材置場', 'しざい おきば', 'site', 'gray']]
     .forEach(([name, kana, kind, color], i) => { sites['s_demo' + i] = { name, kana, kind, color, order: i + 1, done: false }; });
   people.p_demo5.color = '#3498db';   // マグネットの色の見本
+  people.p_demo6.color = '#2c3e50'; people.p_demo7.color = '#9b59b6';
   const mon = mondayOf(new Date()), cells = {};
   // 工期の見本
   [[2, -45, 60], [3, -120, 150], [4, -14, 25]].forEach(([i, a, b]) => Object.assign(sites['s_demo' + i], { start: ds(addDays(mon, a)), end: ds(addDays(mon, b)) }));
@@ -721,20 +834,50 @@ function seedDemo() {
     });
   cells.p_demo0[ds(mon)].note = '7:00 事務所集合';
   const memos = { s_demo2: { [ds(addDays(mon, 1))]: '8:00 現地集合・弁当持参', week: '駐車場は北側の空き地' } };
-  return { company: { name: 'お試し株式会社', people, sites }, weeks: { [ds(mon)]: { cells, memos } }, editors: [] };
+  const weeks = { [ds(mon)]: { cells, memos } };
+  // 月の集計の見本：前の月の初めから来週まで、ほかの週にも配置を入れる（来週は途中まで＝未定の見本）
+  const base = [2, 3, 4, 3, 4, 2], alt = [3, 4, 2, 2, 3, 4];
+  for (let m = mondayOf(new Date(mon.getFullYear(), mon.getMonth() - 1, 1)), w = 0; m <= addDays(mon, 7); m = addDays(m, 7), w++) {
+    if (ds(m) === ds(mon)) continue;
+    const wc = {};
+    for (let i = 0; i < 6; i++) {
+      const pc = wc['p_demo' + i] = {};
+      for (let j = 0; j < 6; j++) {
+        const d = addDays(m, j);
+        if (isRestDay(d) || (m > mon && j > 2)) continue;
+        const si = (i + w + j) % 11 === 0 ? 0 : j === 5 && (i + w) % 2 ? 0 : w % 3 === 2 ? alt[i] : base[i];
+        pc[ds(d)] = { site: 's_demo' + si, note: '' };
+      }
+    }
+    weeks[ds(m)] = { cells: wc };
+  }
+  // 管理側の見本：工事情報（発注者・住所・金額・構造・階数）と、月ごとの担当
+  const priv = { sites: {
+    s_demo2: { client: 'お試し住宅株式会社', address: '千葉県柏市〇〇1-2-3', amount: 12800000, structure: '木造', floors: '2階' },
+    s_demo3: { client: 'お試し不動産株式会社', address: '千葉県船橋市〇〇4-5-6', amount: 186000000, structure: 'RC造', floors: '地上5階' },
+    s_demo4: { client: 'お試し商事株式会社', amount: 42500000, structure: 'S造', floors: '3階' },
+  } };
+  const months = {}, m0 = firstOfMonth(new Date());
+  for (let i = 0; i < 4; i++) {
+    months[monthKey(addMonths(m0, i))] = { assign: { s_demo3: { p_demo6: true, p_demo7: i < 2 }, ...(i < 2 ? { s_demo2: { p_demo6: true } } : {}), ...(i === 0 ? { s_demo4: { p_demo7: true } } : {}) } };
+  }
+  months[monthKey(m0)].memos = { s_demo3: '月末に中間検査' };
+  return { company: { name: 'お試し株式会社', people, sites }, weeks, editors: [], months, priv };
 }
 function makeDemoStore() {
   const KEY = 'jsched_demo_v1';
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } };
   let data = read();
   if (!data) { data = seedDemo(); write(); }
-  const fix = () => { data.editors ||= []; data.history ||= []; };
+  const fix = () => { data.editors ||= []; data.history ||= []; data.months ||= {}; data.priv ||= { sites: {} }; };
   fix();
-  const subsC = new Set(), subsW = new Map(), subsE = new Set(), subsH = new Set();
+  const subsC = new Set(), subsW = new Map(), subsE = new Set(), subsH = new Set(), subsM = new Map(), subsP = new Set();
   function write() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { toast('この端末に保存できませんでした'); } }
   function emit() {
     subsC.forEach(cb => cb(clone(data.company)));
     for (const [m, set] of subsW) set.forEach(cb => cb(clone(data.weeks[m] || { cells: {} })));
+    for (const [k, set] of subsM) set.forEach(cb => cb(clone(data.months[k] || {})));
+    subsP.forEach(cb => cb(clone(data.priv)));
     subsE.forEach(cb => cb(clone(data.editors)));
     subsH.forEach(h => h.cb(clone(data.history.slice(0, h.n))));
   }
@@ -763,6 +906,14 @@ function makeDemoStore() {
       if (o) delete o[path[path.length - 1]];
       return done(hist);
     },
+    onMonth(k, cb) {
+      if (!subsM.has(k)) subsM.set(k, new Set());
+      subsM.get(k).add(cb); cb(clone(data.months[k] || {}));
+      return () => subsM.get(k)?.delete(cb);
+    },
+    async setMonth(k, patch, hist) { deepMerge(data.months[k] ||= {}, patch); return done(hist); },
+    onPrivate(cb) { subsP.add(cb); cb(clone(data.priv)); return () => subsP.delete(cb); },
+    async setPrivate(patch, hist) { deepMerge(data.priv, patch); return done(hist); },
     onEditors(cb) { subsE.add(cb); cb(clone(data.editors)); return () => subsE.delete(cb); },
     async addEditors(list, hist) { for (const e of list) if (!data.editors.includes(e)) data.editors.push(e); return done(hist); },
     async removeEditor(email, hist) { data.editors = data.editors.filter(x => x !== email); return done(hist); },
@@ -775,6 +926,8 @@ function makeDemoStore() {
    保存先：クラウド（Firebase Authentication〔Google〕＋ Cloud Firestore）
    companies/{会社ID}            … 会社名・人・現場（実習生もURLで読める）
    companies/{会社ID}/weeks/{月曜} … その週の配置 cells[人ID][日付] = {site, note}
+   companies/{会社ID}/months/{YYYY-MM} … 管理側の月ごとの担当 {assign:{現場ID:{人ID:true}}, memos:{現場ID:文字}}（編集者だけ）
+   companies/{会社ID}/private/info … 管理側の工事情報 {sites:{現場ID:{client,address,amount,structure,floors}}}（編集者だけ。金額を実習生に見せない）
    acl/{会社ID}                  … 編集できる人のメールアドレス {editors:[…]}（編集者だけ読める）
    config/lock                   … 予定表を作った印。1つ作ったら以後は誰も作れない
    1マスずつ merge で書くので、2台で別のマスを同時に触っても消し合わない。
@@ -846,6 +999,9 @@ const Cloud = {
     const META = { includeMetadataChanges: true };
     const aref = F.doc(db, 'acl', cid);
     const hcol = F.collection(db, 'companies', cid, 'history');
+    const mref = k => F.doc(db, 'companies', cid, 'months', k);
+    const pref = F.doc(db, 'companies', cid, 'private', 'info');
+    const ADMIN_DENIED = '管理側を保存できませんでした。Firebase のルールの更新が必要です（管理側を書けるルールを貼って「公開」してください）';
     let histWarned = false;
     // 書き込みと編集履歴を1回のまとめ書き（batch）にする＝片方だけ残ることがない。
     // 履歴を書くルールがまだ公開されていないとき（permission-denied）は、履歴なしで書き直して知らせる
@@ -889,6 +1045,11 @@ const Cloud = {
       },
       patch(obj, hist) { return commit(b => b.set(cref, obj, { merge: true }), hist); },
       removeField(path, hist) { return commit(b => b.update(cref, new F.FieldPath(...path), F.deleteField()), hist); },
+      // 管理側（2026-10-30 追加）。ルールを先に公開しないと読めない・書けない
+      onMonth(k, cb, onErr) { return F.onSnapshot(mref(k), META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : {}); }, e => { console.error(e); onErr?.(e); }); },
+      setMonth(k, patch, hist) { return commit(b => b.set(mref(k), patch, { merge: true }), hist, ADMIN_DENIED); },
+      onPrivate(cb, onErr) { return F.onSnapshot(pref, META, s => { if (!notYet(s)) cb(s.exists() ? s.data() : {}); }, e => { console.error(e); onErr?.(e); }); },
+      setPrivate(patch, hist) { return commit(b => b.set(pref, patch, { merge: true }), hist, ADMIN_DENIED); },
       onEditors(cb, onErr) { return F.onSnapshot(aref, s => { if (s.exists()) cb(s.data().editors || []); }, e => { console.error(e); onErr?.(e); }); },
       // 一覧を丸ごと書かず、足す・抜くだけを送る（2人が同時に触っても、片方の変更が消えない）
       addEditors(list, hist) { return commit(b => b.update(aref, { editors: F.arrayUnion(...list) }), hist); },
@@ -908,10 +1069,77 @@ const Cloud = {
    データの購読と再描画
    ===================================================================== */
 function stopData() {
-  S.unsubC?.(); S.unsubE?.(); S.unsubH?.(); S.unsubC = S.unsubE = S.unsubH = null;
+  S.unsubC?.(); S.unsubE?.(); S.unsubH?.(); S.unsubP?.(); S.unsubC = S.unsubE = S.unsubH = S.unsubP = null;
   Object.values(S.subsW).forEach(s => s.off?.()); S.subsW = {}; S.weeks = {};
   clearTimeout(S.slowTimer); clearTimeout(S.weekSlowTimer);
+  for (const un of watching.values()) un?.();
+  watching.clear(); clearTimeout(watchTimer);
+  S.wk = {}; S.wkLoaded = new Set(); S.mon = {}; S.monLoaded = new Set();
+  S.priv = { sites: {} }; S.privLoaded = false; S.adminErr = '';
 }
+/* ---- 月の集計・管理側の月の表で使う、何週分・何か月分かのデータ。見ている画面に要る分だけ購読する ---- */
+const watching = new Map();   // 'w:月曜' / 'm:YYYY-MM' → 購読をやめる関数
+let watchTimer = 0;
+const viewerMonth = () => firstOfMonth(addDays(S.weekStart, 3));   // 実習生の画面：見ている週の木曜の月（週の多くの日がある月）
+function watchWanted() {
+  if (S.screen !== 'app' || !store) return [];
+  if (S.role === 'view') return S.vtab === 'me' && S.me ? mondaysOf(viewerMonth()).map(m => 'w:' + m) : [];
+  if (S.tab === 'table' && S.view === 'month') return mondaysOf(S.month).map(m => 'w:' + m);
+  if (S.tab === 'admin') return [...mondaysOf(S.month, ADMIN_MONTHS).map(m => 'w:' + m),
+    ...Array.from({ length: ADMIN_MONTHS }, (_, i) => 'm:' + monthKey(addMonths(S.month, i)))];
+  return [];
+}
+// 届いたら描き直す（いくつも続けて届くので、まとめて1回）
+const watchLater = () => { clearTimeout(watchTimer); watchTimer = setTimeout(refresh, 30); };
+function adminDenied(err) {
+  S.adminErr = String(err?.code || '').includes('permission-denied')
+    ? '管理側のデータを読めません。Firebase のルールの更新が必要です（管理側を読めるルールを貼って「公開」してください）'
+    : '管理側のデータを読めませんでした：' + errMsg(err);
+}
+function ensureWatch() {
+  const want = new Set(watchWanted());
+  for (const [k, un] of watching) {
+    if (want.has(k)) continue;
+    un?.(); watching.delete(k);
+    // 読むのをやめた分は捨てる（戻ったときに、その間にほかの端末が変えた古い中身を出さない）
+    const id = k.slice(2);
+    if (k[0] === 'w') { S.wkLoaded.delete(id); delete S.wk[id]; } else { S.monLoaded.delete(id); delete S.mon[id]; }
+  }
+  // 中身が前と同じ知らせ（書いた後のサーバーの確認だけの知らせ・電波が戻ったとき）では描き直さない。
+  // 描き直すと、次に押しかけたマスや選びかけた名前が消えるため（subscribeWeek と同じ）
+  const got = (data, loaded, id, v) => {
+    const same = loaded.has(id) && stableJson(data[id]) === stableJson(v);
+    data[id] = v; loaded.add(id);
+    if (!same) watchLater();
+  };
+  for (const k of want) {
+    if (watching.has(k)) continue;
+    const id = k.slice(2);
+    watching.set(k, k[0] === 'w'
+      ? store.onWeek(id, w => got(S.wk, S.wkLoaded, id, w || { cells: {} }))
+      : store.onMonth(id, d => got(S.mon, S.monLoaded, id, d || {}),
+        err => { adminDenied(err); S.monLoaded.add(id); watchLater(); }));
+  }
+}
+// その月の人ごと・現場ごとの日数（管理の人は数えない）。読み込み中なら null
+// per[人ID][現場ID] = 日数、bySite[現場ID][人ID] = 日数
+function monthTally(first) {
+  const mons = mondaysOf(first), mk = monthKey(first);
+  if (!mons.every(m => S.wkLoaded.has(m))) return null;
+  const per = {}, bySite = {};
+  for (const m of mons) for (const [pid, byDay] of Object.entries(S.wk[m]?.cells || {})) {
+    if (isAdminP(S.company?.people?.[pid])) continue;
+    for (const [k, c] of Object.entries(byDay || {})) {
+      if (!c?.site || k.slice(0, 7) !== mk) continue;
+      const pp = per[pid] ||= {}; pp[c.site] = (pp[c.site] || 0) + 1;
+      const bs = bySite[c.site] ||= {}; bs[pid] = (bs[pid] || 0) + 1;
+    }
+  }
+  return { per, bySite };
+}
+const wkCell = (pid, k) => S.wk[ds(mondayOf(pd(k)))]?.cells?.[pid]?.[k] || null;
+const isWorkSite = id => S.company?.sites?.[id]?.kind !== 'off';   // 休み・研修など以外（削除された現場も現場として数える）
+const sumOf = o => Object.values(o || {}).reduce((a, n) => a + n, 0);
 // 編集履歴は「履歴」タブを開いたときに読み始める（開かない人の読み取りを増やさない）
 function startHistory() {
   if (S.unsubH || S.role !== 'edit') return;
@@ -945,6 +1173,13 @@ function startData() {
   subscribeWeek();
   S.editors = []; S.editorsLoaded = false; S.edAdding = false;
   if (S.role === 'edit') {
+    // 管理側の物件の情報（金額など）。編集者だけが読める
+    S.unsubP = store.onPrivate(d => {
+      d = d || {}; d.sites ||= {};
+      const same = S.privLoaded && stableJson(d) === stableJson(S.priv);   // 中身が同じ知らせでは描き直さない
+      S.priv = d; S.privLoaded = true;
+      if (S.tab === 'admin' && !same) refresh();
+    }, err => { adminDenied(err); S.privLoaded = true; S.unsubP = null; if (S.tab === 'admin') refresh(); });
     S.unsubE = store.onEditors(list => {
       S.editors = list; S.editorsLoaded = true;
       if (S.tab === 'settings') refresh();
@@ -1030,10 +1265,11 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // データが届いたときに描き直す領域。入力欄やボタンのある所は入れない
 // （描き直すと打っている文字が消え、押しかけたボタンも別物になってクリックが効かない）
-const REGIONS = { table: ['grid', () => weekView(), mountBoard], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], history: ['hlist', () => historyList()], settings: ['edlist', () => editorItems()] };
+const REGIONS = { table: ['grid', () => weekView(), mountBoard], admin: ['grid', () => adminView()], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], history: ['hlist', () => historyList()], settings: ['edlist', () => editorItems()] };
 function refresh() {
   if (S.screen !== 'app') return;
   if (S.role === 'view' || !$('#main')) return render();
+  ensureWatch();
   const co = $('#coName'); if (co) co.textContent = S.company?.name || '';
   if (S.tab === 'settings') {
     const ci = $('#coNameIn'); if (ci && document.activeElement !== ci) ci.value = S.company?.name || '';
@@ -1075,7 +1311,7 @@ function render() {
   if (S.screen === 'login') return renderLogin();
   if (S.screen === 'create') return renderCreate();
   if (S.screen === 'noaccess') return renderNoAccess();
-  if (S.role === 'view') renderViewer(); else renderEditor();
+  if (S.role === 'view') { renderViewer(); ensureWatch(); } else renderEditor();
 }
 
 /* =====================================================================
@@ -1087,17 +1323,23 @@ function renderEditor() {
   <header class="top">
     <div class="brand"><span class="logo">週間配置表</span><span class="co" id="coName">${esc(S.company?.name || '')}</span>${S.mode === 'demo' ? '<span class="demo">お試しモード：この端末だけに保存</span>' : ''}</div>
     <nav class="tabs">${TABS.map(([k, l]) => `<button data-act="tab" data-tab="${k}" class="${S.tab === k ? 'on' : ''}">${l}</button>`).join('')}</nav>
-    <div class="topR">${S.mode === 'cloud' ? `<span class="who">${esc(S.user?.email || '')}</span>` : ''}<button class="btn" data-act="openView">実習生の画面 ↗</button>${S.mode === 'cloud' ? '<button class="btn ghost" data-act="logout">ログアウト</button>' : ''}</div>
+    <div class="topR">${S.mode === 'cloud' ? `<span class="who">${esc(S.user?.email || '')}</span>` : ''}<button class="btn" data-act="openView">プレイヤーの画面 ↗</button>${S.mode === 'cloud' ? '<button class="btn ghost" data-act="logout">ログアウト</button>' : ''}</div>
   </header>
   <main id="main"></main>`;
   renderMain();
 }
 function renderMain() {
   const m = $('#main'); if (!m) return;
+  ensureWatch();   // 月の集計・管理側なら、要る週・月を読み始める（描く前に。お試しモードはすぐ届く）
   if (S.tab === 'table') {
-    m.innerHTML = tableBar() + `<div class="gridwrap" id="grid">${weekView()}</div>` + (S.view === 'board'
+    m.innerHTML = (S.view === 'month' ? monthBar() : tableBar()) + `<div class="gridwrap" id="grid">${weekView()}</div>` + (S.view === 'board'
       ? `<div class="legend"><span>マグネットを同じ日の別の行（現場・休み・未配置）へドラッグすると、その日の予定が変わります</span><span>同じマスの中でドラッグすると、並び順を変えられます</span><span>マグネットを押すと、現場とメモを変えられます</span></div>`
+      : S.view === 'month'
+      ? `<div class="legend"><span>数字は日数です。プレイヤー側の配置（ホワイトボード・表）から数えます（これからの予定も入ります）</span><span>出勤＝現場に入った日（休み・研修などは除く）</span><span>未定＝日曜・祝日を除く、まだ決まっていない日</span><span>合計の行＝その現場の延べ人工</span></div>`
       : `<div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`);
+  } else if (S.tab === 'admin') {
+    m.innerHTML = adminBar() + `<div class="gridwrap" id="grid">${adminView()}</div>`
+      + `<div class="legend"><span>物件名を押すと、工事情報（発注者・住所・金額・構造・階数）と工期を入れられます</span><span>マスを押すと、その月の担当（管理の人）とメモを変えられます</span><span><i style="background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6"></i>工期に入っている月</span><span>プレイヤーの延べ人工は、プレイヤー側の配置から数えます（休み・研修などは除く）</span></div>`;
   } else if (S.tab === 'people') m.innerHTML = peoplePanel();
   else if (S.tab === 'sites') m.innerHTML = sitesPanel();
   else if (S.tab === 'history') {
@@ -1115,12 +1357,21 @@ function tableBar() {
   return `<div class="bar">
     <div class="seg"><button data-act="week" data-d="-7">◀◀ 前週</button><button data-act="week" data-d="-1">◀ 前日</button><button data-act="week" data-d="0">今週</button><button data-act="week" data-d="1">翌日 ▶</button><button data-act="week" data-d="7">次週 ▶▶</button></div>
     <div class="wk">${days[0].getFullYear()}年 ${md(days[0])}（${DOW[days[0].getDay()]}）〜 ${md(days[6])}（${DOW[days[6].getDay()]}）</div>
-    <div class="seg dark">${[['board', 'ホワイトボード'], ['table', '表']].map(([k, l]) => `<button data-act="view" data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    ${viewSeg()}
     <input id="search" type="search" placeholder="名前で検索…" value="${esc(S.search)}" autocomplete="off">
     <span class="sp"></span>
     <button class="btn" data-act="copyPrev">前の週をコピー</button>
     <button class="btn" data-act="print">印刷</button>
   </div>`;
+}
+// プレイヤー側の見せ方：ホワイトボード（現場×日）／表（人×日）／月の集計（人×現場の日数）
+const viewSeg = () => `<div class="seg dark">${[['board', 'ホワイトボード'], ['table', '表'], ['month', '月の集計']].map(([k, l]) => `<button data-act="view" data-v="${k}" class="${S.view === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+const monthNav = () => `<div class="seg"><button data-act="month" data-d="-1">◀ 前月</button><button data-act="month" data-d="0">今月</button><button data-act="month" data-d="1">次月 ▶</button></div>`;
+function monthBar() {
+  return `<div class="bar">${monthNav()}<div class="wk">${monthLabel(monthKey(S.month))}</div>${viewSeg()}<span class="sp"></span><button class="btn" data-act="print">印刷</button></div>`;
+}
+function adminBar() {
+  return `<div class="bar">${monthNav()}<div class="wk">${monthLabel(monthKey(S.month))} 〜 ${monthLabel(monthKey(addMonths(S.month, ADMIN_MONTHS - 1)))}</div></div>`;
 }
 function siteOptionsBase() {
   const list = sortedSites(false);
@@ -1146,7 +1397,7 @@ function gridTable() {
   }).join('')}</tr></thead>`;
   const people = visiblePeople();
   if (!people.length) {
-    const msg = sortedPeople(false).length ? '該当する人がいません' : '「人の登録」タブから実習生を登録してください';
+    const msg = sortedPlayers(false).length ? '該当する人がいません' : '「人の登録」タブからプレイヤーを登録してください';
     return `<table class="grid">${head}</table><div class="empty">${msg}</div>`;
   }
   const base = siteOptionsBase();
@@ -1163,7 +1414,196 @@ function gridTable() {
   </tr>`).join('');
   return `<table class="grid">${head}<tbody>${rows}</tbody></table>`;
 }
-const weekView = () => S.view === 'board' ? boardTable() : gridTable();
+const weekView = () => S.view === 'board' ? boardTable() : S.view === 'month' ? monthSummary() : gridTable();
+
+/* ---- プレイヤー側：月の集計（人×現場の日数。プレイヤー側の配置から数える） ---- */
+function monthSummary(print) {
+  if (!S.company) return loadingHtml();
+  const t = monthTally(S.month);
+  if (!t) return print ? '<div class="empty">読み込み中です</div>' : loadingHtml();
+  const days = monthDays(S.month).filter(d => !isRestDay(d)).map(ds);
+  // 帰国・退職の人と削除された人も、この月に予定があれば出す
+  const people = [...sortedPlayers(true).filter(p => !p.retired || t.per[p.id]),
+    ...Object.keys(t.per).filter(id => !S.company.people[id]).map(id => ({ id, name: '（削除された人）', gone: true }))];
+  if (!people.length) return `<div class="empty">「人の登録」タブからプレイヤーを登録してください</div>`;
+  const used = new Set(Object.keys(t.bySite));
+  const all = sortedSites(true);
+  const cols = [...all.filter(s => s.kind !== 'off' && used.has(s.id)),
+    ...[...used].filter(id => !S.company.sites[id]).map(id => ({ id, name: '（削除された現場）' })),
+    ...all.filter(s => s.kind === 'off' && used.has(s.id))];
+  const n = v => v ? v : '<span class="z">0</span>';
+  const work = o => Object.entries(o || {}).filter(([id]) => isWorkSite(id)).reduce((a, [, v]) => a + v, 0);
+  const unset = id => days.filter(k => !wkCell(id, k)?.site).length;
+  const head = `<thead><tr><th class="nm">氏名</th><th class="work">出勤</th>${cols.map(s => {
+    const ca = colorAttr(S.company.sites[s.id], s.kind === 'off' ? 'off' : '');
+    return `<th class="${ca.cls}"${ca.style}>${esc(s.name)}</th>`;
+  }).join('')}<th>未定</th></tr></thead>`;
+  // 未定は今いる人だけ数える（帰国・退職・削除された人の空いた日は「未定」ではない）
+  const un = p => p.gone || p.retired ? 0 : unset(p.id);
+  const body = people.map(p => `<tr class="${p.gone || p.retired ? 'gone' : ''}"><th class="nm">${esc(p.name)}${p.retired ? '（帰国・退職）' : ''}</th><td class="work">${n(work(t.per[p.id]))}</td>${cols.map(s => `<td>${n(t.per[p.id]?.[s.id])}</td>`).join('')}<td>${n(un(p))}</td></tr>`).join('');
+  const foot = `<tfoot><tr><th class="nm">合計</th><td class="work">${n(people.reduce((a, p) => a + work(t.per[p.id]), 0))}</td>${cols.map(s => `<td>${n(sumOf(t.bySite[s.id]))}</td>`).join('')}<td>${n(people.reduce((a, p) => a + un(p), 0))}</td></tr></tfoot>`;
+  return `<table class="sum">${head}<tbody>${body}</tbody>${foot}</table>`;
+}
+
+/* ---- 管理側：物件×月の表 ---- */
+// その月がその物件の工期に入っているか（工期が無ければ入っていない扱い）
+function termIn(s, first) {
+  if (!isYmd(s?.start) && !isYmd(s?.end)) return false;
+  const a = ds(first), b = ds(addDays(addMonths(first, 1), -1));
+  return (!isYmd(s.start) || s.start <= b) && (!isYmd(s.end) || s.end >= a);
+}
+// その月にその物件の担当になっている人（人の登録の順）
+const monAssign = (k, sid) => new Set(Object.entries(S.mon[k]?.assign?.[sid] || {}).filter(([, v]) => v).map(([id]) => id));
+const monMemo = (k, sid) => S.mon[k]?.memos?.[sid] || '';
+const siteInfo = sid => S.priv?.sites?.[sid] || {};
+const yen = n => Number.isFinite(n) ? n.toLocaleString('ja-JP') + '円' : '';
+const peopleIn = set => sortedPeople(true).filter(p => set.has(p.id));
+// マスの延べ人工の内訳「名前 日数」。登録に無い（削除された）人も出す（足すと延べ人工になるように）
+const tallyNames = (bys, unit = '') => [...peopleIn(new Set(Object.keys(bys))), ...Object.keys(bys).filter(id => !S.company.people[id]).map(id => ({ id, name: '（削除された人）' }))]
+  .map(p => `${esc(p.name)} ${bys[p.id]}${unit}`);
+function roMagnet(p) {
+  const mc = magnetColor(p.color);
+  return `<span class="mg ro${mc.cls}"${mc.style}>${esc(p.name)}</span>`;
+}
+function adminView() {
+  if (!S.company) return loadingHtml();
+  const months = Array.from({ length: ADMIN_MONTHS }, (_, i) => addMonths(S.month, i));
+  const keys = months.map(monthKey), now = monthKey(new Date());
+  const tallies = months.map(m => monthTally(m));   // null＝読み込み中
+  const err = S.adminErr ? `<div class="aerr">${esc(S.adminErr)}</div>` : '';
+  // 物件＝種類が「現場」のもの。完了した物件も、この6か月に担当・メモ・プレイヤーの配置があれば出す
+  const sites = sortedSites(true).filter(s => s.kind !== 'off' && (!s.done
+    || keys.some((k, i) => monAssign(k, s.id).size || monMemo(k, s.id) || tallies[i]?.bySite[s.id])));
+  const head = `<thead><tr><th class="nm">物件</th>${months.map((m, i) => `<th class="${keys[i] === now ? 'tdy' : ''}">${i === 0 || m.getMonth() === 0 ? m.getFullYear() + '年 ' : ''}${m.getMonth() + 1}月${keys[i] === now ? '<span class="today">今月</span>' : ''}</th>`).join('')}</tr></thead>`;
+  if (!sites.length) return err + `<table class="grid board admin">${head}</table><div class="empty">「現場の登録」で物件（種類＝現場）を登録すると、ここに出ます</div>`;
+  const admins = sortedPeople(false).filter(isAdminP);
+  // いちばん上の行：管理の人で、その月どの物件の担当にもなっていない人
+  const pool = admins.length ? `<tr class="pool"><th class="nm">未担当<span class="sub">管理の人で、その月どの物件にも入っていない人</span></th>${keys.map(k => {
+    if (!S.monLoaded.has(k)) return '<td>…</td>';
+    const used = new Set(Object.values(S.mon[k]?.assign || {}).flatMap(o => Object.entries(o || {}).filter(([, v]) => v).map(([id]) => id)));
+    return `<td><div class="alist">${admins.filter(p => !used.has(p.id)).map(roMagnet).join('')}</div></td>`;
+  }).join('')}</tr>` : '';
+  const body = sites.map(s => `<tr>${adminRowHead(s)}${months.map((m, i) => {
+    const k = keys[i], inT = termIn(s, m), ca = colorAttr(inT && !s.done ? s : null, inT ? 'in' : '');
+    const t = tallies[i], bys = t?.bySite[s.id];
+    const tl = !t ? '<div class="atally wait">プレイヤー …</div>'
+      : bys ? `<div class="atally">プレイヤー 延べ <b>${sumOf(bys)}</b> 人工</div><div class="anames">${tallyNames(bys).join('・')}</div>` : '';
+    const as = S.monLoaded.has(k) ? `<div class="alist">${peopleIn(monAssign(k, s.id)).map(roMagnet).join('')}</div>` : '<div class="alist">…</div>';
+    return `<td class="${ca.cls}"${ca.style} data-act="acell" data-site="${esc(s.id)}" data-month="${k}" role="button" tabindex="0" aria-label="${esc(s.name)} ${monthLabel(k)}">${as}${monMemo(k, s.id) ? `<div class="amemo">${esc(monMemo(k, s.id))}</div>` : ''}${tl}</td>`;
+  }).join('')}</tr>`).join('');
+  const foot = `<tfoot><tr><th class="nm">延べ人工（プレイヤー）</th>${tallies.map(t => `<td>${t ? Object.entries(t.bySite).filter(([id]) => isWorkSite(id)).reduce((a, [, o]) => a + sumOf(o), 0) : '…'}</td>`).join('')}</tr></tfoot>`;
+  return err + `<table class="grid board admin"${S.privLoaded ? '' : ' aria-busy="true"'}>${head}<tbody>${pool}${body}</tbody>${foot}</table>`;
+}
+// 物件名の欄：ふりがな・名前の下に、工事情報（発注者、住所、構造・階数、金額）と工期
+function adminRowHead(s) {
+  const info = siteInfo(s.id), spec = [info.structure, info.floors].filter(Boolean).join('・');
+  const ca = colorAttr(s.done ? null : s, 'nm');
+  const any = info.client || info.address || spec || Number.isFinite(info.amount);
+  return `<th class="${ca.cls}"${ca.style} data-act="ainfo" data-site="${esc(s.id)}" role="button" tabindex="0">${s.kana ? `<span class="sub">${esc(s.kana)}</span>` : ''}${s.done ? '（完了）' : ''}${esc(s.name)}`
+    + (info.client ? `<span class="ainfo">発注者 ${esc(info.client)}</span>` : '')
+    + (info.address ? `<span class="ainfo">📍${esc(info.address)}</span>` : '')
+    + (spec ? `<span class="ainfo">${esc(spec)}</span>` : '')
+    + (Number.isFinite(info.amount) ? `<span class="amt">${yen(info.amount)}</span>` : '')
+    + (termText(s) ? `<span class="term">工期 ${termText(s)}</span>` : '')
+    + (!any && S.privLoaded ? '<span class="ainfo add">＋工事情報</span>' : '') + '</th>';
+}
+// 画面の中に出す入力の画面（form）。onSave(form) が false を返したら閉じない
+function formModal(inner, onSave) {
+  const wrap = document.createElement('div');
+  wrap.className = 'modal';
+  wrap.innerHTML = `<form class="modalBox" role="dialog" aria-modal="true">${inner}<div class="btns"><button type="button" class="btn" data-k="no">キャンセル</button><button class="btn primary">保存</button></div></form>`;
+  const f = wrap.querySelector('form');
+  const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+  const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey, true); };
+  let downOut = false;
+  wrap.addEventListener('pointerdown', e => { downOut = e.target === wrap; });
+  wrap.addEventListener('click', e => { if ((e.target === wrap && downOut) || e.target.closest('[data-k=no]')) close(); });
+  f.addEventListener('submit', e => { e.preventDefault(); if (onSave(f) !== false) close(); });
+  // Safari では変換を確定する Enter で画面ごと保存されてしまうので止める
+  f.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && imeEnter(e)) e.preventDefault(); });
+  document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(wrap);
+  return f;
+}
+// マスを押したとき：その月のその物件の担当（管理の人）とメモ
+function editAdminCell(sid, k) {
+  const s = S.company?.sites[sid]; if (!s) return;
+  if (!S.monLoaded.has(k)) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
+  const cur = monAssign(k, sid), memo0 = monMemo(k, sid);
+  // 管理の人。今の担当に、管理でなくなった人・帰国退職した人がいれば、外せるように一緒に出す
+  const list = sortedPeople(true).filter(p => (isAdminP(p) && !p.retired) || cur.has(p.id));
+  const t = monthTally(firstOfMonth(pd(k + '-01'))), bys = t?.bySite[sid];
+  const f = formModal(`<h3>${esc(s.name)}　${monthLabel(k)}</h3>
+    <div class="mrow">担当（管理）${list.length
+      ? `<div class="acks">${list.map(p => `<label><input type="checkbox" name="p" value="${esc(p.id)}" ${cur.has(p.id) ? 'checked' : ''}>${esc(p.name)}${!isAdminP(p) ? '（プレイヤー）' : p.retired ? '（帰国・退職）' : ''}</label>`).join('')}</div>`
+      : '<span class="hint">「人の登録」で側を「管理」にした人が、ここで選べます</span>'}</div>
+    <label class="mrow">この月のメモ<textarea name="memo" rows="2" maxlength="300" placeholder="例：月末に中間検査">${esc(memo0)}</textarea></label>
+    ${bys ? `<div class="mbreak">プレイヤー 延べ ${sumOf(bys)} 人工：${tallyNames(bys, '日').join('、')}</div>` : ''}`, f => {
+    const next = new Set([...f.querySelectorAll('[name=p]:checked')].map(x => x.value));
+    const memo = f.elements.memo.value.trim();
+    // 開いたときから変えた所だけ書く（開いている間にほかの人が変えた所を、古い値で戻さない）
+    const ch = {};
+    for (const p of list) if (cur.has(p.id) !== next.has(p.id)) ch[p.id] = next.has(p.id);
+    const patch = {}, hist = [];
+    if (Object.keys(ch).length) {
+      patch.assign = { [sid]: ch };
+      const names = set => peopleIn(set).map(p => p.name).join('、') || 'なし';
+      hist.push(`担当を「${names(cur)}」→「${names(next)}」に変更`);
+    }
+    if (memo !== memo0) { patch.memos = { [sid]: memo }; hist.push(memo ? `メモを「${short(memo)}」にした` : 'メモを消した'); }
+    if (hist.length) store.setMonth(k, patch, `管理側 ${monthLabel(k)} 物件「${s.name}」の${hist.join('、')}`);
+  });
+  if (!TOUCH) (f.querySelector('[name=p]') || f.elements.memo).focus();
+}
+// 金額の入力を円の数にする（「1,280万」「￥12,800,000」「12800000円」も可）。空なら ''、読めなければ null
+function parseYen(v) {
+  let t = String(v ?? '').normalize('NFKC').replace(/[,\s¥￥円]/g, '');
+  if (!t) return '';
+  let mul = 1;
+  if (t.endsWith('万')) { mul = 10000; t = t.slice(0, -1); }
+  if (!/^\d+(\.\d+)?$/.test(t)) return null;
+  const n = Math.round(parseFloat(t) * mul);
+  return Number.isSafeInteger(n) && n <= 1e12 ? n : null;
+}
+// 物件名を押したとき：工事情報（発注者・住所・金額・構造・階数。管理側だけ）と工期
+function editSiteInfo(sid) {
+  const s = S.company?.sites[sid]; if (!s) return;
+  if (!S.privLoaded) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
+  const info = siteInfo(sid), st0 = isYmd(s.start) ? s.start : '', en0 = isYmd(s.end) ? s.end : '';
+  const map = info.address ? ` <a href="${esc('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(info.address))}" target="_blank" rel="noopener">地図で見る ↗</a>` : '';
+  const f = formModal(`<h3>${esc(s.name)}</h3>
+    <label class="mrow">発注者<input name="client" maxlength="60" value="${esc(info.client || '')}" placeholder="例：〇〇建設株式会社" autocomplete="off"></label>
+    <label class="mrow"><span>住所${map}</span><input name="address" maxlength="120" value="${esc(info.address || '')}" placeholder="例：東京都〇〇区〇〇1-2-3" autocomplete="off"></label>
+    <label class="mrow">金額（円）<input name="amount" inputmode="numeric" maxlength="20" value="${Number.isFinite(info.amount) ? info.amount.toLocaleString('ja-JP') : ''}" placeholder="例：12800000" autocomplete="off"></label>
+    <label class="mrow">構造<input name="structure" list="structList" maxlength="20" value="${esc(info.structure || '')}" placeholder="例：RC造" autocomplete="off"></label>
+    <datalist id="structList">${STRUCTS.map(x => `<option value="${x}">`).join('')}</datalist>
+    <label class="mrow">階数<input name="floors" maxlength="20" value="${esc(info.floors || '')}" placeholder="例：地上5階" autocomplete="off"></label>
+    <div class="mrow">工期<div class="mrow2"><input type="date" name="ts" value="${st0}" aria-label="工期の始め">〜<input type="date" name="te" value="${en0}" aria-label="工期の終わり"></div></div>
+    <p class="hint">発注者・住所・金額・構造・階数は管理側にだけ出ます（プレイヤーの画面には出ません）。工期はホワイトボードの現場名の下にも出ます。</p>`, f => {
+    if (!S.company?.sites?.[sid]) { toast('この現場は削除されたので保存できません', true); return; }
+    const amount = parseYen(f.elements.amount.value);
+    if (amount === null) { toast('金額は数字で入れてください（例：12800000、1280万）', true); return false; }
+    const ts = f.elements.ts.value, te = f.elements.te.value;
+    if ([f.elements.ts, f.elements.te].some(x => x.validity?.badInput) || !okTermDate(ts) || !okTermDate(te)) { toast(TERM_BAD, true); return false; }
+    if (ts && te && ts > te) { toast('工期の終わりが始めより前になっています', true); return false; }
+    const val = k => f.elements[k].value.trim();
+    const now = { client: val('client'), address: val('address'), amount, structure: val('structure'), floors: val('floors') };
+    const LB = { client: '発注者', address: '住所', amount: '金額', structure: '構造', floors: '階数' };
+    const show = (key, v) => key === 'amount' ? (Number.isFinite(v) ? yen(v) : 'なし') : (v || 'なし');
+    const pp = {}, hist = [];
+    for (const key of Object.keys(now)) {
+      const old = info[key] ?? '';
+      if (now[key] === old) continue;
+      pp[key] = now[key]; hist.push(`${LB[key]}を「${show(key, old)}」→「${show(key, now[key])}」`);
+    }
+    if (hist.length) store.setPrivate({ sites: { [sid]: pp } }, `管理側 物件「${s.name}」の${hist.join('、')}に変更`);
+    const tp = {};
+    if (ts !== st0) tp.start = ts;
+    if (te !== en0) tp.end = te;
+    if (Object.keys(tp).length) store.patch({ sites: { [sid]: tp } }, `現場「${s.name}」の工期を ${termText(s) || 'なし'} → ${termText({ ...s, ...tp }) || 'なし'} に変更`);
+  });
+  if (!TOUCH) f.elements.client.focus();
+}
 
 /* ---- ホワイトボード（現場ごと。人のマグネットを、同じ日の別の現場へドラッグして配置を変える） ---- */
 // マスの中の並び順は cells[人][日].rank（ドラッグで並べたときだけ書く）と、並べたときの現場 rankSite。
@@ -1212,7 +1652,7 @@ function boardTable() {
     return `<th class="${dayCls(d)}${k === today ? ' tdy' : ''}">${DOW[d.getDay()]} ${md(d)}${k === today ? '<span class="today">今日</span>' : ''}${h ? `<div class="hol">${esc(h)}</div>` : ''}</th>`;
   }).join('')}<th class="bk">備考<div class="hol">${isMonStart() ? 'この週' : '週ごと（見るだけ）'}</div></th></tr></thead>`;
   if (!visiblePeople().length) {
-    const msg = sortedPeople(false).length ? '該当する人がいません' : '「人の登録」タブから実習生を登録してください';
+    const msg = sortedPlayers(false).length ? '該当する人がいません' : '「人の登録」タブからプレイヤーを登録してください';
     return `<table class="grid board">${head}</table><div class="empty">${msg}</div>`;
   }
   const body = rows.map(r => `<tr class="${r.pool ? 'pool' : ''}">${boardRowHead(r)}${days.map(d => {
@@ -1341,10 +1781,18 @@ function boardDragEnd(ev) {
   const list = hit?.closest('#grid td')?.querySelector('.mlist');
   const dest = list && list.dataset.date === ev.from.dataset.date && !list.dataset.lock ? list : null;
   // 現場のマスでの並び：Sortable が仮に置いた所（見えていた順）。仮の位置がまだ別のマスなら、離した点から決める。
-  // 元のマスの元の位置で離したときは並びを書かない（待っている間にほかの端末が並べ替えていたら、それを戻さない）
+  // 元のマスで仮の位置が動かなかったとき（短い名前の右の空いた所など、マグネットの上を通らないと Sortable は動かさない）も
+  // 離した点から決める。それでも元の位置なら並びは書かない（待っている間にほかの端末が並べ替えていたら、それを戻さない）。
+  // ただし元のマスでは、マグネットの並ぶ行（.mlist の上下の範囲）で離したときだけ。マスの下の空いた所（現場メモを下にそろえたので広い）で
+  // 離したのは「やめた」とみなし、末尾へ動かさない
   const still = dest === ev.from && ev.to === ev.from && ev.oldIndex === ev.newIndex;
-  const order = !dest?.dataset.site || still ? null
-    : dest === ev.to ? [...dest.querySelectorAll('.mg')].map(m => m.dataset.pid) : orderAt(dest, pid, pt);
+  const shown = dest ? [...dest.querySelectorAll('.mg')].map(m => m.dataset.pid) : [];
+  // 上下だけ見る（左右はマスの中ならどこでもよい。マスの右の余白で離しても末尾へ入れる）
+  const inList = el => { const r = el.getBoundingClientRect(); return pt && pt.clientY >= r.top - 4 && pt.clientY <= r.bottom + 4; };
+  const at = dest?.dataset.site && (dest !== ev.to || (still && inList(dest))) ? orderAt(dest, pid, pt) : null;
+  const order = !dest?.dataset.site ? null
+    : still ? (at && at.some((id, i) => id !== shown[i]) ? at : null)
+    : dest === ev.to ? shown : at;
   // マウスで動かして離すと、同じ流れで click が来てマグネットの画面が開いてしまうので、動かした後の click は捨てる
   const eat = e => { e.stopPropagation(); e.preventDefault(); };
   if (moved) window.addEventListener('click', eat, true);
@@ -1394,7 +1842,8 @@ function dropMagnet(pid, date, site, order, from) {
 // rank を書かなくても同じ並びになるとき（並べ替えずに別のマスの末尾へ入れただけなど）は書かない
 function rankPatch(pid, date, site, order, moving) {
   const rk = id => id === pid && moving ? Infinity : rankOf(id, date);
-  const base = sortedPeople(true).filter(p => p.id === pid || cellOf(p.id, date)?.site === site)
+  // 管理の人はホワイトボードに出ないので、並びに入れない（配置が残っていても、見えない名前を並べ替えの履歴に出さない）
+  const base = sortedPeople(true).filter(p => p.id === pid || (cellOf(p.id, date)?.site === site && !isAdminP(p)))
     .sort((a, b) => cmpRank(rk(a.id), rk(b.id))).map(p => p.id);
   const rest = base.filter(id => id !== pid), i = order.indexOf(pid);
   // 待っている間にほかの端末がこのマスから動かした人は、目印にしない
@@ -1472,6 +1921,7 @@ function fieldHist(coll, x, f, v) {
     case 'color': return coll === 'people'
       ? `${who}のマグネットの色を ${personColorLabel(x.color)} → ${personColorLabel(v)} に変更`
       : `${who}の色を ${colorLabel(x.color)} → ${colorLabel(v)} に変更`;
+    case 'side': return `${who}の側を ${sideLabel(x.side)} → ${sideLabel(v)} に変更`;
     case 'retired': return v ? `${who}を「帰国・退職」にした` : `${who}を「在籍」に戻した`;
     case 'done': return v ? `${who}を「完了」にした` : `${who}を「稼働中」に戻した`;
     default: return `${who}の ${f} を変更`;
@@ -1571,7 +2021,7 @@ function copyPlan(prev) {
   const put = (pid, nd, v) => { (out[pid] ||= {})[nd] = { ...out[pid]?.[nd], ...v }; };
   for (const [pid, days] of Object.entries(prev?.cells || {})) {
     const p = S.company.people[pid];
-    if (!p || p.retired) continue;
+    if (!p || p.retired || isAdminP(p)) continue;   // 管理の人はプレイヤー側に出ないので写さない
     for (const [d, c] of Object.entries(days || {})) {
       if (!c?.site) continue;
       const nd = ds(addDays(pd(d), 7));
@@ -1592,7 +2042,7 @@ function copyPlan(prev) {
   }
   // マグネットの並び順：前の週にそのマスにいた人を前の週の順に並べ、この週だけの人はその後ろに今の順で並べる。
   // 現場だけ書いたときの並びと同じなら rank は書かない。帰国・退職の人はホワイトボードに出ないので並べない（fromPrev と同じ）
-  const reg = sortedPeople(false).map(p => p.id);
+  const reg = sortedPlayers(false).map(p => p.id);
   const byReg = (a, b) => reg.indexOf(a.id) - reg.indexOf(b.id);
   for (const { nd, site, prev: pv, moved } of boxes.values()) {
     const fromPrev = pv.sort((a, b) => cmpRank(a.rank, b.rank) || byReg(a, b)).map(x => x.id);
@@ -1628,6 +2078,10 @@ function furi(s, viewer) {
   return `<span class="furi" lang="ja">${s.kana ? `<span class="fk">${esc(s.kana)}</span>` : ''}<span class="fb">${esc(s.name)}</span>${tr ? `<span class="tr" lang="${S.lang}">${esc(tr)}</span>` : ''}</span>`;
 }
 function printWeek() {
+  if (S.view === 'month') {
+    $('#print').innerHTML = `<h1>${esc(S.company.name)}　月の集計<small>${monthLabel(monthKey(S.month))}（数字は日数）</small></h1>${monthSummary(true)}`;
+    window.print(); return;
+  }
   const days = weekDays();
   $('#print').innerHTML = `<h1>${esc(S.company.name)}　週間配置表<small>${days[0].getFullYear()}年 ${md(days[0])}（${DOW[days[0].getDay()]}）〜 ${md(days[6])}（${DOW[days[6].getDay()]}）</small></h1>${S.view === 'board' ? boardPrint() : allTable(visiblePeople(), days, true)}`;
   window.print();
@@ -1656,11 +2110,13 @@ function peoplePanel() {
       <label>名前<input name="nm" required maxlength="40" placeholder="例：グエン・ヴァン・ナム"></label>
       <label>ふりがな（なくても可）<input name="kn" maxlength="60"></label>
       <label>区分<select name="kd">${KINDS.map(k => `<option value="${k[0]}">${k[1]}</option>`).join('')}</select></label>
+      <label>側<select name="sd">${sideOptions('')}</select></label>
       <label>マグネットの色<select name="pc">${personColorOptions('')}</select></label>
       <button class="btn primary">追加</button>
     </form>
     <div id="plist">${peopleList()}</div></section>`;
 }
+const sideOptions = cur => SIDES.map(([v, l]) => `<option value="${v}"${(cur || '') === v ? ' selected' : ''}>${l}</option>`).join('');
 // 人の登録の一覧に出すマグネットの見本（押しても何も起きない）
 function magnetPreview(p) {
   const mc = magnetColor(p.color);
@@ -1670,17 +2126,19 @@ function peopleList() {
   if (!S.company) return '<div class="empty">読み込み中…</div>';
   const list = sortedPeople(true);
   if (!list.length) return '<div class="empty">まだ登録されていません</div>';
-  return `<table class="list"><thead><tr><th>並び順</th><th>名前</th><th>ふりがな</th><th>区分</th><th>マグネット</th><th>状態</th><th></th></tr></thead><tbody>${list.map((p, i) => `
+  return `<table class="list"><thead><tr><th>並び順</th><th>名前</th><th>ふりがな</th><th>区分</th><th>側</th><th>マグネット</th><th>状態</th><th></th></tr></thead><tbody>${list.map((p, i) => `
     <tr class="${p.retired ? 'retired' : ''}">
       <td class="ord"><button class="mini" data-act="move" data-coll="people" data-id="${esc(p.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="people" data-id="${esc(p.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
-      <td><input data-coll="people" data-f="name" data-id="${esc(p.id)}" value="${esc(p.name)}" maxlength="40"></td>
-      <td><input data-coll="people" data-f="kana" data-id="${esc(p.id)}" value="${esc(p.kana || '')}" maxlength="60"></td>
-      <td><select data-coll="people" data-f="kind" data-id="${esc(p.id)}">${KINDS.map(k => `<option value="${k[0]}" ${p.kind === k[0] ? 'selected' : ''}>${k[1]}</option>`).join('')}</select></td>
-      <td><span class="clr">${magnetPreview(p)}<select data-coll="people" data-f="color" data-id="${esc(p.id)}" aria-label="マグネットの色">${personColorOptions(p.color)}</select></span></td>
-      <td><select data-coll="people" data-f="retired" data-id="${esc(p.id)}"><option value="">在籍</option><option value="1" ${p.retired ? 'selected' : ''}>帰国・退職</option></select></td>
-      <td><button class="mini danger" data-act="del" data-coll="people" data-id="${esc(p.id)}">削除</button></td>
+      <td data-l="名前"><input data-coll="people" data-f="name" data-id="${esc(p.id)}" value="${esc(p.name)}" maxlength="40"></td>
+      <td data-l="ふりがな"><input data-coll="people" data-f="kana" data-id="${esc(p.id)}" value="${esc(p.kana || '')}" maxlength="60"></td>
+      <td data-l="区分"><select data-coll="people" data-f="kind" data-id="${esc(p.id)}">${KINDS.map(k => `<option value="${k[0]}" ${p.kind === k[0] ? 'selected' : ''}>${k[1]}</option>`).join('')}</select></td>
+      <td data-l="側"><select data-coll="people" data-f="side" data-id="${esc(p.id)}" aria-label="側">${sideOptions(p.side)}</select></td>
+      <td data-l="マグネット"><span class="clr">${magnetPreview(p)}<select data-coll="people" data-f="color" data-id="${esc(p.id)}" aria-label="マグネットの色">${personColorOptions(p.color)}</select></span></td>
+      <td data-l="状態"><select data-coll="people" data-f="retired" data-id="${esc(p.id)}"><option value="">在籍</option><option value="1" ${p.retired ? 'selected' : ''}>帰国・退職</option></select></td>
+      <td class="dl"><button class="mini danger" data-act="del" data-coll="people" data-id="${esc(p.id)}">削除</button></td>
     </tr>`).join('')}</tbody></table>
-    <p class="hint">「帰国・退職」にすると予定表に出なくなります（これまでの予定は残ります）。「削除」は登録の間違いを消すときだけ使ってください。</p>`;
+    <p class="hint">「帰国・退職」にすると予定表に出なくなります（これまでの予定は残ります）。「削除」は登録の間違いを消すときだけ使ってください。</p>
+    <p class="hint">側を「管理」にした人は、プレイヤー側（ホワイトボード・表・月の集計・プレイヤーの画面）には出ず、管理側の月の表で物件の担当に選べます。</p>`;
 }
 
 /* ---- 現場の登録 ---- */
@@ -1688,7 +2146,7 @@ function sitesPanel() {
   return `<section class="panel wide"><h2>現場の登録</h2>
     <form class="addrow" data-form="addSite">
       <label>現場名<input name="nm" required maxlength="60" placeholder="例：柏市 新築外構工事"></label>
-      <label>ふりがな（実習生の画面に出ます）<input name="kn" maxlength="80" placeholder="例：かしわし しんちく がいこう こうじ"></label>
+      <label>ふりがな（プレイヤーの画面に出ます）<input name="kn" maxlength="80" placeholder="例：かしわし しんちく がいこう こうじ"></label>
       <label>種類<select name="kd"><option value="site">現場</option><option value="off">休み・研修など</option></select></label>
       <label>色<select name="cl">${colorOptions(nextSiteColor())}</select></label>
       <label>工期（なくても可）<span class="terms"><input type="date" name="ts" aria-label="工期の始め"><span class="te">〜<input type="date" name="te" aria-label="工期の終わり"></span></span></label>
@@ -1703,13 +2161,13 @@ function siteList() {
   return `<table class="list"><thead><tr><th>並び順</th><th>現場名</th><th>ふりがな</th><th>種類</th><th>色</th><th>工期</th><th>状態</th><th></th></tr></thead><tbody>${list.map((s, i) => `
     <tr class="${s.done ? 'retired' : ''}">
       <td class="ord"><button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="上へ">↑</button> <button class="mini" data-act="move" data-coll="sites" data-id="${esc(s.id)}" data-d="1" ${i === list.length - 1 ? 'disabled' : ''} aria-label="下へ">↓</button></td>
-      <td><input data-coll="sites" data-f="name" data-id="${esc(s.id)}" value="${esc(s.name)}" maxlength="60"></td>
-      <td><input data-coll="sites" data-f="kana" data-id="${esc(s.id)}" value="${esc(s.kana || '')}" maxlength="80"></td>
-      <td><select data-coll="sites" data-f="kind" data-id="${esc(s.id)}"><option value="site">現場</option><option value="off" ${s.kind === 'off' ? 'selected' : ''}>休み・研修など</option></select></td>
-      <td><span class="clr">${swatch(s.color)}<select data-coll="sites" data-f="color" data-id="${esc(s.id)}" aria-label="色">${colorOptions(s.color)}</select></span></td>
-      <td>${s.kind === 'off' && !termText(s) ? '<span class="hint">―</span>' : `<span class="terms${termBad(s) ? ' bad' : ''}"><input type="date" data-coll="sites" data-f="start" data-id="${esc(s.id)}" value="${isYmd(s.start) ? s.start : ''}" aria-label="工期の始め"><span class="te">〜<input type="date" data-coll="sites" data-f="end" data-id="${esc(s.id)}" value="${isYmd(s.end) ? s.end : ''}" aria-label="工期の終わり"></span></span>`}</td>
-      <td><select data-coll="sites" data-f="done" data-id="${esc(s.id)}"><option value="">稼働中</option><option value="1" ${s.done ? 'selected' : ''}>完了</option></select></td>
-      <td><button class="mini danger" data-act="del" data-coll="sites" data-id="${esc(s.id)}">削除</button></td>
+      <td data-l="現場名"><input data-coll="sites" data-f="name" data-id="${esc(s.id)}" value="${esc(s.name)}" maxlength="60"></td>
+      <td data-l="ふりがな"><input data-coll="sites" data-f="kana" data-id="${esc(s.id)}" value="${esc(s.kana || '')}" maxlength="80"></td>
+      <td data-l="種類"><select data-coll="sites" data-f="kind" data-id="${esc(s.id)}"><option value="site">現場</option><option value="off" ${s.kind === 'off' ? 'selected' : ''}>休み・研修など</option></select></td>
+      <td data-l="色"><span class="clr">${swatch(s.color)}<select data-coll="sites" data-f="color" data-id="${esc(s.id)}" aria-label="色">${colorOptions(s.color)}</select></span></td>
+      <td data-l="工期">${s.kind === 'off' && !termText(s) ? '<span class="hint">―</span>' : `<span class="terms${termBad(s) ? ' bad' : ''}"><input type="date" data-coll="sites" data-f="start" data-id="${esc(s.id)}" value="${isYmd(s.start) ? s.start : ''}" aria-label="工期の始め"><span class="te">〜<input type="date" data-coll="sites" data-f="end" data-id="${esc(s.id)}" value="${isYmd(s.end) ? s.end : ''}" aria-label="工期の終わり"></span></span>`}</td>
+      <td data-l="状態"><select data-coll="sites" data-f="done" data-id="${esc(s.id)}"><option value="">稼働中</option><option value="1" ${s.done ? 'selected' : ''}>完了</option></select></td>
+      <td class="dl"><button class="mini danger" data-act="del" data-coll="sites" data-id="${esc(s.id)}">削除</button></td>
     </tr>`).join('')}</tbody></table>
     <p class="hint">終わった現場は「完了」にすると予定表の選択肢から消えます（これまでの予定は残ります）。工期を入れると、ホワイトボードの現場名の下に出ます。</p>`;
 }
@@ -1761,9 +2219,9 @@ function viewerUrl() {
 }
 function settingsBody() {
   return `<label class="row">会社名<input id="coNameIn" value="${esc(S.company?.name || '')}" maxlength="40"></label>
-    <h3>実習生に見せる画面</h3>
-    <p>このURLかQRコードを、実習生のスマホで開いてもらいます。見るだけの画面で、予定を書き換えることはできません。</p>
-    <div class="urlrow"><input readonly value="${esc(viewerUrl())}" aria-label="実習生用URL"><button class="btn" data-act="copyUrl">コピー</button><button class="btn" data-act="openView">開く ↗</button></div>
+    <h3>プレイヤーに見せる画面</h3>
+    <p>このURLかQRコードを、プレイヤーのスマホで開いてもらいます。見るだけの画面で、予定を書き換えることはできません。</p>
+    <div class="urlrow"><input readonly value="${esc(viewerUrl())}" aria-label="プレイヤー用URL"><button class="btn" data-act="copyUrl">コピー</button><button class="btn" data-act="openView">開く ↗</button></div>
     <div id="qr" class="qr"></div>
     <p class="hint">${S.mode === 'cloud' ? 'URLを知っている人は誰でもこの予定表を見られます。社外の人には渡さないでください。' : 'お試しモードでは、このパソコンのこのブラウザでしか開けません。'}</p>
     ${editorsSection()}
@@ -1833,7 +2291,7 @@ function renderViewer() {
   const c = S.company;
   if (S.notFound) { app.innerHTML = viewerShell(`<div class="empty">${vt('notFound')}</div>`); return; }
   if (!c) { app.innerHTML = viewerShell(loadingHtml()); return; }
-  const days = weekDays(), people = sortedPeople(false);
+  const days = weekDays(), people = sortedPlayers(false);
   if (S.me && !people.some(p => p.id === S.me)) S.me = '';
   const range = S.lang === 'ja'
     ? `${md(days[0])}（${R('月', 'げつ')}）〜 ${md(days[6])}（${R('日', 'にち')}）`
@@ -1867,7 +2325,20 @@ function meView(people, days) {
       ${c?.note ? `<div class="vnote" lang="ja">${esc(c.note)}${trHtml(c.note)}</div>` : ''}
       ${s && memoOf(c.site, k) ? `<div class="vsm" lang="ja">📌 ${esc(memoOf(c.site, k))}${trHtml(memoOf(c.site, k))}</div>` : ''}
     </div>`;
-  }).join('')}</div>${weekMemos(days)}`;
+  }).join('')}</div>${weekMemos(days)}${monthCard()}`;
+}
+// 実習生の画面「自分」：見ている週の月に、どこへ何日行くか（これからの予定も入る）
+function monthCard() {
+  const first = viewerMonth(), t = monthTally(first), m = first.getMonth();
+  const title = `<div class="vwh">📅 ${vMonthTitle(m)}</div>`;
+  if (!t) return `<div class="vmon">${title}<p class="vmnote">${vt('loading')}</p></div>`;
+  const mine = t.per[S.me] || {}, order = sortedSites(true).map(s => s.id);
+  const ids = Object.keys(mine).sort((a, b) => !isWorkSite(a) - !isWorkSite(b) || (order.indexOf(a) + 1 || 1e9) - (order.indexOf(b) + 1 || 1e9));
+  const work = ids.filter(isWorkSite).reduce((a, id) => a + mine[id], 0);
+  return `<div class="vmon">${title}<div class="vmrow tot"><span>${vt('work')}</span><span class="vmn">${vDays(work)}</span></div>${ids.map(id => {
+    const s = S.company.sites[id];
+    return `<div class="vmrow"><div class="vs">${s ? furi(s, true) : '<span lang="ja">（削除された現場）</span>'}</div><span class="vmn">${vDays(mine[id])}</span></div>`;
+  }).join('')}<p class="vmnote">${vt('inclPlan')}</p></div>`;
 }
 // 実習生の画面：この週に行く現場の「備考」（事務所がホワイトボードの右端に書いたもの）
 function weekMemos(days) {
@@ -1894,7 +2365,7 @@ function renderLogin() {
       <div class="err" id="authErr"></div>
       <p class="hint">会社の Google アカウント（@${esc(COMPANY_DOMAIN)}）でログインしてください。予定表を書き換えられるのは、登録されたメールアドレスの人だけです。</p>
     </div>
-    <p class="hint">実習生の方は、会社から届いたURLかQRコードから開いてください（ログインはいりません）。</p>
+    <p class="hint">プレイヤーの方は、会社から届いたURLかQRコードから開いてください（ログインはいりません）。</p>
     ${S.cid && S.role === 'view' ? '<p><button class="link" data-act="backToView">予定表に戻る</button></p>' : ''}
   </div>`;
 }
@@ -1937,7 +2408,11 @@ app.addEventListener('click', e => {
   switch (d.act) {
     case 'tab': S.tab = d.tab; render(); break;
     case 'week': goWeek(+d.d); break;
-    case 'view': S.view = d.v; lsSet('jsched_view2', S.view); sortFailed = false; renderMain(); break;
+    // 月の集計は覚えない（次に開いたときはホワイトボードか表）
+    case 'view': S.view = d.v; if (d.v !== 'month') lsSet('jsched_view2', S.view); sortFailed = false; renderMain(); break;
+    case 'month': S.month = +d.d ? addMonths(S.month, +d.d) : firstOfMonth(new Date()); renderMain(); break;
+    case 'acell': if (S.role === 'edit') editAdminCell(d.site, d.month); break;
+    case 'ainfo': if (S.role === 'edit') editSiteInfo(d.site); break;
     case 'mg': if (S.role === 'edit') editMagnet(d.pid, d.date); break;
     case 'note': if (S.role === 'edit') startNote(b); break;
     case 'memo': if (S.role === 'edit') startMemo(b); break;
@@ -2046,6 +2521,9 @@ app.addEventListener('input', e => {
 });
 // マグネットと現場のメモはキーボードでも開ける（Enter・スペース）
 app.addEventListener('keydown', e => {
+  // 管理側の物件名・マスも Enter・スペースで開ける
+  const a = e.target.closest?.('[data-act=acell], [data-act=ainfo]');
+  if (a && e.target === a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); a.click(); return; }
   const m = e.target.closest?.('.mg, .smemo');
   if (!m || (e.key !== 'Enter' && e.key !== ' ')) return;
   e.preventDefault();
@@ -2063,12 +2541,12 @@ app.addEventListener('submit', async e => {
     if (coll === 'sites' && (!(okTermDate(ts) && okTermDate(te)) || [...f.querySelectorAll('.terms input')].some(x => x.validity?.badInput))) { toast(TERM_BAD, true); return; }
     if (coll === 'sites' && ts && te && ts > te) { toast('工期の終わりが始めより前になっています', true); return; }
     const item = coll === 'people'
-      ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', color: val('pc'), order: nextOrder('people'), retired: false }
+      ? { name, kana: val('kn'), kind: val('kd') || 'jisshu', side: val('sd') === 'admin' ? 'admin' : '', color: val('pc'), order: nextOrder('people'), retired: false }
       : { name, kana: val('kn'), kind: val('kd') || 'site', color: val('cl'), start: ts, end: te, order: nextOrder('sites'), done: false };
-    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}${item.color ? `・マグネット ${personColorLabel(item.color)}` : ''}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}${termText(item) ? `・工期 ${termText(item)}` : ''}）`;
+    const hist = coll === 'people' ? `人を追加：${name}（${kindLabel(item.kind)}・${sideLabel(item.side)}${item.color ? `・マグネット ${personColorLabel(item.color)}` : ''}）` : `現場を追加：${name}（${siteKindLabel(item.kind)}・色 ${colorLabel(item.color)}${termText(item) ? `・工期 ${termText(item)}` : ''}）`;
     if (!(await store.patch({ [coll]: { [newId(coll === 'people' ? 'p_' : 's_')]: item } }, hist))) return;   // 失敗したら入力を残す
     f.reset();
-    if (coll === 'people') f.querySelector('[name=kd]').value = item.kind;
+    if (coll === 'people') { f.querySelector('[name=kd]').value = item.kind; f.querySelector('[name=sd]').value = item.side; }
     else { const cl = f.querySelector('[name=cl]'); delete cl.dataset.touched; cl.innerHTML = colorOptions(nextSiteColor(f.querySelector('[name=kd]').value)); }
     f.querySelector('[name=nm]').focus();
     toast(`「${name}」を追加しました`);
@@ -2118,7 +2596,7 @@ app.addEventListener('submit', async e => {
       S.role = 'edit'; S.tab = 'people';
       store = Cloud.storeFor(S.cid);
       startData();
-      toast('登録しました。まず実習生と現場を登録してください');
+      toast('登録しました。まずプレイヤーと現場を登録してください');
     } catch (ex) {
       if (gen !== authGen) return;
       console.error(ex);
@@ -2209,6 +2687,7 @@ async function afterAuth(user) {
           catch (e) { if (isCode(e, 'unavailable')) throw e; console.error(e); }
         }
         if (gen !== authGen) return;
+        stopData();   // 待っている間に描き直しで始まった購読（月の集計・管理側の分）を止める
         S.screen = locked ? 'noaccess' : 'create';
         render();
         return;
@@ -2217,7 +2696,7 @@ async function afterAuth(user) {
     else { showLogin(); return; }
   } catch (err) {
     if (gen !== authGen) return;
-    console.error(err); S.screen = 'error'; S.errMsg = errMsg(err); render(); return;
+    console.error(err); stopData(); S.screen = 'error'; S.errMsg = errMsg(err); render(); return;
   }
   store = Cloud.storeFor(S.cid);
   startData();

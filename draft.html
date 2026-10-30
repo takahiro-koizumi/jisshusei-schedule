@@ -37,10 +37,10 @@ ruby rt{font-size:.55em;font-weight:400}
 .center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center}
 .spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--dark);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#222;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:50;max-width:calc(100vw - 32px)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#222;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:70;max-width:calc(100vw - 32px)}   /* 入力画面（.modal 60）より手前。開いたまま出す注意が隠れないように */
 #toast.show{opacity:1;transform:translate(-50%,0)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:60}
-.modalBox{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:440px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:flex-start;justify-content:center;padding:16px;z-index:60;overflow-y:auto;overscroll-behavior:contain}
+.modalBox{background:#fff;border-radius:12px;padding:20px;width:100%;max-width:440px;box-shadow:0 8px 30px rgba(0,0,0,.25);margin:auto}   /* 画面より高いとき（横向き・小さいスマホ）は上から出してスクロール。収まるときは margin:auto で真ん中 */
 .modalMsg{margin:0 0 16px;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:60vh;overflow:auto}
 .modalBox .btns{display:flex;justify-content:flex-end;gap:8px}
 
@@ -161,6 +161,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .mrow textarea{padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;font-size:16px;font-family:inherit;color:var(--ink);resize:vertical}
 .mrow2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .mrow2 input{flex:1 1 130px;min-width:0}
+.mrow input[type=date]{min-height:40px}   /* iPhone の Safari は空の日付欄を低く描く */
 .acks{display:flex;flex-wrap:wrap;gap:6px}
 .acks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:6px;padding:5px 8px;color:var(--ink);cursor:pointer}
 .acks input{width:18px;height:18px;margin:0}
@@ -183,7 +184,7 @@ table.sum{border-collapse:separate;border-spacing:0;min-width:100%;font-variant-
 .admin td{min-width:150px;cursor:pointer}
 .admin td.in{background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6}   /* 工期に入っている月 */
 .admin td.in.col{background:color-mix(in srgb,var(--sc) 55%,#fff);box-shadow:inset 0 3px 0 var(--sb)}
-.admin td:hover,.admin th.nm[data-act]:hover{outline:2px solid var(--line2);outline-offset:-2px}
+@media (hover:hover){.admin td:hover,.admin th.nm[data-act]:hover{outline:2px solid var(--line2);outline-offset:-2px}}   /* iPhone はタップの後も :hover が残るので、マウスの端末だけ */
 .admin th.nm{min-width:190px;max-width:260px}
 .admin th.nm[data-act]{cursor:pointer}
 .admin .ainfo{display:block;font-size:11px;color:#333;font-weight:400;margin-top:2px}
@@ -369,6 +370,8 @@ a.vtr{text-decoration:underline}
   .hist .hx{grid-column:1/-1}
   .addrow .terms input{width:auto;flex:1 1 130px;min-width:0}
   .tabs{flex-wrap:wrap}
+  .topR{flex-wrap:wrap;min-width:0;max-width:100%}
+  .who{flex:1 1 100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* ログイン中のメールは1行に。長ければ「…」 */
   .tabs button{white-space:nowrap;padding:6px 9px}   /* 「プレイヤー側」を途中で折らない（入らなければ次の行へ） */
   .admin th.nm{min-width:118px}
   .admin td{min-width:128px}
@@ -571,7 +574,7 @@ const VT = {
   siteMemo:  { ja: `${R('現場', 'げんば')}の メモ`, id: 'Catatan lokasi kerja', si: 'වැඩබිමේ සටහන්' },
   openTr:    { ja: '', id: 'Lihat terjemahan (Google)', si: 'පරිවර්තනය බලන්න (Google)' },
   admin:     { ja: '事務所の方（ログイン）', id: 'Untuk staf kantor (masuk)', si: 'කාර්යාල කාර්ය මණ්ඩලය සඳහා (පිවිසෙන්න)' },
-  work:      { ja: R('出勤', 'しゅっきん'), id: 'Hari kerja', si: 'වැඩ කළ දින' },
+  work:      { ja: R('出勤', 'しゅっきん'), id: 'Hari kerja', si: 'වැඩ දින' },
   inclPlan:  { ja: `これからの ${R('予定', 'よてい')}も ${R('入', 'はい')}っています`, id: 'Termasuk jadwal yang akan datang', si: 'ඉදිරි වැඩ සටහන ද ඇතුළත්ය' },
   nobody:    { ja: 'まだ だれも いません', id: 'Belum ada nama yang terdaftar', si: 'තවම කිසිවෙකු ලියාපදිංචි කර නැත' },
   demo:      { ja: 'お試しモード', id: 'Mode uji coba', si: 'අත්හදා බැලීමේ ප්‍රකාරය' },
@@ -739,6 +742,8 @@ const IN_APP = /\bLine\//.test(UA) ? 'LINE'
   : /MicroMessenger/.test(UA) ? 'WeChat'
   : /KAKAOTALK/i.test(UA) ? 'カカオトーク'
   : /; wv\)/.test(UA) ? 'アプリ' : '';
+// 指で操作する端末（スマホ・タブレット）。入力画面を開いたときに文字の欄へすぐ focus しない（キーボードで画面が隠れるため）
+const TOUCH = typeof matchMedia === 'function' && matchMedia('(hover:none)').matches;
 // 編集する人に渡すURL。LINE で送っても、開くと Safari・Chrome で開く（LINE の openExternalBrowser）
 const editorUrl = () => location.origin + location.pathname + '?openExternalBrowser=1';
 // ログイン画面を出す。LINE の中なら、まずふつうのブラウザで開き直す（それでも LINE の中なら案内を出す）
@@ -1090,14 +1095,23 @@ function ensureWatch() {
   for (const [k, un] of watching) {
     if (want.has(k)) continue;
     un?.(); watching.delete(k);
-    (k[0] === 'w' ? S.wkLoaded : S.monLoaded).delete(k.slice(2));
+    // 読むのをやめた分は捨てる（戻ったときに、その間にほかの端末が変えた古い中身を出さない）
+    const id = k.slice(2);
+    if (k[0] === 'w') { S.wkLoaded.delete(id); delete S.wk[id]; } else { S.monLoaded.delete(id); delete S.mon[id]; }
   }
+  // 中身が前と同じ知らせ（書いた後のサーバーの確認だけの知らせ・電波が戻ったとき）では描き直さない。
+  // 描き直すと、次に押しかけたマスや選びかけた名前が消えるため（subscribeWeek と同じ）
+  const got = (data, loaded, id, v) => {
+    const same = loaded.has(id) && stableJson(data[id]) === stableJson(v);
+    data[id] = v; loaded.add(id);
+    if (!same) watchLater();
+  };
   for (const k of want) {
     if (watching.has(k)) continue;
     const id = k.slice(2);
     watching.set(k, k[0] === 'w'
-      ? store.onWeek(id, w => { S.wk[id] = w || { cells: {} }; S.wkLoaded.add(id); watchLater(); })
-      : store.onMonth(id, d => { S.mon[id] = d || {}; S.monLoaded.add(id); watchLater(); },
+      ? store.onWeek(id, w => got(S.wk, S.wkLoaded, id, w || { cells: {} }))
+      : store.onMonth(id, d => got(S.mon, S.monLoaded, id, d || {}),
         err => { adminDenied(err); S.monLoaded.add(id); watchLater(); }));
   }
 }
@@ -1155,8 +1169,10 @@ function startData() {
   if (S.role === 'edit') {
     // 管理側の物件の情報（金額など）。編集者だけが読める
     S.unsubP = store.onPrivate(d => {
-      S.priv = d || {}; S.priv.sites ||= {}; S.privLoaded = true;
-      if (S.tab === 'admin') refresh();
+      d = d || {}; d.sites ||= {};
+      const same = S.privLoaded && stableJson(d) === stableJson(S.priv);   // 中身が同じ知らせでは描き直さない
+      S.priv = d; S.privLoaded = true;
+      if (S.tab === 'admin' && !same) refresh();
     }, err => { adminDenied(err); S.privLoaded = true; S.unsubP = null; if (S.tab === 'admin') refresh(); });
     S.unsubE = store.onEditors(list => {
       S.editors = list; S.editorsLoaded = true;
@@ -1436,6 +1452,9 @@ const monMemo = (k, sid) => S.mon[k]?.memos?.[sid] || '';
 const siteInfo = sid => S.priv?.sites?.[sid] || {};
 const yen = n => Number.isFinite(n) ? n.toLocaleString('ja-JP') + '円' : '';
 const peopleIn = set => sortedPeople(true).filter(p => set.has(p.id));
+// マスの延べ人工の内訳「名前 日数」。登録に無い（削除された）人も出す（足すと延べ人工になるように）
+const tallyNames = (bys, unit = '') => [...peopleIn(new Set(Object.keys(bys))), ...Object.keys(bys).filter(id => !S.company.people[id]).map(id => ({ id, name: '（削除された人）' }))]
+  .map(p => `${esc(p.name)} ${bys[p.id]}${unit}`);
 function roMagnet(p) {
   const mc = magnetColor(p.color);
   return `<span class="mg ro${mc.cls}"${mc.style}>${esc(p.name)}</span>`;
@@ -1462,11 +1481,11 @@ function adminView() {
     const k = keys[i], inT = termIn(s, m), ca = colorAttr(inT && !s.done ? s : null, inT ? 'in' : '');
     const t = tallies[i], bys = t?.bySite[s.id];
     const tl = !t ? '<div class="atally wait">プレイヤー …</div>'
-      : bys ? `<div class="atally">プレイヤー 延べ <b>${sumOf(bys)}</b> 人工</div><div class="anames">${peopleIn(new Set(Object.keys(bys))).map(p => `${esc(p.name)} ${bys[p.id]}`).join('・')}</div>` : '';
+      : bys ? `<div class="atally">プレイヤー 延べ <b>${sumOf(bys)}</b> 人工</div><div class="anames">${tallyNames(bys).join('・')}</div>` : '';
     const as = S.monLoaded.has(k) ? `<div class="alist">${peopleIn(monAssign(k, s.id)).map(roMagnet).join('')}</div>` : '<div class="alist">…</div>';
     return `<td class="${ca.cls}"${ca.style} data-act="acell" data-site="${esc(s.id)}" data-month="${k}" role="button" tabindex="0" aria-label="${esc(s.name)} ${monthLabel(k)}">${as}${monMemo(k, s.id) ? `<div class="amemo">${esc(monMemo(k, s.id))}</div>` : ''}${tl}</td>`;
   }).join('')}</tr>`).join('');
-  const foot = `<tfoot><tr><th class="nm">延べ人工（プレイヤー）</th>${tallies.map(t => `<td>${t ? sites.reduce((a, s) => a + sumOf(t.bySite[s.id]), 0) : '…'}</td>`).join('')}</tr></tfoot>`;
+  const foot = `<tfoot><tr><th class="nm">延べ人工（プレイヤー）</th>${tallies.map(t => `<td>${t ? Object.entries(t.bySite).filter(([id]) => isWorkSite(id)).reduce((a, [, o]) => a + sumOf(o), 0) : '…'}</td>`).join('')}</tr></tfoot>`;
   return err + `<table class="grid board admin"${S.privLoaded ? '' : ' aria-busy="true"'}>${head}<tbody>${pool}${body}</tbody>${foot}</table>`;
 }
 // 物件名の欄：ふりがな・名前の下に、工事情報（発注者、住所、構造・階数、金額）と工期
@@ -1490,7 +1509,9 @@ function formModal(inner, onSave) {
   const f = wrap.querySelector('form');
   const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
   const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey, true); };
-  wrap.addEventListener('click', e => { if (e.target === wrap || e.target.closest('[data-k=no]')) close(); });
+  let downOut = false;
+  wrap.addEventListener('pointerdown', e => { downOut = e.target === wrap; });
+  wrap.addEventListener('click', e => { if ((e.target === wrap && downOut) || e.target.closest('[data-k=no]')) close(); });
   f.addEventListener('submit', e => { e.preventDefault(); if (onSave(f) !== false) close(); });
   // Safari では変換を確定する Enter で画面ごと保存されてしまうので止める
   f.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT' && imeEnter(e)) e.preventDefault(); });
@@ -1511,7 +1532,7 @@ function editAdminCell(sid, k) {
       ? `<div class="acks">${list.map(p => `<label><input type="checkbox" name="p" value="${esc(p.id)}" ${cur.has(p.id) ? 'checked' : ''}>${esc(p.name)}${!isAdminP(p) ? '（プレイヤー）' : p.retired ? '（帰国・退職）' : ''}</label>`).join('')}</div>`
       : '<span class="hint">「人の登録」で側を「管理」にした人が、ここで選べます</span>'}</div>
     <label class="mrow">この月のメモ<textarea name="memo" rows="2" maxlength="300" placeholder="例：月末に中間検査">${esc(memo0)}</textarea></label>
-    ${bys ? `<div class="mbreak">プレイヤー 延べ ${sumOf(bys)} 人工：${peopleIn(new Set(Object.keys(bys))).map(p => `${esc(p.name)} ${bys[p.id]}日`).join('、')}</div>` : ''}`, f => {
+    ${bys ? `<div class="mbreak">プレイヤー 延べ ${sumOf(bys)} 人工：${tallyNames(bys, '日').join('、')}</div>` : ''}`, f => {
     const next = new Set([...f.querySelectorAll('[name=p]:checked')].map(x => x.value));
     const memo = f.elements.memo.value.trim();
     // 開いたときから変えた所だけ書く（開いている間にほかの人が変えた所を、古い値で戻さない）
@@ -1526,7 +1547,7 @@ function editAdminCell(sid, k) {
     if (memo !== memo0) { patch.memos = { [sid]: memo }; hist.push(memo ? `メモを「${short(memo)}」にした` : 'メモを消した'); }
     if (hist.length) store.setMonth(k, patch, `管理側 ${monthLabel(k)} 物件「${s.name}」の${hist.join('、')}`);
   });
-  (f.querySelector('[name=p]') || f.elements.memo).focus();
+  if (!TOUCH) (f.querySelector('[name=p]') || f.elements.memo).focus();
 }
 // 金額の入力を円の数にする（「1,280万」「￥12,800,000」「12800000円」も可）。空なら ''、読めなければ null
 function parseYen(v) {
@@ -1547,12 +1568,13 @@ function editSiteInfo(sid) {
   const f = formModal(`<h3>${esc(s.name)}</h3>
     <label class="mrow">発注者<input name="client" maxlength="60" value="${esc(info.client || '')}" placeholder="例：〇〇建設株式会社" autocomplete="off"></label>
     <label class="mrow"><span>住所${map}</span><input name="address" maxlength="120" value="${esc(info.address || '')}" placeholder="例：東京都〇〇区〇〇1-2-3" autocomplete="off"></label>
-    <label class="mrow">金額（円）<input name="amount" inputmode="numeric" maxlength="20" value="${Number.isFinite(info.amount) ? info.amount.toLocaleString('ja-JP') : ''}" placeholder="例：12,800,000（1280万 でも可）" autocomplete="off"></label>
+    <label class="mrow">金額（円）<input name="amount" inputmode="numeric" maxlength="20" value="${Number.isFinite(info.amount) ? info.amount.toLocaleString('ja-JP') : ''}" placeholder="例：12800000" autocomplete="off"></label>
     <label class="mrow">構造<input name="structure" list="structList" maxlength="20" value="${esc(info.structure || '')}" placeholder="例：RC造" autocomplete="off"></label>
     <datalist id="structList">${STRUCTS.map(x => `<option value="${x}">`).join('')}</datalist>
     <label class="mrow">階数<input name="floors" maxlength="20" value="${esc(info.floors || '')}" placeholder="例：地上5階" autocomplete="off"></label>
     <div class="mrow">工期<div class="mrow2"><input type="date" name="ts" value="${st0}" aria-label="工期の始め">〜<input type="date" name="te" value="${en0}" aria-label="工期の終わり"></div></div>
     <p class="hint">発注者・住所・金額・構造・階数は管理側にだけ出ます（プレイヤーの画面には出ません）。工期はホワイトボードの現場名の下にも出ます。</p>`, f => {
+    if (!S.company?.sites?.[sid]) { toast('この現場は削除されたので保存できません', true); return; }
     const amount = parseYen(f.elements.amount.value);
     if (amount === null) { toast('金額は数字で入れてください（例：12800000、1280万）', true); return false; }
     const ts = f.elements.ts.value, te = f.elements.te.value;
@@ -1574,7 +1596,7 @@ function editSiteInfo(sid) {
     if (te !== en0) tp.end = te;
     if (Object.keys(tp).length) store.patch({ sites: { [sid]: tp } }, `現場「${s.name}」の工期を ${termText(s) || 'なし'} → ${termText({ ...s, ...tp }) || 'なし'} に変更`);
   });
-  f.elements.client.focus();
+  if (!TOUCH) f.elements.client.focus();
 }
 
 /* ---- ホワイトボード（現場ごと。人のマグネットを、同じ日の別の現場へドラッグして配置を変える） ---- */
@@ -1754,12 +1776,16 @@ function boardDragEnd(ev) {
   const dest = list && list.dataset.date === ev.from.dataset.date && !list.dataset.lock ? list : null;
   // 現場のマスでの並び：Sortable が仮に置いた所（見えていた順）。仮の位置がまだ別のマスなら、離した点から決める。
   // 元のマスで仮の位置が動かなかったとき（短い名前の右の空いた所など、マグネットの上を通らないと Sortable は動かさない）も
-  // 離した点から決める。それでも元の位置なら並びは書かない（待っている間にほかの端末が並べ替えていたら、それを戻さない）
+  // 離した点から決める。それでも元の位置なら並びは書かない（待っている間にほかの端末が並べ替えていたら、それを戻さない）。
+  // ただし元のマスでは、マグネットの並ぶ行（.mlist の上下の範囲）で離したときだけ。マスの下の空いた所（現場メモを下にそろえたので広い）で
+  // 離したのは「やめた」とみなし、末尾へ動かさない
   const still = dest === ev.from && ev.to === ev.from && ev.oldIndex === ev.newIndex;
   const shown = dest ? [...dest.querySelectorAll('.mg')].map(m => m.dataset.pid) : [];
-  const at = dest?.dataset.site && (still || dest !== ev.to) ? orderAt(dest, pid, pt) : null;
+  // 上下だけ見る（左右はマスの中ならどこでもよい。マスの右の余白で離しても末尾へ入れる）
+  const inList = el => { const r = el.getBoundingClientRect(); return pt && pt.clientY >= r.top - 4 && pt.clientY <= r.bottom + 4; };
+  const at = dest?.dataset.site && (dest !== ev.to || (still && inList(dest))) ? orderAt(dest, pid, pt) : null;
   const order = !dest?.dataset.site ? null
-    : still ? (at.some((id, i) => id !== shown[i]) ? at : null)
+    : still ? (at && at.some((id, i) => id !== shown[i]) ? at : null)
     : dest === ev.to ? shown : at;
   // マウスで動かして離すと、同じ流れで click が来てマグネットの画面が開いてしまうので、動かした後の click は捨てる
   const eat = e => { e.stopPropagation(); e.preventDefault(); };
@@ -1810,7 +1836,8 @@ function dropMagnet(pid, date, site, order, from) {
 // rank を書かなくても同じ並びになるとき（並べ替えずに別のマスの末尾へ入れただけなど）は書かない
 function rankPatch(pid, date, site, order, moving) {
   const rk = id => id === pid && moving ? Infinity : rankOf(id, date);
-  const base = sortedPeople(true).filter(p => p.id === pid || cellOf(p.id, date)?.site === site)
+  // 管理の人はホワイトボードに出ないので、並びに入れない（配置が残っていても、見えない名前を並べ替えの履歴に出さない）
+  const base = sortedPeople(true).filter(p => p.id === pid || (cellOf(p.id, date)?.site === site && !isAdminP(p)))
     .sort((a, b) => cmpRank(rk(a.id), rk(b.id))).map(p => p.id);
   const rest = base.filter(id => id !== pid), i = order.indexOf(pid);
   // 待っている間にほかの端末がこのマスから動かした人は、目印にしない
@@ -2654,6 +2681,7 @@ async function afterAuth(user) {
           catch (e) { if (isCode(e, 'unavailable')) throw e; console.error(e); }
         }
         if (gen !== authGen) return;
+        stopData();   // 待っている間に描き直しで始まった購読（月の集計・管理側の分）を止める
         S.screen = locked ? 'noaccess' : 'create';
         render();
         return;
@@ -2662,7 +2690,7 @@ async function afterAuth(user) {
     else { showLogin(); return; }
   } catch (err) {
     if (gen !== authGen) return;
-    console.error(err); S.screen = 'error'; S.errMsg = errMsg(err); render(); return;
+    console.error(err); stopData(); S.screen = 'error'; S.errMsg = errMsg(err); render(); return;
   }
   store = Cloud.storeFor(S.cid);
   startData();
