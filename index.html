@@ -91,6 +91,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .k-jisshu{background:#e3f1e7;color:#1f7a43}
 .k-tokutei{background:#e6eefc;color:#2156b8}
 .k-other{background:#eceef1;color:#555}
+.k-vehicle{background:#fdecc8;color:#8a5a00}
 .fill{border:1px solid var(--line2);background:#fff;border-radius:4px;font-size:12px;padding:0 5px;line-height:20px;color:var(--sub)}
 .fill:hover{color:var(--ink);border-color:var(--dark)}
 .note{font-size:12px;color:var(--faint);padding:4px 2px 0;cursor:pointer;min-height:20px}
@@ -489,7 +490,9 @@ const isRestDay = d => d.getDay() === 0 || !!holidayName(ds(d));
 const dayCls = d => (isRestDay(d) ? 'sun' : d.getDay() === 6 ? 'sat' : '');
 
 /* ---------- 状態 ---------- */
-const KINDS = [['jisshu', '技能実習', '実'], ['tokutei', '特定技能', '特'], ['other', 'その他', '他']];
+// 'vehicle'（車両）はトラックなど。ホワイトボードで現場に置くが、人ではないので月の集計・延べ人工には数えない（2026-10-30 ユーザー指示）
+const KINDS = [['jisshu', '技能実習', '実'], ['tokutei', '特定技能', '特'], ['other', 'その他', '他'], ['vehicle', '車両', '車']];
+const isVehicle = p => p?.kind === 'vehicle';
 // 現場の色 [保存する値, 名前, 地の色（薄い）, 線の色（濃い）]。未配置の黄色と紛れないよう黄色は入れない
 const SITE_COLORS = [
   ['', 'なし', '', ''],
@@ -1121,14 +1124,15 @@ function ensureWatch() {
         err => { adminDenied(err); S.monLoaded.add(id); watchLater(); }));
   }
 }
-// その月の人ごと・現場ごとの日数（管理の人は数えない）。読み込み中なら null
+// その月の人ごと・現場ごとの日数（管理の人と車両は数えない）。読み込み中なら null
 // per[人ID][現場ID] = 日数、bySite[現場ID][人ID] = 日数
 function monthTally(first) {
   const mons = mondaysOf(first), mk = monthKey(first);
   if (!mons.every(m => S.wkLoaded.has(m))) return null;
   const per = {}, bySite = {};
   for (const m of mons) for (const [pid, byDay] of Object.entries(S.wk[m]?.cells || {})) {
-    if (isAdminP(S.company?.people?.[pid])) continue;
+    const who = S.company?.people?.[pid];
+    if (isAdminP(who) || isVehicle(who)) continue;   // 管理の人と車両は数えない
     for (const [k, c] of Object.entries(byDay || {})) {
       if (!c?.site || k.slice(0, 7) !== mk) continue;
       const pp = per[pid] ||= {}; pp[c.site] = (pp[c.site] || 0) + 1;
@@ -1335,11 +1339,11 @@ function renderMain() {
     m.innerHTML = (S.view === 'month' ? monthBar() : tableBar()) + `<div class="gridwrap" id="grid">${weekView()}</div>` + (S.view === 'board'
       ? `<div class="legend"><span>マグネットを同じ日の別の行（現場・休み・未配置）へドラッグすると、その日の予定が変わります</span><span>同じマスの中でドラッグすると、並び順を変えられます</span><span>マグネットを押すと、現場とメモを変えられます</span></div>`
       : S.view === 'month'
-      ? `<div class="legend"><span>数字は日数です。プレイヤー側の配置（ホワイトボード・表）から数えます（これからの予定も入ります）</span><span>出勤＝現場に入った日（休み・研修などは除く）</span><span>未定＝日曜・祝日を除く、まだ決まっていない日</span><span>合計の行＝その現場の延べ人工</span></div>`
+      ? `<div class="legend"><span>数字は日数です。プレイヤー側の配置（ホワイトボード・表）から数えます（これからの予定も入ります）</span><span>出勤＝現場に入った日（休み・研修などは除く）</span><span>区分が「車両」のもの（トラックなど）は数えません</span><span>未定＝日曜・祝日を除く、まだ決まっていない日</span><span>合計の行＝その現場の延べ人工</span></div>`
       : `<div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`);
   } else if (S.tab === 'admin') {
     m.innerHTML = adminBar() + `<div class="gridwrap" id="grid">${adminView()}</div>`
-      + `<div class="legend"><span>物件名を押すと、工事情報（発注者・住所・金額・構造・階数）と工期を入れられます</span><span>マスを押すと、その月の担当（管理の人）とメモを変えられます</span><span><i style="background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6"></i>工期に入っている月</span><span>プレイヤーの延べ人工は、プレイヤー側の配置から数えます（休み・研修などは除く）</span></div>`;
+      + `<div class="legend"><span>物件名を押すと、工事情報（発注者・住所・金額・構造・階数）と工期を入れられます</span><span>マスを押すと、その月の担当（管理の人）とメモを変えられます</span><span><i style="background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6"></i>工期に入っている月</span><span>プレイヤーの延べ人工は、プレイヤー側の配置から数えます（休み・研修などと、区分が「車両」のものは除く）</span></div>`;
   } else if (S.tab === 'people') m.innerHTML = peoplePanel();
   else if (S.tab === 'sites') m.innerHTML = sitesPanel();
   else if (S.tab === 'history') {
@@ -1423,7 +1427,7 @@ function monthSummary(print) {
   if (!t) return print ? '<div class="empty">読み込み中です</div>' : loadingHtml();
   const days = monthDays(S.month).filter(d => !isRestDay(d)).map(ds);
   // 帰国・退職の人と削除された人も、この月に予定があれば出す
-  const people = [...sortedPlayers(true).filter(p => !p.retired || t.per[p.id]),
+  const people = [...sortedPlayers(true).filter(p => !isVehicle(p) && (!p.retired || t.per[p.id])),
     ...Object.keys(t.per).filter(id => !S.company.people[id]).map(id => ({ id, name: '（削除された人）', gone: true }))];
   if (!people.length) return `<div class="empty">「人の登録」タブからプレイヤーを登録してください</div>`;
   const used = new Set(Object.keys(t.bySite));
@@ -2138,7 +2142,7 @@ function peopleList() {
       <td class="dl"><button class="mini danger" data-act="del" data-coll="people" data-id="${esc(p.id)}">削除</button></td>
     </tr>`).join('')}</tbody></table>
     <p class="hint">「帰国・退職」にすると予定表に出なくなります（これまでの予定は残ります）。「削除」は登録の間違いを消すときだけ使ってください。</p>
-    <p class="hint">側を「管理」にした人は、プレイヤー側（ホワイトボード・表・月の集計・プレイヤーの画面）には出ず、管理側の月の表で物件の担当に選べます。</p>`;
+    <p class="hint">側を「管理」にした人は、プレイヤー側（ホワイトボード・表・月の集計・プレイヤーの画面）には出ず、管理側の月の表で物件の担当に選べます。区分を「車両」にしたもの（トラックなど）は、ホワイトボードで現場に置けますが、月の集計・延べ人工には数えません。</p>`;
 }
 
 /* ---- 現場の登録 ---- */
