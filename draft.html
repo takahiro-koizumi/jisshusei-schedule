@@ -179,7 +179,7 @@ table.sum{border-collapse:separate;border-spacing:0;min-width:100%;font-variant-
 .sum tfoot th,.sum tfoot td{background:#f3f3f0;font-weight:700}
 .sum tr.gone th.nm{color:var(--sub)}
 
-/* ---- 管理側（物件×月）。物件名の下に金額・構造・階数・工期、マスに担当（管理の人）と、プレイヤーの延べ人工 ---- */
+/* ---- 管理側（物件×月）。物件名の下に工事情報（発注者・住所・構造・階数・金額）と工期、マスに担当（管理の人）と、プレイヤーの延べ人工 ---- */
 .admin td{min-width:150px;cursor:pointer}
 .admin td.in{background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6}   /* 工期に入っている月 */
 .admin td.in.col{background:color-mix(in srgb,var(--sc) 55%,#fff);box-shadow:inset 0 3px 0 var(--sb)}
@@ -677,7 +677,7 @@ const S = {
   month: firstOfMonth(new Date()),
   wk: {}, wkLoaded: new Set(),     // 何週分かの配置 wk[月曜] = {cells}（見ている画面に要る週だけ読む）
   mon: {}, monLoaded: new Set(),   // 管理側の月ごとの担当 mon['YYYY-MM'] = {assign:{現場ID:{人ID:true}}, memos:{現場ID:文字}}
-  priv: { sites: {} }, privLoaded: false,   // 管理側の物件の情報 priv.sites[現場ID] = {amount, structure, floors}（実習生は読めない）
+  priv: { sites: {} }, privLoaded: false,   // 管理側の工事情報 priv.sites[現場ID] = {client, address, amount, structure, floors}（実習生は読めない）
   adminErr: '',
 };
 let store = null;
@@ -840,11 +840,11 @@ function seedDemo() {
     }
     weeks[ds(m)] = { cells: wc };
   }
-  // 管理側の見本：物件の情報（金額・構造・階数）と、月ごとの担当
+  // 管理側の見本：工事情報（発注者・住所・金額・構造・階数）と、月ごとの担当
   const priv = { sites: {
-    s_demo2: { amount: 12800000, structure: '木造', floors: '2階' },
-    s_demo3: { amount: 186000000, structure: 'RC造', floors: '地上5階' },
-    s_demo4: { amount: 42500000, structure: 'S造', floors: '3階' },
+    s_demo2: { client: 'お試し住宅株式会社', address: '千葉県柏市〇〇1-2-3', amount: 12800000, structure: '木造', floors: '2階' },
+    s_demo3: { client: 'お試し不動産株式会社', address: '千葉県船橋市〇〇4-5-6', amount: 186000000, structure: 'RC造', floors: '地上5階' },
+    s_demo4: { client: 'お試し商事株式会社', amount: 42500000, structure: 'S造', floors: '3階' },
   } };
   const months = {}, m0 = firstOfMonth(new Date());
   for (let i = 0; i < 4; i++) {
@@ -854,7 +854,7 @@ function seedDemo() {
   return { company: { name: 'お試し株式会社', people, sites }, weeks, editors: [], months, priv };
 }
 function makeDemoStore() {
-  const KEY = 'jsched_draft_v1';
+  const KEY = 'jsched_draft_v2';
   const read = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } };
   let data = read();
   if (!data) { data = seedDemo(); write(); }
@@ -916,7 +916,7 @@ function makeDemoStore() {
    companies/{会社ID}            … 会社名・人・現場（実習生もURLで読める）
    companies/{会社ID}/weeks/{月曜} … その週の配置 cells[人ID][日付] = {site, note}
    companies/{会社ID}/months/{YYYY-MM} … 管理側の月ごとの担当 {assign:{現場ID:{人ID:true}}, memos:{現場ID:文字}}（編集者だけ）
-   companies/{会社ID}/private/info … 管理側の物件の情報 {sites:{現場ID:{amount,structure,floors}}}（編集者だけ。金額を実習生に見せない）
+   companies/{会社ID}/private/info … 管理側の工事情報 {sites:{現場ID:{client,address,amount,structure,floors}}}（編集者だけ。金額を実習生に見せない）
    acl/{会社ID}                  … 編集できる人のメールアドレス {editors:[…]}（編集者だけ読める）
    config/lock                   … 予定表を作った印。1つ作ったら以後は誰も作れない
    1マスずつ merge で書くので、2台で別のマスを同時に触っても消し合わない。
@@ -1317,7 +1317,7 @@ function renderMain() {
       : `<div class="legend"><span><i style="background:var(--unset)"></i>未配置</span><span><i style="background:var(--off)"></i>休み・研修など</span><span><i style="background:var(--rest)"></i>日曜・祝日（未配置）</span><span>⇉ ＝ その人の空いている日を同じ現場で埋める</span></div>`);
   } else if (S.tab === 'admin') {
     m.innerHTML = adminBar() + `<div class="gridwrap" id="grid">${adminView()}</div>`
-      + `<div class="legend"><span>物件名を押すと、金額・構造・階数・工期を入れられます</span><span>マスを押すと、その月の担当（管理の人）とメモを変えられます</span><span><i style="background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6"></i>工期に入っている月</span><span>プレイヤーの延べ人工は、プレイヤー側の配置から数えます（休み・研修などは除く）</span></div>`;
+      + `<div class="legend"><span>物件名を押すと、工事情報（発注者・住所・金額・構造・階数）と工期を入れられます</span><span>マスを押すと、その月の担当（管理の人）とメモを変えられます</span><span><i style="background:#eef3fb;box-shadow:inset 0 3px 0 #9fb4d6"></i>工期に入っている月</span><span>プレイヤーの延べ人工は、プレイヤー側の配置から数えます（休み・研修などは除く）</span></div>`;
   } else if (S.tab === 'people') m.innerHTML = peoplePanel();
   else if (S.tab === 'sites') m.innerHTML = sitesPanel();
   else if (S.tab === 'history') {
@@ -1469,15 +1469,18 @@ function adminView() {
   const foot = `<tfoot><tr><th class="nm">延べ人工（プレイヤー）</th>${tallies.map(t => `<td>${t ? sites.reduce((a, s) => a + sumOf(t.bySite[s.id]), 0) : '…'}</td>`).join('')}</tr></tfoot>`;
   return err + `<table class="grid board admin"${S.privLoaded ? '' : ' aria-busy="true"'}>${head}<tbody>${pool}${body}</tbody>${foot}</table>`;
 }
-// 物件名の欄：ふりがな・名前の下に、構造・階数、金額、工期
+// 物件名の欄：ふりがな・名前の下に、工事情報（発注者、住所、構造・階数、金額）と工期
 function adminRowHead(s) {
   const info = siteInfo(s.id), spec = [info.structure, info.floors].filter(Boolean).join('・');
   const ca = colorAttr(s.done ? null : s, 'nm');
+  const any = info.client || info.address || spec || Number.isFinite(info.amount);
   return `<th class="${ca.cls}"${ca.style} data-act="ainfo" data-site="${esc(s.id)}" role="button" tabindex="0">${s.kana ? `<span class="sub">${esc(s.kana)}</span>` : ''}${s.done ? '（完了）' : ''}${esc(s.name)}`
+    + (info.client ? `<span class="ainfo">発注者 ${esc(info.client)}</span>` : '')
+    + (info.address ? `<span class="ainfo">📍${esc(info.address)}</span>` : '')
     + (spec ? `<span class="ainfo">${esc(spec)}</span>` : '')
     + (Number.isFinite(info.amount) ? `<span class="amt">${yen(info.amount)}</span>` : '')
     + (termText(s) ? `<span class="term">工期 ${termText(s)}</span>` : '')
-    + (!spec && !Number.isFinite(info.amount) && S.privLoaded ? '<span class="ainfo add">＋金額・構造・階数</span>' : '') + '</th>';
+    + (!any && S.privLoaded ? '<span class="ainfo add">＋工事情報</span>' : '') + '</th>';
 }
 // 画面の中に出す入力の画面（form）。onSave(form) が false を返したら閉じない
 function formModal(inner, onSave) {
@@ -1535,25 +1538,29 @@ function parseYen(v) {
   const n = Math.round(parseFloat(t) * mul);
   return Number.isSafeInteger(n) && n <= 1e12 ? n : null;
 }
-// 物件名を押したとき：金額・構造・階数（管理側だけ）と工期
+// 物件名を押したとき：工事情報（発注者・住所・金額・構造・階数。管理側だけ）と工期
 function editSiteInfo(sid) {
   const s = S.company?.sites[sid]; if (!s) return;
   if (!S.privLoaded) { toast('読み込み中です。少し待ってからもう一度押してください'); return; }
   const info = siteInfo(sid), st0 = isYmd(s.start) ? s.start : '', en0 = isYmd(s.end) ? s.end : '';
+  const map = info.address ? ` <a href="${esc('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(info.address))}" target="_blank" rel="noopener">地図で見る ↗</a>` : '';
   const f = formModal(`<h3>${esc(s.name)}</h3>
+    <label class="mrow">発注者<input name="client" maxlength="60" value="${esc(info.client || '')}" placeholder="例：〇〇建設株式会社" autocomplete="off"></label>
+    <label class="mrow"><span>住所${map}</span><input name="address" maxlength="120" value="${esc(info.address || '')}" placeholder="例：東京都〇〇区〇〇1-2-3" autocomplete="off"></label>
     <label class="mrow">金額（円）<input name="amount" inputmode="numeric" maxlength="20" value="${Number.isFinite(info.amount) ? info.amount.toLocaleString('ja-JP') : ''}" placeholder="例：12,800,000（1280万 でも可）" autocomplete="off"></label>
     <label class="mrow">構造<input name="structure" list="structList" maxlength="20" value="${esc(info.structure || '')}" placeholder="例：RC造" autocomplete="off"></label>
     <datalist id="structList">${STRUCTS.map(x => `<option value="${x}">`).join('')}</datalist>
     <label class="mrow">階数<input name="floors" maxlength="20" value="${esc(info.floors || '')}" placeholder="例：地上5階" autocomplete="off"></label>
     <div class="mrow">工期<div class="mrow2"><input type="date" name="ts" value="${st0}" aria-label="工期の始め">〜<input type="date" name="te" value="${en0}" aria-label="工期の終わり"></div></div>
-    <p class="hint">金額・構造・階数は管理側にだけ出ます（プレイヤーの画面には出ません）。工期はホワイトボードの現場名の下にも出ます。</p>`, f => {
+    <p class="hint">発注者・住所・金額・構造・階数は管理側にだけ出ます（プレイヤーの画面には出ません）。工期はホワイトボードの現場名の下にも出ます。</p>`, f => {
     const amount = parseYen(f.elements.amount.value);
     if (amount === null) { toast('金額は数字で入れてください（例：12800000、1280万）', true); return false; }
     const ts = f.elements.ts.value, te = f.elements.te.value;
     if ([f.elements.ts, f.elements.te].some(x => x.validity?.badInput) || !okTermDate(ts) || !okTermDate(te)) { toast(TERM_BAD, true); return false; }
     if (ts && te && ts > te) { toast('工期の終わりが始めより前になっています', true); return false; }
-    const now = { amount, structure: f.elements.structure.value.trim(), floors: f.elements.floors.value.trim() };
-    const LB = { amount: '金額', structure: '構造', floors: '階数' };
+    const val = k => f.elements[k].value.trim();
+    const now = { client: val('client'), address: val('address'), amount, structure: val('structure'), floors: val('floors') };
+    const LB = { client: '発注者', address: '住所', amount: '金額', structure: '構造', floors: '階数' };
     const show = (key, v) => key === 'amount' ? (Number.isFinite(v) ? yen(v) : 'なし') : (v || 'なし');
     const pp = {}, hist = [];
     for (const key of Object.keys(now)) {
@@ -1567,7 +1574,7 @@ function editSiteInfo(sid) {
     if (te !== en0) tp.end = te;
     if (Object.keys(tp).length) store.patch({ sites: { [sid]: tp } }, `現場「${s.name}」の工期を ${termText(s) || 'なし'} → ${termText({ ...s, ...tp }) || 'なし'} に変更`);
   });
-  f.elements.amount.focus();
+  f.elements.client.focus();
 }
 
 /* ---- ホワイトボード（現場ごと。人のマグネットを、同じ日の別の現場へドラッグして配置を変える） ---- */
