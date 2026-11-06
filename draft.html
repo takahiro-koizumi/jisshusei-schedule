@@ -118,7 +118,7 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .bcell{display:flex;flex-direction:column;gap:4px;height:100%}
 .bcell>*{flex-shrink:0}
 .bcell>.bnote{margin-top:0}
-.bcell>.smemo,.bcell>.smemoIn{margin-top:auto}
+.bcell>.smemo,.bcell>.smemoEd{margin-top:auto}
 .nostretch .board td,.nostretch .bcell{height:auto}   /* 伸ばせないブラウザ（checkCellStretch）は前の並びに戻す */
 .board td.col{background:color-mix(in srgb,var(--sc) 45%,#fff);box-shadow:none}
 .board td.lock{background:#f3f3f1}
@@ -143,9 +143,19 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .smemo:hover{border-color:var(--line2)}
 .smemo.ro{cursor:default}.smemo.ro:hover{border-color:transparent}   /* 日送りで2つの週にまたがっているときの備考（見るだけ） */
 @media (hover:hover){.smemo.empty{color:transparent}td:hover .smemo.empty{color:var(--faint)}}   /* マウスの端末では、空のメモ欄は指したときだけ出す */
-.smemoIn{width:100%;margin-top:4px;padding:3px 5px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
+.smemo.mcol{background:var(--mb);color:var(--mf)}   /* メモごとに選んだ色（MEMO_COLORS） */
+/* メモを書いている間：入力欄と、その下に浮かせた色。色は行の高さに入れない
+   （入れると、確定して元の欄に戻ったときに行が縮み、続けて押した別のメモやマグネットがずれて click が空振りする） */
+.smemoEd{margin-top:4px;position:relative}
+.smemoIn{width:100%;padding:3px 5px;font-size:12px;border:1px solid var(--accent);border-radius:4px}
+.mcs{position:absolute;left:0;top:calc(100% + 2px);z-index:4;display:grid;grid-template-columns:repeat(4,24px);gap:4px;padding:4px;background:#fff;border:1px solid var(--line2);border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.mcs.up{top:auto;bottom:calc(100% + 2px)}
+.mcs button{width:24px;height:24px;padding:0;border-radius:4px;border:1px solid rgba(0,0,0,.2);font-size:11px;font-weight:700;line-height:1;cursor:pointer;background:var(--mb);color:var(--mf)}
+.mcs button.on{outline:2px solid var(--dark);outline-offset:1px}
+@media (hover:none){.mcs{grid-template-columns:repeat(4,30px)}.mcs button{width:30px;height:30px}}
 .board th.bk,.board td.bk{min-width:150px;max-width:220px;background:#fffdf3}
-.board td.bk .smemo{margin-top:0;min-height:22px}
+.board td.bk .smemo,.board td.bk .smemoEd{margin-top:0}
+.board td.bk .smemo{min-height:22px}
 .board td.bk .smemo.empty{color:var(--faint)}
 .mg.pv{cursor:default;touch-action:auto;user-select:auto;-webkit-user-select:auto;margin-right:6px;flex:none;max-width:110px;overflow:hidden;white-space:nowrap}
 .pcs{display:flex;flex-wrap:wrap;gap:6px}
@@ -303,6 +313,9 @@ table.sum{border-collapse:separate;border-spacing:0;min-width:100%;font-variant-
 .vaddr{display:inline-block;font-size:14px;color:#1d4f91;text-decoration:underline;word-break:break-all;margin-top:2px}   /* 現場の住所（地図のリンク） */
 .vaddrs{background:#fff;border-color:var(--line)}
 .vsm{font-size:14px;color:#7a4b00;background:#fff8d6;border-radius:6px;padding:3px 8px;margin-top:4px;white-space:pre-wrap;word-break:break-all}
+.vsm.mcol,.vwi .vnote.mcol{background:var(--mb);color:var(--mf)}   /* 事務所がメモに付けた色 */
+.vwi .vnote.mcol{border-radius:6px;padding:3px 8px}
+.mdk .vtr,.mdk .vtr.wait{color:#fff}   /* 濃い地のメモ（赤・白い字）は訳も白い字 */
 .vweek{margin-top:14px;background:#fffdf3;border:1px solid #f0dca0;border-radius:10px;padding:10px 12px}
 .vwh{font-weight:700;margin-bottom:6px}
 .vwi{padding:6px 0;border-top:1px solid #f3e7c0}
@@ -357,6 +370,7 @@ a.vtr{text-decoration:underline}
   #print .vt th,#print .vt td{border:1px solid #888}
   #print .vt td.off,#print .vt td.col,#print .vt thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #print .pmemo{font-size:8pt;color:#7a4b00;margin-top:2px;white-space:pre-wrap}
+  #print .pmemo.mcol{color:var(--mf);background:var(--mb);padding:0 2px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #print .pterm{font-size:7pt;font-weight:400;color:#444;margin-top:1px;word-break:normal}   /* 現場名の break-all を外す（日付の数字の途中で折り返さない） */
   #print table.sum{width:100%;font-size:9pt;border-collapse:collapse}
   #print .sum th,#print .sum td{position:static;border:1px solid #888;padding:3px 5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -544,6 +558,20 @@ function magnetColor(color) {
 }
 function personColorOptions(cur) {
   return PERSON_COLORS.map(([v, l]) => `<option value="${v}"${(cur || '') === v ? ' selected' : ''}${v ? ` style="background:${v};color:${textColorFor(v)}"` : ''}>${l}</option>`).join('');
+}
+// 現場のメモの色 [保存する値, 名前, 地の色, 字の色, 地が濃いか]。'' は標準（今までの黄色）。2026-11-05 ユーザー指示「メモ欄の色を変えれるように」
+// 週の文書の memos[現場ID].colors[日付 or 'week'] に保存（memos の中なのでルールの変更は要らない。前の版は colors を読まない）
+const MEMO_COLORS = [
+  ['', '黄（標準）', '#fff8d6', '#7a4b00'], ['red', '赤', '#ffdcd8', '#b3261e'], ['orange', 'オレンジ', '#ffe3c8', '#8a4500'],
+  ['green', '緑', '#d5f0dc', '#1d6b35'], ['blue', '青', '#dbe7ff', '#1d4f91'], ['purple', '紫', '#eadffb', '#5b2a9e'],
+  ['gray', '灰', '#e5e7ea', '#374151'], ['alert', '赤（白い字）', '#d93025', '#ffffff', true],
+];
+// 選べる色だけを使う（ほかの値が入っていたら標準のまま）
+const memoColorEntry = v => v ? MEMO_COLORS.find(c => c[0] === v) : undefined;
+const memoColorLabel = v => (memoColorEntry(v) || MEMO_COLORS[0])[1];
+function memoColorAttr(v) {
+  const c = memoColorEntry(v);
+  return c ? { cls: ' mcol' + (c[4] ? ' mdk' : ''), style: ` style="--mb:${c[2]};--mf:${c[3]}"` } : { cls: '', style: '' };
 }
 const KIND_SHORT = Object.fromEntries(KINDS.map(k => [k[0], k[2]]));
 // 人の「側」（people[id].side）。'' ＝プレイヤー（現場で働く人。日ごとの配置・月の集計・実習生の画面に出る）、
@@ -1687,46 +1715,119 @@ function boardTable() {
   return `<table class="grid board">${head}<tbody>${body}</tbody></table>`;
 }
 // 現場のメモ（key＝日付ならその日のマス、'week' なら右端の備考＝月曜はじまりで表示している週のもの）。押すと書ける
-const memoOf = (sid, key) => (key === 'week' ? S.weeks[ds(S.weekStart)] : S.weeks[wkOf(key)])?.memos?.[sid]?.[key] || '';
-// 右端の備考の中身 [見出し, 文]。日送りで7日が2つの週にまたがっているときは、両方の週の備考を見出し付きで
-const weekNotes = sid => (isMonStart() ? [['', memoOf(sid, 'week')]]
-  : shownWeeks().map(m => [`${md(pd(m))}〜 の週`, S.weeks[m]?.memos?.[sid]?.week || ''])).filter(([, v]) => v);
+const memosOf = (sid, key) => (key === 'week' ? S.weeks[ds(S.weekStart)] : S.weeks[wkOf(key)])?.memos?.[sid];
+const memoOf = (sid, key) => memosOf(sid, key)?.[key] || '';
+// メモの色（選べる値だけ。'' は標準）。文が無いときに残っている色は、表示では使わない
+const memoColorOf = (sid, key) => memoColorEntry(memosOf(sid, key)?.colors?.[key])?.[0] || '';
+// 右端の備考の中身 [見出し, 文, 色]。日送りで7日が2つの週にまたがっているときは、両方の週の備考を見出し付きで
+const weekNotes = sid => (isMonStart() ? [['', memoOf(sid, 'week'), memoColorOf(sid, 'week')]]
+  : shownWeeks().map(m => {
+    const w = S.weeks[m]?.memos?.[sid];
+    return [`${md(pd(m))}〜 の週`, w?.week || '', memoColorEntry(w?.colors?.week)?.[0] || ''];
+  })).filter(([, v]) => v);
 // 2つの週にまたがっているときは、どちらの週に書くか決まらないので見せるだけにする
 function weekMemoCell(sid) {
   if (isMonStart()) return memoBox(sid, 'week');
-  return weekNotes(sid).map(([h, v]) => `<div class="smemo ro" title="備考は月曜からの表示で書けます（「今週」で戻ります）"><b>${h}</b>\n${esc(v)}</div>`).join('');
+  return weekNotes(sid).map(([h, v, c]) => {
+    const mc = memoColorAttr(c);
+    return `<div class="smemo ro${mc.cls}"${mc.style} title="備考は月曜からの表示で書けます（「今週」で戻ります）"><b>${h}</b>\n${esc(v)}</div>`;
+  }).join('');
 }
 function memoBox(sid, key) {
-  const v = memoOf(sid, key);
-  return `<div class="smemo${v ? '' : ' empty'}" data-act="memo" data-site="${esc(sid)}" data-key="${key}" role="button" tabindex="0">${v ? esc(v) : (key === 'week' ? '＋備考' : '＋メモ')}</div>`;
+  const v = memoOf(sid, key), mc = memoColorAttr(v ? memoColorOf(sid, key) : '');
+  return `<div class="smemo${v ? '' : ' empty'}${mc.cls}"${mc.style} data-act="memo" data-site="${esc(sid)}" data-key="${key}" role="button" tabindex="0">${v ? esc(v) : (key === 'week' ? '＋備考' : '＋メモ')}</div>`;
+}
+// 描き直しを待たずに、元の欄の色を付け替える（startMemo の確定のとき）
+function paintMemo(el, v) {
+  const c = memoColorEntry(v);
+  el.classList.toggle('mcol', !!c);
+  el.classList.toggle('mdk', !!c?.[4]);
+  if (c) { el.style.setProperty('--mb', c[2]); el.style.setProperty('--mf', c[3]); }
+  else { el.style.removeProperty('--mb'); el.style.removeProperty('--mf'); }
 }
 const memoWhere = (sid, key, mon) => `現場「${siteLabel(sid)}」の ${key === 'week' ? `${md(pd(mon))}〜 の週の備考` : `${dayLabel(key)} のメモ`}`;
 function startMemo(el) {
   const { site, key } = el.dataset;
   // 書き始めた週に書く（待っている間に週を移っても、別の週へ書かない）。日のメモはその日の週、備考は表示中の週（月曜はじまりのときだけ出る）
   const mon = key === 'week' ? ds(S.weekStart) : wkOf(key);
-  const cur = memoOf(site, key);
+  const cur = memoOf(site, key), raw = memoColorOf(site, key), col0 = cur ? raw : '';
+  let col = col0;
+  // 入力欄の下に色を並べる。色を押しても入力欄からフォーカスを外さない（外れると、その場で確定してしまう）
+  const ed = document.createElement('div');
+  ed.className = 'smemoEd';
+  ed.innerHTML = `<div class="mcs" role="radiogroup" aria-label="メモの色">${MEMO_COLORS.map(([v, l, bg, fg]) =>
+    `<button type="button" tabindex="-1" data-c="${v}" title="${l}" aria-label="${l}" role="radio" style="--mb:${bg};--mf:${fg}">あ</button>`).join('')}</div>`;
   const inp = document.createElement('input');
   inp.className = 'smemoIn'; inp.value = cur; inp.maxLength = key === 'week' ? 300 : 200;
   inp.placeholder = key === 'week' ? '備考（Enterで確定）' : 'メモ（Enterで確定）';
-  el.replaceWith(inp); inp.focus();
+  ed.prepend(inp);
+  const paint = () => {
+    const c = memoColorEntry(col) || MEMO_COLORS[0];
+    inp.style.background = c[2]; inp.style.color = c[3];
+    ed.querySelectorAll('[data-c]').forEach(b => { const on = b.dataset.c === col; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+  };
+  paint();
+  // 色を押している間（pointerdown〜pointerup）だけ立てる。離したことが届かないときのため、1.5秒で無効
+  let picking = 0;
+  const unpick = () => setTimeout(() => { picking = 0; }, 0);
+  // 色と色のすき間・枠を押しても閉じないよう、色の枠（.mcs）の中は全部止める
+  ed.addEventListener('pointerdown', e => {
+    if (!e.target.closest('.mcs')) return;
+    e.preventDefault(); picking = Date.now();
+    const b = e.target.closest('[data-c]');
+    if (b) { col = b.dataset.c; paint(); }
+  });
+  ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, unpick, true));
+  // マウスは mousedown、iPhone は touchstart を止めないとフォーカスが移る
+  ed.addEventListener('mousedown', e => { if (e.target.closest('.mcs')) e.preventDefault(); });
+  ed.addEventListener('touchstart', e => { if (e.target.closest('.mcs')) e.preventDefault(); }, { passive: false });
+  // 読み上げ機能など、click だけが届くとき
+  ed.addEventListener('click', e => {
+    const b = e.target.closest('[data-c]'); if (!b || done) return;
+    col = b.dataset.c; paint(); inp.focus();
+  });
+  el.replaceWith(ed); inp.focus();
+  // 指の端末では入力欄の上に出す（下だとキーボードに隠れる）。マウスの端末でも、表の枠の下にはみ出すなら上に
+  const mcs = ed.querySelector('.mcs'), gw = ed.closest('.gridwrap')?.getBoundingClientRect();
+  if (TOUCH || (gw && mcs.getBoundingClientRect().bottom > gw.bottom)) mcs.classList.add('up');
   let done = false;
   const finish = save => {
     if (done) return; done = true;
-    const v = inp.value.trim(), changed = save && v !== cur, shown = changed ? v : cur;
+    ['pointerup', 'pointercancel'].forEach(t => document.removeEventListener(t, unpick, true));
+    const v = inp.value.trim(), c = v ? col : '';
+    // 文を消したら色も標準に戻す。文が空のまま色だけ残っていても、文を変えないなら書かない（見た目は変わらないので）
+    const textCh = save && v !== cur, colCh = save && c !== raw && (textCh || !!v);
+    const shown = textCh ? v : cur;
     inp.blur();
     // 描き直しを待たずに元の欄へ戻す（入力欄が残ると、そこに打った文字はどこにも保存されない。
     // また描き直すと、次に押しかけた別のメモやマグネットが消えて、押し直すことになる）
     el.textContent = shown || (key === 'week' ? '＋備考' : '＋メモ');
     el.classList.toggle('empty', !shown);
-    inp.replaceWith(el);
-    if (changed) store.setMemos(mon, { [site]: { [key]: v } }, `${memoWhere(site, key, mon)}を${v ? `「${short(v)}」にした` : '消した'}`);
+    paintMemo(el, shown ? (save ? c : col0) : '');
+    ed.replaceWith(el);
+    if (!textCh && !colCh) return;
+    const patch = {};
+    if (textCh) patch[key] = v;
+    if (colCh) patch.colors = { [key]: c };
+    const where = memoWhere(site, key, mon);
+    store.setMemos(mon, { [site]: patch }, textCh
+      ? `${where}を${v ? `「${short(v)}」にした${colCh && c !== col0 ? `（色：${memoColorLabel(c)}）` : ''}` : '消した'}`
+      : `${where}の色を「${memoColorLabel(c)}」にした`);
   };
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !imeEnter(e)) { e.preventDefault(); finish(true); }
     else if (e.key === 'Escape') finish(false);
   });
-  inp.addEventListener('blur', () => finish(true));
+  inp.addEventListener('blur', e => {
+    // 色を押したはずみでフォーカスが外れるブラウザでは、確定せずに入力欄へ戻す（戻せなければ確定する）。
+    // 色を押している間だけ。選んだ直後にほかの所を押したときは、いつもどおりその場で確定する
+    // （戻すと、押したタブなどで描き直されたときに、入力欄ごと消えて保存されない）。ほかの欄やボタンへ移ったのなら戻さない
+    if ((picking && Date.now() - picking < 1500 && !e.relatedTarget) || ed.contains(e.relatedTarget)) {
+      setTimeout(() => { if (done) return; inp.focus(); if (document.activeElement !== inp) finish(true); }, 0);
+      return;
+    }
+    finish(true);
+  });
 }
 // Firefox は、高さを決めた td の中の height:100% を行の高さで計算しない（.bcell が 0 になり、マグネットが下の行に重なる）。
 // 描いた後に伸びていなければ、メモを下にそろえるのをやめて前の並び（中身のすぐ下）に戻す。ブラウザ名ではなく結果で見分ける
@@ -2120,8 +2221,12 @@ function boardPrint() {
     return `<td class="${ca.cls}"${ca.style}>${list.map(p => {
       const n = cellOf(p.id, k)?.note;
       return `<div>${esc(p.name)}${n ? `<div class="vnote">${esc(n)}</div>` : ''}</div>`;
-    }).join('')}${!r.pool && memoOf(r.id, k) ? `<div class="pmemo">${esc(memoOf(r.id, k))}</div>` : ''}</td>`;
-  }).join('')}<td>${r.pool ? '' : weekNotes(r.id).map(([h, v]) => `<div class="pmemo">${h ? h + '\n' : ''}${esc(v)}</div>`).join('')}</td></tr>`).join('')}</tbody></table>`;
+    }).join('')}${!r.pool && memoOf(r.id, k) ? pmemo(memoOf(r.id, k), memoColorOf(r.id, k)) : ''}</td>`;
+  }).join('')}<td>${r.pool ? '' : weekNotes(r.id).map(([h, v, c]) => pmemo(v, c, h)).join('')}</td></tr>`).join('')}</tbody></table>`;
+}
+function pmemo(v, c, h = '') {
+  const mc = memoColorAttr(c);
+  return `<div class="pmemo${mc.cls}"${mc.style}>${h ? h + '\n' : ''}${esc(v)}</div>`;
 }
 
 /* ---- 人の登録 ---- */
@@ -2340,6 +2445,7 @@ function meView(people, days) {
   const today = todayStr();
   return pick + `<div class="vdays">${days.map(d => {
     const k = ds(d), c = cellOf(S.me, k), s = c?.site ? S.company.sites[c.site] : null, hol = holidayName(k);
+    const sm = s ? memoOf(c.site, k) : '', smc = memoColorAttr(sm ? memoColorOf(c.site, k) : '');
     const body = s ? furi(s, true) : `<span class="vmuted">${isRestDay(d) ? '―' : vt('undecided')}</span>`;
     const ca = colorAttr(s, `vday ${dayCls(d)}${k === today ? ' tdy' : ''}${s?.kind === 'off' ? ' off' : ''}${isRestDay(d) && !s ? ' rest' : ''}`);
     return `<div class="${ca.cls}"${ca.style}>
@@ -2347,7 +2453,7 @@ function meView(people, days) {
       <div class="vs">${body}</div>
       ${s && siteAddr(c.site) ? addrLink(siteAddr(c.site), 'vaddr') : ''}
       ${c?.note ? `<div class="vnote" lang="ja">${esc(c.note)}${trHtml(c.note)}</div>` : ''}
-      ${s && memoOf(c.site, k) ? `<div class="vsm" lang="ja">📌 ${esc(memoOf(c.site, k))}${trHtml(memoOf(c.site, k))}</div>` : ''}
+      ${sm ? `<div class="vsm${smc.cls}"${smc.style} lang="ja">📌 ${esc(sm)}${trHtml(sm)}</div>` : ''}
     </div>`;
   }).join('')}</div>${weekMemos(days)}${monthCard()}`;
 }
@@ -2376,8 +2482,10 @@ function addrList(people, days) {
 function weekMemos(days) {
   const ids = [...new Set(days.map(d => cellOf(S.me, ds(d))?.site).filter(id => id && S.company.sites[id] && memoOf(id, 'week')))];
   if (!ids.length) return '';
-  return `<div class="vweek"><div class="vwh">📌 ${vt('siteMemo')}</div>${ids.map(id =>
-    `<div class="vwi"><div class="vs">${furi(S.company.sites[id], true)}</div><div class="vnote" lang="ja">${esc(memoOf(id, 'week'))}${trHtml(memoOf(id, 'week'))}</div></div>`).join('')}</div>`;
+  return `<div class="vweek"><div class="vwh">📌 ${vt('siteMemo')}</div>${ids.map(id => {
+    const mc = memoColorAttr(memoColorOf(id, 'week'));
+    return `<div class="vwi"><div class="vs">${furi(S.company.sites[id], true)}</div><div class="vnote${mc.cls}"${mc.style} lang="ja">${esc(memoOf(id, 'week'))}${trHtml(memoOf(id, 'week'))}</div></div>`;
+  }).join('')}</div>`;
 }
 
 /* =====================================================================
