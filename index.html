@@ -126,7 +126,8 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .board th.nm.off{background:var(--off)}
 .board tr.pool th.nm{background:#fff8d6}
 .board tr.pool td{border-bottom:2px solid #d4d2c4}
-/* 未配置の行は、たてにスクロールしても見出しの下に止める（2026-11-17 ユーザー指示「スクロールするとき未配置は固定で」）。
+/* 未配置の行は、たてにスクロールしても見出しの下に止める（2026-11-17 ユーザー指示「スクロールするとき未配置は固定で」。
+   管理側の「未担当」の行も同じ＝同日「管理側の未担当も固定して」。管理側の表も class に board が付いている）。
    top は見出しの高さ（stickPool で測る）。見出しより下、ほかの行より上に重ねる */
 .board.stick tr.pool th,.board.stick tr.pool td{position:sticky;top:var(--hh,0px);z-index:1}
 .board.stick tr.pool th.nm{z-index:2}
@@ -171,6 +172,17 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .sortable-chosen{transform:scale(1.05)}
 .sortable-drag{box-shadow:0 2px 6px rgba(0,0,0,.25)!important}
 .sortable-fallback{will-change:transform;transform:translateZ(0);backface-visibility:hidden;pointer-events:none}
+/* 現場の行の並べ替え（2026-11-17 ユーザー指示「現場の入れ替えをドラッグでできるように」）。マウスは行の見出し（現場名の欄）のどこでも、
+   指の端末は右上のつまみ（⠿）からつかむ（見出しのほかの所は今までどおりスクロールに使う）。
+   動かしている行はその場で並びが変わるので、浮かぶ写し（fallback）は出さずに、動かしている行を色で示す
+   （写しは body に付くので表の見た目にならず、横にスクロールしていると画面の外に出る） */
+.rgrip{float:right;margin:-2px -4px 0 4px;padding:2px 4px;color:var(--faint);font-size:14px;line-height:1;font-weight:400;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+@media (hover:hover){.board tr.srow>th.nm{cursor:grab}}
+@media (hover:none){.rgrip{padding:6px 8px;margin:-6px -8px 0 2px;font-size:18px}}
+.board tr.sortable-chosen{transform:none}
+.board tr.sortable-ghost{opacity:.85}
+.board tr.sortable-ghost>*{background-image:linear-gradient(rgba(37,99,235,.14),rgba(37,99,235,.14))}
+tr.sortable-fallback{visibility:hidden}
 .modalBox h3{margin:0 0 12px;font-size:16px}
 .mrow{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--sub);margin-bottom:12px}
 .mrow select,.mrow input{padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#fff;font-size:16px;color:var(--ink)}   /* 16px 未満だと iPhone で押したときに画面が拡大されたままになる */
@@ -1308,7 +1320,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // データが届いたときに描き直す領域。入力欄やボタンのある所は入れない
 // （描き直すと打っている文字が消え、押しかけたボタンも別物になってクリックが効かない）
-const REGIONS = { table: ['grid', () => weekView(), mountBoard], admin: ['grid', () => adminView()], people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], history: ['hlist', () => historyList()], settings: ['edlist', () => editorItems()] };
+const REGIONS = { table: ['grid', () => weekView(), mountBoard], admin: ['grid', () => adminView(), stickPool],people: ['plist', () => peopleList()], sites: ['slist', () => siteList()], history: ['hlist', () => historyList()], settings: ['edlist', () => editorItems()] };
 function refresh() {
   if (S.screen !== 'app') return;
   if (S.role === 'view' || !$('#main')) return render();
@@ -1540,7 +1552,7 @@ function adminView() {
     return `<td class="${ca.cls}"${ca.style} data-act="acell" data-site="${esc(s.id)}" data-month="${k}" role="button" tabindex="0" aria-label="${esc(s.name)} ${monthLabel(k)}">${as}${monMemo(k, s.id) ? `<div class="amemo">${esc(monMemo(k, s.id))}</div>` : ''}${tl}</td>`;
   }).join('')}</tr>`).join('');
   const foot = `<tfoot><tr><th class="nm">延べ人工（プレイヤー）</th>${tallies.map(t => `<td>${t ? Object.entries(t.bySite).filter(([id]) => isWorkSite(id)).reduce((a, [, o]) => a + sumOf(o), 0) : '…'}</td>`).join('')}</tr></tfoot>`;
-  return err + `<table class="grid board admin"${S.privLoaded ? '' : ' aria-busy="true"'}>${head}<tbody>${pool}${body}</tbody>${foot}</table>`;
+  return err + `<table class="grid board admin stick"${S.privLoaded ? '' : ' aria-busy="true"'}>${head}<tbody>${pool}${body}</tbody>${foot}</table>`;
 }
 // 物件名の欄：ふりがな・名前の下に、工事情報（発注者、住所、構造・階数、金額）と工期
 function adminRowHead(s) {
@@ -1696,8 +1708,12 @@ function boardRowHead(r) {
   if (r.pool) return '<th class="nm">未配置<span class="sub">まだ決まっていない人</span></th>';
   const ca = colorAttr(r.locked ? null : r, `nm${r.kind === 'off' ? ' off' : ''}`);
   const name = r.gone ? '（削除された現場）' : (r.locked ? '（完了）' : '') + esc(r.name), term = termText(r), addr = r.gone ? '' : siteAddr(r.id);
-  return `<th class="${ca.cls}"${ca.style}>${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}${addr ? addrLink(addr, 'addr') : ''}${term ? `<span class="term">工期 ${term}</span>` : ''}</th>`;
+  const grip = r.locked ? '' : '<span class="rgrip" title="ドラッグで現場の順番を入れ替え" aria-hidden="true">⠿</span>';
+  return `<th class="${ca.cls}"${ca.style}>${grip}${r.kana ? `<span class="sub">${esc(r.kana)}</span>` : ''}${name}${addr ? addrLink(addr, 'addr') : ''}${term ? `<span class="term">工期 ${term}</span>` : ''}</th>`;
 }
+// 行に付けるもの。現場の行はドラッグで並べ替えられる（同じ種類＝現場／休み・研修などの中だけ。未配置・完了・削除の行は動かさない）
+const boardRowAttr = r => r.pool ? ' class="pool"' : r.locked ? ''
+  : ` class="srow" data-sid="${esc(r.id)}" data-grp="${r.kind === 'off' ? 'off' : 'site'}"`;
 function magnet(p, k, faded) {
   const mc = magnetColor(p.color);
   return `<span class="mg${mc.cls}${faded ? ' faded' : ''}"${mc.style} data-act="mg" data-pid="${esc(p.id)}" data-date="${k}" role="button" tabindex="0" title="${esc(p.name)}">${esc(p.name)}</span>`;
@@ -1713,7 +1729,7 @@ function boardTable() {
     const msg = sortedPlayers(false).length ? '該当する人がいません' : '「人の登録」タブからプレイヤーを登録してください';
     return `<table class="grid board">${head}</table><div class="empty">${msg}</div>`;
   }
-  const body = rows.map(r => `<tr class="${r.pool ? 'pool' : ''}">${boardRowHead(r)}${days.map(d => {
+  const body = rows.map(r => `<tr${boardRowAttr(r)}>${boardRowHead(r)}${days.map(d => {
     const k = ds(d), list = at[r.id]?.[k] || [], rest = isRestDay(d);
     // 未配置のマスは表と同じ色（平日は黄色、日曜・祝日は灰色）。日曜・祝日の未配置は休みなので薄く出す
     const ca = r.pool ? { cls: list.length ? (rest ? 'rest' : 'unset') : '', style: '' }
@@ -1848,13 +1864,14 @@ function checkCellStretch() {
   if (c && c.offsetHeight + 2 < c.scrollHeight) root.classList.add('nostretch');
 }
 // 未配置の行を止める位置＝見出しの高さ（祝日の名前などで変わる）。端数は切り捨てて、見出しの下へ少しもぐらせる（すき間から下の行が見えないように）。
-// 未配置の人が多くて行が高く、止めるとほかの行を見る所がほとんど残らないとき（見出しと合わせて表の枠の6割を超える）は止めない
+// 未配置の人が多くて行が高く、止めるとほかの行を見る所がほとんど残らないとき（見出しと合わせて表の枠の75%を超える）は止めない。
+// ※最初は6割にしたが、本番の週（平日に10人ほど未配置）で未配置の行が約280pxあり、小さめのスマホでは止まらなくなるので広げた
 function stickPool() {
   const g = $('#grid'), t = g?.querySelector('table.board'), p = t?.querySelector('tr.pool');
   if (!t?.tHead || !p) return;
   const hh = Math.floor(t.tHead.getBoundingClientRect().height);
   t.style.setProperty('--hh', hh + 'px');
-  t.classList.toggle('stick', hh + p.getBoundingClientRect().height <= g.clientHeight * 0.6);
+  t.classList.toggle('stick', hh + p.getBoundingClientRect().height <= g.clientHeight * 0.75);
 }
 window.addEventListener('resize', stickPool);
 // ドラッグの部品（SortableJS。現場配置ボードと同じ版）は、ホワイトボードを開いたときに読み込む
@@ -1906,6 +1923,59 @@ async function mountBoard() {
       onEnd: boardDragEnd,
     }));
   }
+  // 現場の行の並べ替え。つかむのはマウスなら行の見出し、指なら右上のつまみ（見出しのほかの所はスクロールに使う）。
+  // 住所の地図リンクからはつかまない（押せばふつうに開く）。マグネットのドラッグとは group が別なので混ざらない
+  const tb = document.querySelector('#grid table.board:not(.admin) > tbody');
+  if (tb?.querySelector('tr.srow')) sortables.push(window.Sortable.create(tb, {
+    group: 'rows', draggable: 'tr.srow', handle: TOUCH ? '.rgrip' : 'th.nm', filter: 'a', preventOnFilter: false,
+    animation: 0, forceFallback: true, fallbackOnBody: true, fallbackTolerance: 8,
+    onStart() { S.dragging = true; },
+    onUnchoose() { if (!S.dragging) setTimeout(clearSortableClick, 0); },
+    // 同じ種類の行の間だけ動かす（未配置の行の上、完了・削除の行の下、現場と休み・研修などの境目は越えない）
+    onMove: ev => !!ev.related?.dataset && ev.related.dataset.grp === ev.dragged.dataset.grp,
+    onEnd: rowDragEnd,
+  }));
+}
+// 現場の行を離したとき。行き先は離した点の下の行（同じ種類）：その行の上半分なら前、下半分なら後ろ。
+// Sortable の仮の並びは 50ms ごとにしか動かず、素早く動かして離すと1つ手前のままになる（boardDragEnd と同じ理由）。
+// 離した点が動かしている行の上・表の外・入れない行（未配置・別の種類）なら、Sortable が動かした見えている並びのまま
+function rowDragEnd(ev) {
+  const waited = S.pending, moved = S.dragging;
+  S.dragging = false; S.pending = false;
+  const sid = ev.item.dataset.sid, grp = ev.item.dataset.grp;
+  let shown = [...ev.from.querySelectorAll(`tr.srow[data-grp="${grp}"]`)].map(tr => tr.dataset.sid);
+  const oe = ev.originalEvent, pt = oe && (oe.changedTouches?.[0] || oe);
+  const hit = moved && pt && pt.clientX != null ? document.elementFromPoint(pt.clientX, pt.clientY)?.closest('#grid tr.srow') : null;
+  if (hit && hit.dataset.grp === grp && hit.dataset.sid !== sid) {
+    const r = hit.getBoundingClientRect();
+    shown = shown.filter(id => id !== sid);
+    shown.splice(shown.indexOf(hit.dataset.sid) + (pt.clientY > r.top + r.height / 2 ? 1 : 0), 0, sid);
+  }
+  // マウスで動かして離すと click が来るので捨てる（boardDragEnd と同じ）
+  const eat = e => { e.stopPropagation(); e.preventDefault(); };
+  if (moved) window.addEventListener('click', eat, true);
+  setTimeout(() => {
+    if (moved) { window.removeEventListener('click', eat, true); clearSortableClick(); }
+    if (moved && moveSiteRow(sid, shown)) return;
+    if (ev.oldIndex !== ev.newIndex || waited) refresh();
+  }, 0);
+}
+// 動かした現場だけを、見えていた直前の現場の後ろ（いちばん上なら直後の現場の前）に入れて、order を振り直す。
+// ほかの現場同士は今のデータの順のまま（完了した現場や、ドラッグ中にほかの端末が並べ替えた分を戻さない）。書くものが無ければ false
+function moveSiteRow(sid, shown) {
+  const list = sortedSites(true), me = list.find(s => s.id === sid);
+  if (!me) return false;
+  const i = shown.indexOf(sid), rest = list.filter(s => s.id !== sid);
+  const pi = i > 0 ? rest.findIndex(s => s.id === shown[i - 1]) : -1;
+  const ni = i >= 0 && i + 1 < shown.length ? rest.findIndex(s => s.id === shown[i + 1]) : -1;
+  const at = pi >= 0 ? pi + 1 : ni;
+  if (at < 0) return false;   // 隣の現場が、待っている間にほかの端末で消された
+  rest.splice(at, 0, me);
+  if (rest.every((s, k) => s.id === list[k].id)) return false;
+  const patch = {};
+  rest.forEach((s, k) => { if (s.order !== k + 1) patch[s.id] = { order: k + 1 }; });
+  store.patch({ sites: patch }, `現場の並び順を変更（「${me.name}」を${pi >= 0 ? `「${rest[at - 1].name}」の後ろ` : `「${rest[at + 1].name}」の前`}へ）`);
+  return true;
 }
 // iPhone などでは動かした後に click が来ないため、Sortable の「次の click を捨てる」印が残り、次のタップが効かなくなる。
 // document へ空の click を送って印を消す（#app には届かないので、どのボタンも動かない。印が無ければ何も起きない）
