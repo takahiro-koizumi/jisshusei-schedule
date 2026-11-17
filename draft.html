@@ -127,6 +127,10 @@ table.grid{border-collapse:separate;border-spacing:0;min-width:100%}
 .board th.nm.off{background:var(--off)}
 .board tr.pool th.nm{background:#fff8d6}
 .board tr.pool td{border-bottom:2px solid #d4d2c4}
+/* 未配置の行は、たてにスクロールしても見出しの下に止める（2026-11-17 ユーザー指示「スクロールするとき未配置は固定で」）。
+   top は見出しの高さ（stickPool で測る）。見出しより下、ほかの行より上に重ねる */
+.board.stick tr.pool th,.board.stick tr.pool td{position:sticky;top:var(--hh,0px);z-index:1}
+.board.stick tr.pool th.nm{z-index:2}
 .board .sub{display:block;font-size:10px;color:var(--sub);font-weight:400}
 .board .term{display:block;font-size:10px;color:#555;font-weight:400;margin-top:2px}   /* 現場名の下の工期 */
 .board .addr{display:block;font-size:10px;color:#1d4f91;font-weight:400;margin-top:2px;text-decoration:none;word-break:break-all}   /* 現場名の下の住所（地図のリンク） */
@@ -1712,7 +1716,7 @@ function boardTable() {
       `<div class="bnote" data-act="mg" data-pid="${esc(p.id)}" data-date="${k}"><b>${esc(p.name)}</b>${esc(cellOf(p.id, k).note)}</div>`).join('');
     return `<td class="${ca.cls}"${ca.style}><div class="bcell"><div class="mlist" data-site="${esc(r.id)}" data-date="${k}"${r.locked ? ' data-lock="1"' : ''}>${list.map(p => magnet(p, k, r.pool && rest)).join('')}</div>${notes}${r.pool ? '' : memoBox(r.id, k)}</div></td>`;
   }).join('')}<td class="bk">${r.pool ? '' : weekMemoCell(r.id)}</td></tr>`).join('');
-  return `<table class="grid board">${head}<tbody>${body}</tbody></table>`;
+  return `<table class="grid board stick">${head}<tbody>${body}</tbody></table>`;
 }
 // 現場のメモ（key＝日付ならその日のマス、'week' なら右端の備考＝月曜はじまりで表示している週のもの）。押すと書ける
 const memosOf = (sid, key) => (key === 'week' ? S.weeks[ds(S.weekStart)] : S.weeks[wkOf(key)])?.memos?.[sid];
@@ -1837,6 +1841,16 @@ function checkCellStretch() {
   const c = document.querySelector('#grid .bcell');
   if (c && c.offsetHeight + 2 < c.scrollHeight) root.classList.add('nostretch');
 }
+// 未配置の行を止める位置＝見出しの高さ（祝日の名前などで変わる）。端数は切り捨てて、見出しの下へ少しもぐらせる（すき間から下の行が見えないように）。
+// 未配置の人が多くて行が高く、止めるとほかの行を見る所がほとんど残らないとき（見出しと合わせて表の枠の6割を超える）は止めない
+function stickPool() {
+  const g = $('#grid'), t = g?.querySelector('table.board'), p = t?.querySelector('tr.pool');
+  if (!t?.tHead || !p) return;
+  const hh = Math.floor(t.tHead.getBoundingClientRect().height);
+  t.style.setProperty('--hh', hh + 'px');
+  t.classList.toggle('stick', hh + p.getBoundingClientRect().height <= g.clientHeight * 0.6);
+}
+window.addEventListener('resize', stickPool);
 // ドラッグの部品（SortableJS。現場配置ボードと同じ版）は、ホワイトボードを開いたときに読み込む
 let sortLoader = null, sortables = [], mountGen = 0;
 // 1か所から読めなければ、もう1か所（現場配置ボードが使っている所）から読む
@@ -1853,6 +1867,7 @@ let sortFailed = false;   // 読み込めなかったら、描き直すたびに
 // 描き直すたびに前のドラッグを外してから付け直す（外さないと描き直すたびに溜まっていく）
 async function mountBoard() {
   checkCellStretch();
+  stickPool();
   const gen = ++mountGen;
   // ドラッグの途中で画面ごと描き直された（ログアウト等）。destroy では onEnd が来ないので、ここで片付ける
   const midDrag = S.dragging;
